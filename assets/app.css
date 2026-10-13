@@ -668,3 +668,11 @@ body.locked::before{background:transparent}
 .gatelock:not([hidden])~.gateload,.gatebox:has(.gatelock:not([hidden])) .gateload,.gatebox:has(.gatelock:not([hidden])) .gatetag{display:none}
 @media(prefers-reduced-motion:reduce){.gateload i{animation:none;width:100%}}
 .gateload[hidden],.gatetag[hidden]{display:none}
+.sgmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;font-style:normal}
+.sgtag{font-style:normal;font-size:12px;font-weight:650;padding:3px 8px;border-radius:999px;background:var(--tint);color:var(--royal)}
+.sgtag.yr{background:color-mix(in srgb,var(--gold) 20%,transparent);color:#8a5a00}
+:root[data-theme=dark] .sgtag.yr{color:#ffd166}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .sgtag.yr{color:#ffd166}}
+.sgmeta .sgdot{width:6px;height:6px;border-radius:50%;background:var(--ink-3);display:inline-block;margin:6px 6px 0 0;animation:blink 1s infinite}
+.sgmeta:has(.sgdot){font-size:12px;color:var(--ink-3)}
+.bizline{margin:0 0 14px;color:var(--ink-2);font-size:14.5px}
