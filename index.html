@@ -20,24 +20,24 @@
 <div class="layout">
 <aside class="side"><div class="brand"><img src="assets/logo-192.png" alt="Logo AffiAds Audit" width="42" height="42"><div>AFFIADS <span>AUDIT 360°</span></div></div><nav class="nav"><button class="active" data-view="auto">⚡ Audit automatique</button><button data-view="home">▦ Tableau de bord</button><button data-view="audit">☑ Checklist</button><button data-view="report">▤ Rapport client</button><button data-view="pitch">✉ Message prospect</button><button data-view="campaign">◎ Visibilité IA</button><button data-view="research">⌕ Recherche internet</button><button data-view="webcheck">⌁ Tests web</button><button data-view="tools">↗ Boîte à outils</button><button data-view="settings">⚙ Réglages</button></nav><p>Analysez. Priorisez. Convainquez.<br>Transformez les constats en opportunités commerciales.</p></aside>
 <main class="main">
-<header class="top"><div><div class="eyebrow">Espace de travail AffiAds</div><h1 id="pageTitle">Audit automatique</h1><div class="muted" id="pageSub">Un nom, une ville : l'application collecte les données réelles pour vous.</div></div><div class="actions"><button class="btn" id="save">Enregistrer</button><button class="btn primary" id="pdf">Exporter en PDF</button></div></header>
-<div class="clientbar"><label for="clientSelect">Client</label><select id="clientSelect"></select><button class="btn" id="newClient">+ Nouveau client</button><button class="btn" id="deleteClient">Supprimer</button></div>
+<header class="top"><div><div class="eyebrow">Espace de travail AffiAds</div><h1 id="pageTitle">Audit</h1><div class="muted" id="pageSub">Un nom, une ville : l'application collecte les données réelles pour vous.</div></div><div class="actions topacts"><span class="saved" id="savedState" aria-live="polite">✓ Enregistré</span><button class="btn primary" id="pdf">Rapport PDF</button></div></header>
+<div class="clientbar"><label for="clientSelect">Client</label><select id="clientSelect"></select><button class="btn iconbtn" id="newClient" aria-label="Nouveau client" title="Nouveau client">＋<span class="lbl"> Nouveau</span></button><button class="btn iconbtn" id="deleteClient" aria-label="Supprimer ce client" title="Supprimer ce client">🗑</button></div>
 
 <section id="view-auto"><div class="grid">
-<div class="card hero"><h2>Audit automatique en un clic</h2><p class="muted">Renseignez le commerce : l'application recherche sa fiche Google, ses avis, ses concurrents, sa position locale et analyse son site sur mobile. Chaque résultat est daté et sourcé.</p>
+<div class="card hero"><h2>Quel commerce auditer ?</h2><p class="muted">Tapez son nom et choisissez-le dans la liste : l'audit démarre tout seul. Gratuit, sans compte ni réglage.</p>
 <div class="fields">
 <div class="field suggest-wrap"><label for="autoName">Nom du commerce *</label><input id="autoName" placeholder="Tapez le nom : suggestions automatiques" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest"><div id="suggest" class="suggest hidden" role="listbox"></div><small id="pickInfo" class="pickinfo"></small></div>
 <div class="field"><label for="autoCity">Ville *</label><input id="autoCity" placeholder="Ex. Narbonne" autocomplete="off"></div>
-<div class="field"><label for="autoType">Type de commerce</label><select id="autoType"></select></div>
+</div>
+<details class="adv"><summary>Options (facultatif)</summary><div class="fields"><div class="field"><label for="autoType">Type de commerce</label><select id="autoType"></select></div>
 <div class="field"><label for="autoKeyword">Recherches clients à tester (3 max, séparées par des virgules)</label><input id="autoKeyword" placeholder="Ex. restaurant, meilleur restaurant, pizzeria"></div>
 <div class="field full"><label for="autoSite">Site web (facultatif, trouvé automatiquement si possible)</label><input id="autoSite" type="url" placeholder="https://..."></div>
-</div>
-<label class="optline"><input type="checkbox" id="autoCompSpeed" checked> Comparer aussi la vitesse des sites des 3 premiers concurrents (clé Google)</label>
-<div class="actions" style="margin-top:14px"><button class="btn primary" id="runAuto">⚡ Lancer l'audit automatique</button><button class="btn" id="autoToReport">Voir le rapport →</button></div>
+</div><label class="optline"><input type="checkbox" id="autoCompSpeed" checked> Comparer aussi la vitesse des sites des 3 premiers concurrents (avec clé Google)</label></details>
+<div class="actions" style="margin-top:14px"><button class="btn primary bigcta" id="runAuto">⚡ Lancer l'audit</button><button class="btn" id="autoToReport">Voir le rapport →</button></div>
 <div id="keyNotice" class="muted" style="margin-top:10px"></div>
 </div>
 <div class="card hidden" id="placeChoice"></div>
-<div class="card"><h2>Progression</h2><div id="autoSteps" class="steps"><p class="muted">Aucune analyse lancée pour ce client.</p></div></div>
+<div class="card"><details id="progDetails" class="prog" open><summary><h2 id="progTitle">Progression</h2></summary><div id="autoSteps" class="steps"><p class="muted">Aucune analyse lancée pour ce client.</p></div></details></div>
 <div class="card" id="autoSummaryCard"><h2>Résultats clés</h2><div id="autoSummary"><p class="muted">Les résultats apparaîtront ici après l'analyse.</p></div></div>
 </div></section>
 
@@ -153,7 +153,7 @@
 <section id="view-tools" class="hidden"><div class="card"><h2>Boîte à outils</h2><p class="muted">Liens directs vers les outils publics, préremplis avec le commerce actif quand c'est possible.</p><div class="links" id="links"></div><div class="notice" style="margin-top:15px">Certaines données (statistiques de la fiche, Search Console, résultats publicitaires) nécessitent l'accès du propriétaire. Ne présentez jamais une estimation comme une donnée vérifiée.</div></div></section>
 
 <section id="view-settings" class="hidden"><div class="grid">
-<div class="card s7"><h2>Clé Google (recommandée)</h2><p class="muted">Une seule clé gratuite débloque la fiche Google, les avis, les concurrents, la position locale et l'analyse PageSpeed fiable. Elle reste uniquement dans ce navigateur ; elle n'est jamais publiée sur GitHub.</p>
+<div class="card s7"><h2>Clé Google (facultative)</h2><p class="muted">L'application fonctionne sans clé. Une clé Google gratuite ajoute la fiche Google, la note et les avis, les concurrents Google, les positions sur les recherches et la vitesse comparée des sites. Elle reste uniquement dans ce navigateur ; elle n'est jamais publiée sur GitHub.</p>
 <div class="field"><label for="googleKey">Clé API Google</label><input id="googleKey" type="password" placeholder="AIza..." autocomplete="off"></div>
 <div class="actions" style="margin-top:12px"><button class="btn primary" id="saveKey">Enregistrer la clé</button><button class="btn" id="testKey">Tester la clé</button><button class="btn" id="removeKey">Retirer la clé</button></div>
 <div id="keyStatus" class="muted" style="margin-top:10px"></div>

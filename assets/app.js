@@ -117,7 +117,9 @@ function loadAll(){
  state=fixState(db.audits[db.current]);
 }
 function fixState(s){s=s||blankState();["checks","issues","auto","biz","campaign","data"].forEach(k=>{if(!s[k]||typeof s[k]!=="object")s[k]={}});["aiTests","campaignPrompts"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});if(!s.id)s.id=uid();return s}
-function persistLocal(){state.updatedAt=new Date().toISOString();db.audits[state.id]=state;db.current=state.id;try{localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e){
+function markSaved(ok){const el=$("savedState");if(!el)return;el.textContent=ok?"✓ Enregistré":"⚠ Non enregistré";el.classList.toggle("bad",!ok)}
+function persistLocal(){const ok=persistRaw();markSaved(ok);return ok}
+function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.id]=state;db.current=state.id;try{localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e){
  /* Quota dépassé : on retire la capture d'écran, la plus lourde */
  try{Object.values(db.audits).forEach(a=>{if(a.data&&a.data.psi)delete a.data.psi.shot});localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e2){return false}}}
 function saveSettings(){try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
@@ -164,7 +166,7 @@ function update(){
 /* ---------- Clé Google ---------- */
 function hasKey(){return !!(settings.googleKey&&settings.googleKey.trim())}
 function renderKeyNotice(){
- $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Clé Google active</span> Fiche Google, avis, concurrents, position locale et PageSpeed seront analysés.':'<span class="badge b-mid">Sans clé Google</span> Analyse limitée à OpenStreetMap et à PageSpeed (quota partagé, souvent saturé). <a href="#" data-goto="settings" style="color:#fff;font-weight:800">Ajouter une clé gratuite →</a>';
+ $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Mode gratuit actif</span> Aucune clé nécessaire : site, réseaux, concurrents OpenStreetMap et IA. <a href="#" data-goto="settings" style="color:#fff;font-weight:800;white-space:nowrap">Ajouter les avis Google →</a>';
  const a=$("keyNotice").querySelector("[data-goto]");if(a)a.onclick=e=>{e.preventDefault();nav("settings")};
  $("googleKey").value=settings.googleKey||"";
  $("keyStatus").innerHTML=hasKey()?'<span class="keyok">Clé enregistrée dans ce navigateur.</span>':'Aucune clé enregistrée.';
@@ -203,26 +205,95 @@ async function osmLookup(name,center,type){
  const seen=new Set();const competitors=comp.filter(e=>{const k=norm(e.tags.name);if(seen.has(k))return false;seen.add(k);return true}).map(e=>({name:e.tags.name,website:e.tags.website||e.tags["contact:website"]||"",loc:pos(e),src:"OSM"}));
  return {me:me?{name:me.tags.name,tags:me.tags,loc:pos(me),url:"https://www.openstreetmap.org/"+me.type+"/"+me.id}:null,competitors};
 }
+function parseLhr(lh,loadingExperience,url,via){
+ lh=lh||{};const cat=lh.categories||{},au=lh.audits||{};
+ const sc=k=>cat[k]&&cat[k].score!=null?Math.round(cat[k].score*100):null;
+ const pass=k=>{const x=au[k];if(!x||["error","manual"].includes(x.scoreDisplayMode))return null;if(x.scoreDisplayMode==="notApplicable")return true;return x.score===null?null:x.score>=0.9};
+ const disp=k=>au[k]&&au[k].displayValue||"";
+ const field=(loadingExperience&&loadingExperience.metrics)||{};
+ const fm=k=>field[k]?{p75:field[k].percentile,cat:field[k].category}:null;
+ let entities=((au["third-party-summary"]&&au["third-party-summary"].details&&au["third-party-summary"].details.items)||[]).map(i=>i.entity&&(i.entity.text||i.entity)).filter(Boolean).map(String);
+ if(!entities.length&&Array.isArray(lh.entities))entities=lh.entities.filter(e=>!e.isFirstParty).map(e=>e.name).filter(Boolean);
+ const tracking=[...new Set(TRACKERS.filter(t=>entities.some(e=>e.toLowerCase().includes(t[0].toLowerCase()))).map(t=>t[1]))];
+ const shotData=au["final-screenshot"]&&au["final-screenshot"].details&&au["final-screenshot"].details.data||"";
+ return {url:lh.finalDisplayedUrl||lh.finalUrl||url,requested:url,fetchedAt:nowLabel(),via,scores:{perf:sc("performance"),a11y:sc("accessibility"),bp:sc("best-practices"),seo:sc("seo")},
+  lab:{lcp:disp("largest-contentful-paint"),fcp:disp("first-contentful-paint"),tbt:disp("total-blocking-time"),cls:disp("cumulative-layout-shift"),si:disp("speed-index"),lcpMs:au["largest-contentful-paint"]&&au["largest-contentful-paint"].numericValue},
+  field:{lcp:fm("LARGEST_CONTENTFUL_PAINT_MS"),inp:fm("INTERACTION_TO_NEXT_PAINT"),cls:fm("CUMULATIVE_LAYOUT_SHIFT_SCORE"),overall:loadingExperience&&loadingExperience.overall_category||null},
+  audits:{https:pass("is-on-https"),viewport:pass("viewport"),title:pass("document-title"),meta:pass("meta-description"),crawlable:pass("is-crawlable"),status:pass("http-status-code"),alt:pass("image-alt"),links:pass("link-text"),canonical:pass("canonical"),robots:pass("robots-txt")},
+  entities,tracking,shot:shotData.length<400000?shotData:""};
+}
+/* Google PageSpeed (clé facultative), puis Microlink Lighthouse en secours gratuit */
 async function pageSpeed(url,cats){
  let api="https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&locale=fr&url="+encodeURIComponent(url);
  (cats||["performance","accessibility","best-practices","seo"]).forEach(c=>api+="&category="+c);
  if(hasKey())api+="&key="+encodeURIComponent(settings.googleKey.trim());
- const r=await fetchJson(api,{},120000);
- const lh=r.lighthouseResult||{},cat=lh.categories||{},au=lh.audits||{};
- const sc=k=>cat[k]&&cat[k].score!=null?Math.round(cat[k].score*100):null;
- const pass=k=>{const x=au[k];if(!x||["error","manual"].includes(x.scoreDisplayMode))return null;if(x.scoreDisplayMode==="notApplicable")return true;return x.score===null?null:x.score>=0.9};
- const disp=k=>au[k]&&au[k].displayValue||"";
- const field=(r.loadingExperience&&r.loadingExperience.metrics)||{};
- const fm=k=>field[k]?{p75:field[k].percentile,cat:field[k].category}:null;
- const entities=((au["third-party-summary"]&&au["third-party-summary"].details&&au["third-party-summary"].details.items)||[]).map(i=>i.entity&&(i.entity.text||i.entity)).filter(Boolean).map(String);
- const tracking=[...new Set(TRACKERS.filter(t=>entities.some(e=>e.toLowerCase().includes(t[0].toLowerCase()))).map(t=>t[1]))];
- const shotData=au["final-screenshot"]&&au["final-screenshot"].details&&au["final-screenshot"].details.data||"";
- return {url:lh.finalDisplayedUrl||lh.finalUrl||url,requested:url,fetchedAt:nowLabel(),scores:{perf:sc("performance"),a11y:sc("accessibility"),bp:sc("best-practices"),seo:sc("seo")},
-  lab:{lcp:disp("largest-contentful-paint"),fcp:disp("first-contentful-paint"),tbt:disp("total-blocking-time"),cls:disp("cumulative-layout-shift"),si:disp("speed-index"),lcpMs:au["largest-contentful-paint"]&&au["largest-contentful-paint"].numericValue},
-  field:{lcp:fm("LARGEST_CONTENTFUL_PAINT_MS"),inp:fm("INTERACTION_TO_NEXT_PAINT"),cls:fm("CUMULATIVE_LAYOUT_SHIFT_SCORE"),overall:r.loadingExperience&&r.loadingExperience.overall_category||null},
-  audits:{https:pass("is-on-https"),viewport:pass("viewport"),title:pass("document-title"),meta:pass("meta-description"),crawlable:pass("is-crawlable"),status:pass("http-status-code"),alt:pass("image-alt"),links:pass("link-text"),canonical:pass("canonical"),robots:pass("robots-txt")},
-  entities,tracking,shot:shotData.length<400000?shotData:""};
+ try{const r=await fetchJson(api,{},120000);return parseLhr(r.lighthouseResult,r.loadingExperience,url,"Google PageSpeed Insights")}
+ catch(e){
+  if(cats&&cats.length===1&&!hasKey())throw e;
+  const ml=await fetchJson("https://api.microlink.io/?url="+encodeURIComponent(url)+"&meta=false&insights.technologies=false&insights.lighthouse=true",{},120000);
+  const lh=ml&&ml.data&&ml.data.insights&&ml.data.insights.lighthouse;if(!lh)throw new Error((ml&&ml.message)||e.message);
+  return parseLhr(lh,null,url,"Lighthouse via Microlink");
+ }
 }
+/* Microlink : capture d'écran mobile et technologies (Wappalyzer), sans clé */
+async function microlinkShot(url){
+ const r=await fetchJson("https://api.microlink.io/?url="+encodeURIComponent(url)+"&meta=false&screenshot=true&insights.technologies=true&insights.lighthouse=false&viewport.isMobile=true&viewport.width=390&viewport.height=844&viewport.deviceScaleFactor=1",{},60000);
+ const d=r&&r.data||{};
+ return {shot:d.screenshot&&d.screenshot.url||"",tech:((d.insights&&d.insights.technologies)||[]).map(t=>({name:t.name,cat:(t.categories||[])[0]||""}))};
+}
+/* RDAP : date d'enregistrement du nom de domaine */
+async function domainInfo(host){
+ const dom=host.replace(/^www\./,"");
+ const r=await fetchJson("https://rdap.org/domain/"+encodeURIComponent(dom),{},20000);
+ const ev=k=>((r.events||[]).find(e=>e.eventAction===k)||{}).eventDate||"";
+ return {domain:dom,created:ev("registration"),expires:ev("expiration")};
+}
+/* Lecture du HTML du site : Jina Reader (rendu complet), puis AllOrigins en secours */
+async function fetchText(url,opts,timeout){const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),timeout||40000);try{const r=await fetch(url,{...(opts||{}),signal:ctl.signal});if(!r.ok){const e=new Error("HTTP "+r.status);e.status=r.status;throw e}return await r.text()}finally{clearTimeout(t)}}
+async function fetchHtml(url){
+ const tries=[()=>fetchText("https://r.jina.ai/"+url,{headers:{"X-Return-Format":"html","X-Timeout":"25"}},45000),()=>fetchText("https://api.allorigins.win/raw?url="+encodeURIComponent(url),{},30000)];
+ let last;for(const f of tries){try{const t=await f();if(t&&t.length>400&&/<(html|head|body)[\s>]/i.test(t))return t;last=new Error("page vide")}catch(e){last=e}}
+ throw last||new Error("page illisible");
+}
+const SOCIAL_RX=[["Facebook",/(^|\.)facebook\.com$|(^|\.)fb\.com$/],["Instagram",/(^|\.)instagram\.com$/],["TikTok",/(^|\.)tiktok\.com$/],["YouTube",/(^|\.)youtube\.com$|(^|\.)youtu\.be$/],["LinkedIn",/(^|\.)linkedin\.com$/],["X / Twitter",/(^|\.)(twitter|x)\.com$/],["Pinterest",/(^|\.)pinterest\.[a-z]+$/]];
+const BOOKING_RX=/thefork|lafourchette|zenchef|resy\.com|sevenrooms|guestonline|planity|treatwell|calendly|doctolib|booking\.com|airbnb|ubereats|deliveroo|just-?eat|bookingpage|tablebooker|mybusinessplanner|kalendes|simplybook|resengo|covermanager|opentable/i;
+const TRACK_RX=[["Pixel Meta",/connect\.facebook\.net|fbq\(/],["Google Tag Manager",/googletagmanager\.com\/gtm|GTM-[A-Z0-9]{4,}/],["Google Analytics",/googletagmanager\.com\/gtag|google-analytics\.com|gtag\(/],["Pixel TikTok",/analytics\.tiktok\.com|ttq\.load/],["Microsoft Clarity",/clarity\.ms/],["Hotjar",/hotjar\.com/],["Google Ads",/googleadservices|AW-[0-9]{6,}/]];
+const CMS_RX=[["Wix",/wix\.com|_wixCssImports|wixstatic/i],["WordPress",/wp-content|wp-includes/i],["Shopify",/cdn\.shopify|Shopify\.theme/i],["Squarespace",/squarespace/i],["Webflow",/webflow/i],["Jimdo",/jimdo/i],["PrestaShop",/prestashop/i],["Google Sites",/sites\.google/i],["Site.pro / SitW",/site123|sitew/i]];
+function analyzeHtml(html,pageUrl,ctx){
+ const doc=new DOMParser().parseFromString(html,"text/html");
+ const q=s=>doc.querySelector(s),attr=(s,a)=>{const e=q(s);return e?(e.getAttribute(a)||"").trim():""};
+ const title=(q("title")&&q("title").textContent||"").trim();
+ const metaDesc=attr('meta[name="description" i]',"content");
+ const h1s=[...doc.querySelectorAll("h1")].map(h=>h.textContent.replace(/\s+/g," ").trim()).filter(Boolean);
+ const viewport=!!q('meta[name="viewport" i]');
+ const ogImage=attr('meta[property="og:image"]',"content");
+ const generator=attr('meta[name="generator" i]',"content");
+ const ldTypes=new Set();
+ doc.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{try{const walk=o=>{if(!o||typeof o!=="object")return;if(Array.isArray(o))return o.forEach(walk);const t=o["@type"];(Array.isArray(t)?t:[t]).filter(Boolean).forEach(x=>ldTypes.add(String(x)));if(o["@graph"])walk(o["@graph"])};walk(JSON.parse(s.textContent))}catch(e){}});
+ const base=(()=>{try{return new URL(pageUrl)}catch(e){return null}})();
+ const links=[...doc.querySelectorAll("a[href]")].map(a=>({href:(a.getAttribute("href")||"").trim(),text:a.textContent.replace(/\s+/g," ").trim()}));
+ const socials=[];const seen=new Set();
+ links.forEach(l=>{let u;try{u=new URL(l.href,base||undefined)}catch(e){return}if(/sharer|share\?|intent\/tweet|\/share$/i.test(u.href))return;const s=SOCIAL_RX.find(([,rx])=>rx.test(u.hostname));if(s&&!seen.has(s[0])&&u.pathname.length>1){seen.add(s[0]);socials.push({net:s[0],url:u.href})}});
+ const tel=links.filter(l=>/^tel:/i.test(l.href)).map(l=>l.href.slice(4));
+ const whatsapp=links.some(l=>/wa\.me|whatsapp/i.test(l.href));
+ const booking=[...new Set(links.filter(l=>BOOKING_RX.test(l.href)||/r[ée]serv|commander|prendre rendez|book now|order/i.test(l.text)).map(l=>{try{return new URL(l.href,base||undefined).hostname.replace(/^www\./,"")}catch(e){return l.text}}))].slice(0,4);
+ const tracking=TRACK_RX.filter(([,rx])=>rx.test(html)).map(([n])=>n);
+ const cms=generator||((CMS_RX.find(([,rx])=>rx.test(html))||[])[0]||"");
+ const imgs=[...doc.querySelectorAll("img")];const noAlt=imgs.filter(i=>!i.hasAttribute("alt")||!i.getAttribute("alt").trim()).length;
+ const text=(doc.body&&doc.body.textContent||"").replace(/\s+/g," ");
+ const digits=text.replace(/\D/g,"");
+ const phoneOnSite=ctx&&ctx.phone?digits.includes(String(ctx.phone).replace(/\D/g,"").slice(-9)):null;
+ const cityOnSite=ctx&&ctx.city?norm(text).includes(norm(ctx.city)):null;
+ const hoursOnSite=/horaires|lundi|mardi|mercredi|ouvert du|ouverture/i.test(text);
+ const addressOnSite=/\b\d{5}\b/.test(text);
+ const menuOnSite=/\b(menu|carte|nos plats|tarifs?|prestations|nos services)\b/i.test(links.map(l=>l.text).join(" ")+" "+text.slice(0,4000))||/\d+[,.]?\d*\s?€/.test(text);
+ const years=[...text.matchAll(/(?:©|copyright)\s*(?:\d{4}\s*[-–]\s*)?(\d{4})/gi)].map(m=>+m[1]).filter(y=>y>1995&&y<=new Date().getFullYear());
+ const copyrightYear=years.length?Math.max(...years):null;
+ const words=text.split(" ").filter(w=>w.length>2).length;
+ const mixed=(html.match(/\ssrc=["']http:\/\//gi)||[]).length;
+ return {title,metaDesc,h1s,viewport,ogImage:!!ogImage,ldTypes:[...ldTypes],socials,tel:[...new Set(tel)],whatsapp,booking,tracking,cms,imgs:imgs.length,noAlt,phoneOnSite,cityOnSite,hoursOnSite,addressOnSite,menuOnSite,copyrightYear,words,mixed,fetchedAt:nowLabel()};
+}
+const LOCAL_TYPES=/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffeeShop|BarOrPub|Store|HairSalon|BeautySalon|DaySpa|HealthAndBeautyBusiness|Hotel|LodgingBusiness|AutoRepair|AutomotiveBusiness|HomeAndConstructionBusiness|Plumber|Electrician|HousePainter|ProfessionalService|MedicalBusiness|Organization/;
 
 /* ---------- Recherche assistée : suggestions et choix exact du commerce ---------- */
 const DETAIL_FIELDS=PLACE_FIELDS.split(",").map(f=>f.replace(/^places\./,"")).join(",");
@@ -276,6 +347,7 @@ function pickSuggestion(s){
  if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types))}
  else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value};applyDetectedType(typeFromOsm(s.key,s.value))}
  setPickInfo();persistLocal();
+ if($("autoCity").value.trim())setTimeout(runAuto,60);else $("autoCity").focus();
 }
 async function placeDetails(id){
  const r=await fetchJson("https://places.googleapis.com/v1/places/"+encodeURIComponent(id)+"?languageCode=fr&regionCode=FR&sessionToken="+encodeURIComponent(sessionToken),{headers:{"X-Goog-Api-Key":settings.googleKey.trim(),"X-Goog-FieldMask":DETAIL_FIELDS}},20000);
@@ -300,6 +372,7 @@ function keywordList(type,city){
 let steps=[];
 function setStep(id,status,title,detail){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||""});renderAutoSteps(steps)}
 function renderAutoSteps(list){
+ if(!running){$("progTitle").textContent=list&&list.length?"✓ Analyse terminée — "+list.length+" étapes (détail)":"Progression";$("progDetails").open=!(list&&list.length)}
  if(!list||!list.length){$("autoSteps").innerHTML='<p class="muted">Aucune analyse lancée pour ce client.</p>';return}
  const ico={run:'<span class="spin">◌</span>',ok:"✓",warn:"!",err:"✕",skip:"–"};
  $("autoSteps").innerHTML=list.map(s=>'<div class="step '+s.status+'"><span class="ico">'+(ico[s.status]||"•")+'</span><div><b>'+esc(s.title)+'</b>'+(s.detail?'<small>'+esc(s.detail)+'</small>':'')+'</div></div>').join("");
@@ -310,7 +383,7 @@ async function runAuto(){
  if(running)return;
  const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
- running=true;closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";
+ running=true;closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
  steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
  state.biz.name=name;state.biz.city=city;state.biz.date=today();
@@ -410,30 +483,77 @@ async function runAuto(){
    const c=(data.osm&&data.osm.competitors)||[];data.competitors=c.slice(0,8).map(x=>({name:x.name,website:x.website,dist:distKm(data.loc||center,x.loc),hits:0}));
    if(c.length>=3)setAuto("3-3","info",c.length+" commerces similaires à moins de 2,5 km (OpenStreetMap) : "+c.slice(0,5).map(x=>x.name).join(", ")+". Notes à comparer sur Google Maps.","OpenStreetMap");
   }
-  /* 5. Site web du commerce + sites concurrents */
+  /* 5. Site web : Lighthouse + lecture du contenu + capture + domaine (en parallèle, sans clé) */
   const u=normalizeUrl(site);
   const compSites=hasKey()&&$("autoCompSpeed").checked?(data.competitors||[]).filter(c=>normalizeUrl(c.website)).slice(0,3):[];
   if(compSites.length)setStep("psic","run","Vitesse des sites concurrents",compSites.map(c=>c.name).join(", "));
   const compJobs=compSites.map(c=>pageSpeed(normalizeUrl(c.website).href,["performance"]).then(r=>{c.perf=r.scores.perf;c.lcp=r.lab.lcp}).catch(()=>{c.perf=null}));
   if(!u){setAuto("1-0","issue","Aucun site web trouvé (fiche Google et OpenStreetMap).","Audit automatique, "+data.fetchedAt);findings.push({sev:3,text:"Aucun site web n'est associé au commerce."+(compSites.length?" "+compSites.length+" des concurrents principaux en ont un.":"")});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
-  else{state.biz.site=u.href;setStep("psi","run","Analyse du site sur mobile (PageSpeed)","Compter 20 à 60 secondes.");
-   try{const r=await pageSpeed(u.href);data.psi=r;const src="PageSpeed Insights, "+r.fetchedAt;const s=r.scores,a=r.audits;
-    setAuto("1-0",a.viewport===false?"issue":"ok",a.viewport===false?"Le site n'est pas configuré pour mobile (balise viewport absente).":"Site présent et configuré pour mobile.",src);
-    const slow=(s.perf!=null&&s.perf<50)||(r.lab.lcpMs&&r.lab.lcpMs>4000);
-    setAuto("1-1",slow?"issue":(s.perf!=null&&s.perf>=90?"ok":"info"),"Performance mobile "+(s.perf??"—")+"/100 · contenu principal affiché en "+(r.lab.lcp||"—")+(r.field.overall?" · Core Web Vitals réels : "+({FAST:"bons",AVERAGE:"moyens",SLOW:"mauvais"}[r.field.overall]||r.field.overall):""),src);
-    if(slow)findings.push({sev:3,text:"Sur mobile, le site obtient "+(s.perf??"—")+"/100 en performance et affiche son contenu principal en "+(r.lab.lcp||"plusieurs secondes")+"."});
-    const seoProbs=[a.title===false&&"titre de page manquant",a.meta===false&&"méta-description manquante",a.crawlable===false&&"page bloquée pour Google",a.status===false&&"erreur HTTP"].filter(Boolean);
-    setAuto("1-4",seoProbs.length||(s.seo!=null&&s.seo<80)?"issue":"ok","SEO technique "+(s.seo??"—")+"/100"+(seoProbs.length?" · "+seoProbs.join(", "):" · titre, description et indexation corrects"),src);
-    if(seoProbs.length)findings.push({sev:2,text:"Référencement du site : "+seoProbs.join(", ")+"."});
-    setAuto("1-6",a.https===false||u.protocol==="http:"?"issue":"ok",a.https===false||u.protocol==="http:"?"Le site n'utilise pas entièrement HTTPS.":"Connexion HTTPS active.",src);
-    if(a.https===false||u.protocol==="http:")findings.push({sev:3,text:"Le site n'est pas entièrement sécurisé (HTTPS)."});
-    setAuto("1-7",s.a11y!=null&&s.a11y<80?"issue":"ok","Accessibilité "+(s.a11y??"—")+"/100"+(a.alt===false?" · images sans texte alternatif":""),src);
-    const meta=r.tracking.some(t=>/Meta/.test(t));
-    setAuto("1-8",meta?"ok":"issue",r.tracking.length?"Outils détectés : "+r.tracking.join(", ")+(meta?"":" · Pixel Meta non détecté."):"Aucun outil de mesure publicitaire détecté sur la page d'accueil.",src);
-    if(!meta)findings.push({sev:1,text:"Aucun Pixel Meta détecté : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."});
-    setAuto("1-5","info","À valider avec le test des résultats enrichis de Google (lien dans la boîte à outils).",src);
-    setStep("psi","ok","Site analysé : performance "+(s.perf??"—")+" · SEO "+(s.seo??"—")+" · accessibilité "+(s.a11y??"—")+" · bonnes pratiques "+(s.bp??"—"),r.url);
-   }catch(e){setStep("psi","err","Analyse du site impossible",e.status===429?"Quota PageSpeed gratuit épuisé : ajoutez votre clé Google dans Réglages, puis relancez.":e.message)}}
+  else{
+   state.biz.site=u.href;
+   setStep("psi","run","Vitesse et qualité du site (Lighthouse mobile)","Compter 20 à 60 secondes.");
+   setStep("html","run","Lecture du site : contenu, boutons, réseaux, suivi");
+   setStep("shot","run","Capture mobile et technologies du site");
+   const [rPsi,rHtml,rShot,rDom]=await Promise.allSettled([pageSpeed(u.href),fetchHtml(u.href).then(h=>analyzeHtml(h,u.href,{phone:state.biz.phone,city})),microlinkShot(u.href),domainInfo(u.hostname)]);
+   const H=rHtml.status==="fulfilled"?rHtml.value:null,P=rPsi.status==="fulfilled"?rPsi.value:null,M=rShot.status==="fulfilled"?rShot.value:null,D=rDom.status==="fulfilled"?rDom.value:null;
+   data.html=H;data.psi=P;data.tech=M&&M.tech||[];data.shotUrl=M&&M.shot||"";data.domain=D;
+   const srcP=P?P.via+", "+P.fetchedAt:"",srcH="Lecture du site (Jina Reader), "+data.fetchedAt;
+   /* Vitesse */
+   if(P){const s=P.scores;
+    const slow=(s.perf!=null&&s.perf<50)||(P.lab.lcpMs&&P.lab.lcpMs>4000);
+    setAuto("1-1",slow?"issue":(s.perf!=null&&s.perf>=90?"ok":"info"),"Performance mobile "+(s.perf??"—")+"/100 · contenu principal affiché en "+(P.lab.lcp||"—")+(P.field.overall?" · Core Web Vitals réels : "+({FAST:"bons",AVERAGE:"moyens",SLOW:"mauvais"}[P.field.overall]||P.field.overall):""),srcP);
+    if(slow)findings.push({sev:3,text:"Sur mobile, le site obtient "+(s.perf??"—")+"/100 en performance et affiche son contenu principal en "+(P.lab.lcp||"plusieurs secondes")+"."});
+    setAuto("1-7",s.a11y!=null&&s.a11y<80?"issue":"ok","Accessibilité "+(s.a11y??"—")+"/100"+(P.audits.alt===false?" · images sans texte alternatif":""),srcP);
+    setStep("psi","ok","Site mesuré : performance "+(s.perf??"—")+" · SEO "+(s.seo??"—")+" · accessibilité "+(s.a11y??"—")+" · bonnes pratiques "+(s.bp??"—"),P.via);
+   }else setStep("psi","warn","Vitesse non mesurée",(rPsi.reason&&rPsi.reason.message||"")+" — les autres contrôles du site restent faits. Réessayez plus tard ou ajoutez une clé Google.");
+   /* Mobile */
+   const mobileOk=H?H.viewport:(P?P.audits.viewport!==false:null);
+   if(mobileOk!=null)setAuto("1-0",mobileOk?"ok":"issue",mobileOk?"Site présent et configuré pour mobile.":"Le site n'est pas configuré pour mobile (balise viewport absente).",H?srcH:srcP);
+   if(mobileOk===false)findings.push({sev:3,text:"Le site n'est pas adapté aux téléphones."});
+   /* HTTPS */
+   const httpsBad=u.protocol==="http:"||(P&&P.audits.https===false)||(H&&H.mixed>0);
+   setAuto("1-6",httpsBad?"issue":"ok",httpsBad?"Le site n'utilise pas entièrement HTTPS"+(H&&H.mixed?" ("+H.mixed+" élément(s) chargé(s) en http)":"")+".":"Connexion HTTPS active.",H?srcH:srcP);
+   if(httpsBad)findings.push({sev:3,text:"Le site n'est pas entièrement sécurisé (HTTPS)."});
+   /* SEO */
+   const seoProbs=[];
+   if(H){if(!H.title)seoProbs.push("titre de page absent");else if(city&&!norm(H.title).includes(norm(city)))seoProbs.push("la ville n'apparaît pas dans le titre");if(!H.metaDesc)seoProbs.push("méta-description absente");if(!H.h1s.length)seoProbs.push("aucun titre principal (H1)")}
+   else if(P){if(P.audits.title===false)seoProbs.push("titre de page absent");if(P.audits.meta===false)seoProbs.push("méta-description absente")}
+   if(P&&P.audits.crawlable===false)seoProbs.push("page bloquée pour Google");
+   if(H||P)setAuto("1-4",seoProbs.length?"issue":"ok",(P&&P.scores.seo!=null?"SEO technique "+P.scores.seo+"/100 · ":"")+(H&&H.title?"titre « "+H.title.slice(0,70)+" »":"")+(seoProbs.length?" · à corriger : "+seoProbs.join(", "):" · titre, description et H1 présents"),H?srcH:srcP);
+   if(seoProbs.length)findings.push({sev:2,text:"Référencement du site : "+seoProbs.join(", ")+"."});
+   /* Suivi publicitaire */
+   const track=[...new Set([...(H?H.tracking:[]),...(P?P.tracking:[])])];data.tracking=track;
+   if(H||P){const meta=track.includes("Pixel Meta");setAuto("1-8",meta?"ok":"issue",track.length?"Outils détectés : "+track.join(", ")+(meta?"":" · Pixel Meta absent."):"Aucun outil de mesure (Pixel Meta, Google Analytics) détecté.",H?srcH:srcP);
+    if(!meta)findings.push({sev:1,text:"Aucun Pixel Meta détecté : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."})}
+   if(H){
+    setStep("html","ok","Site lu : "+(H.title?"« "+H.title.slice(0,60)+" »":"sans titre"),[H.socials.length?"Réseaux : "+H.socials.map(s=>s.net).join(", "):"aucun lien vers les réseaux",H.tel.length?"bouton d'appel":"pas de bouton d'appel",H.booking.length?"réservation : "+H.booking.join(", "):"pas de lien de réservation",H.cms?"site "+H.cms:""].filter(Boolean).join(" · "));
+    /* Cohérence avec la fiche */
+    if(H.phoneOnSite!=null||H.hoursOnSite||H.addressOnSite){const miss=[H.phoneOnSite===false&&"le téléphone de la fiche",!H.hoursOnSite&&"les horaires",!H.addressOnSite&&"l'adresse"].filter(Boolean);
+     setAuto("1-2",miss.length?"issue":"ok",miss.length?"Absent(s) de la page d'accueil : "+miss.join(", ")+".":"Téléphone, horaires et adresse visibles sur le site et cohérents avec la fiche.",srcH);
+     setAuto("4-2",miss.length?"issue":"ok",miss.length?"Infos pratiques incomplètes sur le site : "+miss.join(", ")+".":"Infos pratiques claires sur la page d'accueil.",srcH);
+     if(H.phoneOnSite===false)findings.push({sev:2,text:"Le numéro de téléphone public du commerce ("+(place?"fiche Google":"OpenStreetMap")+") n'apparaît pas sur la page d'accueil du site."})}
+    /* Boutons d'action */
+    const ctas=[H.tel.length&&"appel",H.whatsapp&&"WhatsApp",H.booking.length&&"réservation/commande ("+H.booking.join(", ")+")"].filter(Boolean);
+    setAuto("1-3",ctas.length?"ok":"issue",ctas.length?"Boutons d'action présents : "+ctas.join(", ")+".":"Aucun bouton d'appel cliquable, WhatsApp ou lien de réservation sur la page d'accueil.",srcH);
+    if(!ctas.length)findings.push({sev:2,text:"Le site n'a ni bouton d'appel cliquable, ni WhatsApp, ni lien de réservation : les visiteurs mobiles doivent chercher comment vous contacter."});
+    /* Données structurées */
+    const local=H.ldTypes.filter(t=>LOCAL_TYPES.test(t));
+    setAuto("1-5",local.length?"ok":"issue",local.length?"Données structurées présentes : "+local.join(", ")+".":"Aucune donnée structurée LocalBusiness (adresse, horaires) pour Google et les IA"+(H.ldTypes.length?" (types présents : "+H.ldTypes.slice(0,4).join(", ")+")":"")+".",srcH);
+    if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins bien ses informations."});
+    /* Réseaux sociaux */
+    const allSoc=[...(data.socials||[])];H.socials.forEach(s=>{if(!allSoc.some(x=>x.net===s.net))allSoc.push(s)});data.socials=allSoc;
+    const hasFbIg=allSoc.some(s=>/Facebook|Instagram/.test(s.net));
+    setAuto("2-0",hasFbIg?"ok":"issue",hasFbIg?"Comptes liés : "+allSoc.map(s=>s.net).join(", ")+". Activité récente à vérifier.":"Aucun lien vers Facebook ou Instagram depuis le site.",srcH);
+    if(!hasFbIg)findings.push({sev:2,text:"Le site ne renvoie vers aucun compte Facebook ou Instagram."});
+    if(allSoc.some(s=>s.net==="TikTok"))setAuto("2-1","ok","Compte TikTok lié depuis le site.",srcH);
+    setAuto("2-4",allSoc.length?"info":"issue",allSoc.length?"Liens réseaux trouvés : "+allSoc.map(s=>s.net).join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau lié : identité en ligne dispersée.",srcH);
+    if(H.menuOnSite)setAuto("0-3","info","Le site présente une carte, des tarifs ou des prestations.",srcH);
+    if(H.copyrightYear&&H.copyrightYear<new Date().getFullYear()-1)findings.push({sev:1,text:"La mention © du site indique "+H.copyrightYear+" : le site semble ne pas avoir été mis à jour depuis."});
+   }else setStep("html","warn","Contenu du site non lu",(rHtml.reason&&rHtml.reason.message||"")+" — le site bloque peut-être la lecture automatique.");
+   const cmsName=(H&&H.cms)||(data.tech.find(t=>/CMS|Ecommerce|Website builder/i.test(t.cat))||{}).name||"";data.cms=cmsName;
+   setStep("shot",M?"ok":"warn",M?"Capture mobile réalisée"+(data.tech.length?" · technologies : "+data.tech.slice(0,5).map(t=>t.name).join(", "):""):"Capture non disponible",M?(D&&D.created?"Nom de domaine enregistré en "+new Date(D.created).getFullYear():""):"Service de capture saturé : réessayez plus tard.");
+   if(!M&&D&&D.created)setStep("dom","ok","Nom de domaine enregistré en "+new Date(D.created).getFullYear(),D.domain);
+  }
   if(compJobs.length){await Promise.all(compJobs);const done=compSites.filter(c=>c.perf!=null);setStep("psic",done.length?"ok":"warn",done.length?"Vitesse comparée avec "+done.length+" site(s) concurrent(s)":"Vitesse des concurrents non mesurée",done.map(c=>c.name+" : "+c.perf+"/100").join(" · "));
    const mine=data.psi&&data.psi.scores.perf;const faster=done.filter(c=>mine!=null&&c.perf>mine);if(mine!=null&&faster.length)findings.push({sev:2,text:faster.length+" concurrent(s) sur "+done.length+" ont un site plus rapide sur mobile ("+faster.map(c=>c.name+" : "+c.perf+"/100").join(", ")+", contre "+mine+"/100)."});}
   /* 6. Visibilité IA */
@@ -448,7 +568,9 @@ async function runAuto(){
   state.pitch=buildPitch();
   persistLocal();
   renderClientSelect();renderChecklist();update();renderAutoSummary();renderPlaceChoice();$("pitchText").value=state.pitch;renderTools();
-  toast("Audit automatique terminé.");
+  $("progDetails").open=false;$("progTitle").textContent="✓ Analyse terminée — "+steps.length+" étapes (détail)";
+  $("autoSummaryCard").scrollIntoView({behavior:"smooth",block:"start"});
+  toast("Audit terminé : résultats ci-dessous.");
  }catch(e){setStep("fatal","err","Erreur inattendue",e.message)}
  finally{running=false;$("runAuto").disabled=false;$("runAuto").textContent="⚡ Relancer l'audit automatique";state.data.steps=steps;persistLocal()}
 }
@@ -469,6 +591,8 @@ function hbars(title,sub,items,fmt){
 }
 function kpiRow(){
  const d=state.data||{},p=d.place,ps=d.psi,vis=d.visibility,rk=d.ranking;
+ if(d.fetchedAt&&!p){const H=d.html,ctas=H?[H.tel.length,H.whatsapp,H.booking.length].filter(Boolean).length:null,soc=(d.socials||[]).length,comp=(d.competitors||[]).length,hasSite=!!normalizeUrl(state.biz.site);
+  return '<div class="kpis">'+kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(hasSite?"—":"Aucun site"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(hasSite?"":"bad"))+kpiBox(H?ctas+"<small style=font-size:12px> / 3</small>":"—","Boutons d’action (appel, WhatsApp, réservation)",H?(ctas>=2?"good":ctas?"mid":"bad"):"")+kpiBox(soc,"Réseaux sociaux liés",soc>=2?"good":soc?"mid":"bad")+kpiBox(comp,"Concurrents à moins de 2,5 km","")+'</div>'}
  return '<div class="kpis">'+kpiBox(p&&p.rating!=null?fr1(p.rating)+"/5":"—","Note Google",p&&p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p&&p.userRatingCount!=null?p.userRatingCount:"—","Avis Google",p&&p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")
  +(vis&&vis.n>1?kpiBox(vis.top3+'<small style="font-size:12px"> / '+vis.n+'</small>',"Recherches où il est dans le top 3",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):kpiBox(rk?(rk.rank?rk.rank+'<small style="font-size:12px"> / '+rk.total+'</small>':"Absent"):"—","Position « "+esc(rk?rk.query:"recherche locale")+" »",rk?(rk.rank&&rk.rank<=3?"good":rk.rank&&rk.rank<=10?"mid":"bad"):""))
  +kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(d.fetchedAt&&!normalizeUrl(state.biz.site)?"Aucun site":"—"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(d.fetchedAt&&!normalizeUrl(state.biz.site)?"bad":""))+'</div>';
@@ -476,8 +600,15 @@ function kpiRow(){
 function findingsHtml(){const f=(state.data&&state.data.findings)||[];return f.length?'<ul class="findings">'+f.map(x=>'<li>'+esc(x.text)+'</li>').join("")+'</ul>':''}
 function strengths(){return keys.filter(k=>state.auto[k]&&state.auto[k].status==="ok"||(!state.auto[k]&&state.checks[k]&&!state.issues[k])).map(k=>{const [gi,ii]=k.split("-").map(Number);return {it:groups[gi].items[ii],ev:state.auto[k]&&state.auto[k].evidence}})}
 function siteBlock(){
- const ps=(state.data||{}).psi;if(!ps)return "";
- return '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">'+(ps.shot?'<img class="shot" src="'+esc(ps.shot)+'" alt="Capture mobile du site">':'')+'<div style="flex:1 1 260px;min-width:0"><div class="kpis">'+kpiBox(ps.scores.perf??"—","Performance",scoreColor(ps.scores.perf))+kpiBox(ps.scores.seo??"—","SEO",scoreColor(ps.scores.seo))+kpiBox(ps.scores.a11y??"—","Accessibilité",scoreColor(ps.scores.a11y))+kpiBox(ps.scores.bp??"—","Bonnes pratiques",scoreColor(ps.scores.bp))+'</div><p class="muted" style="margin:8px 0 0">Affichage du contenu principal : <b>'+esc(ps.lab.lcp||"—")+'</b> · Stabilité visuelle : <b>'+esc(ps.lab.cls||"—")+'</b> · Blocage : <b>'+esc(ps.lab.tbt||"—")+'</b><br>Mesures réelles des visiteurs (Core Web Vitals) : '+(ps.field.lcp?"LCP "+cwvLabel(ps.field.lcp,"s")+" · INP "+cwvLabel(ps.field.inp,"ms")+" · CLS "+cwvLabel(ps.field.cls,"cls"):"pas assez de trafic mesuré par Chrome")+'<br>Outils de suivi : '+esc(ps.tracking.length?ps.tracking.join(", "):"aucun détecté")+'<br><small>'+esc(ps.url)+' · '+esc(ps.fetchedAt)+'</small></p></div></div>';
+ const d=state.data||{},ps=d.psi,H=d.html;if(!ps&&!H&&!d.shotUrl)return "";
+ const shot=d.shotUrl||(ps&&ps.shot)||"";
+ const yes=(ok,t,extra)=>'<li class="'+(ok?"ok":"ko")+'"><span aria-hidden="true">'+(ok?"✓":"✕")+'</span> '+esc(t)+(extra?' <span class="muted">— '+esc(extra)+'</span>':'')+'</li>';
+ const track=d.tracking||(ps&&ps.tracking)||[];
+ const checks=H?'<ul class="ticks">'+yes(H.viewport,"Adapté aux téléphones")+yes(!(state.biz.site||"").startsWith("http:")&&!H.mixed,"Connexion sécurisée HTTPS")+yes(H.tel.length>0,"Bouton d’appel cliquable")+yes(H.whatsapp,"Contact WhatsApp")+yes(H.booking.length>0,"Réservation ou commande en ligne",H.booking.join(", "))+yes(H.socials.length>0,"Liens vers les réseaux sociaux",H.socials.map(s=>s.net).join(", "))+yes(!!H.title&&!!H.metaDesc,"Titre et description pour Google")+yes(H.hoursOnSite&&H.addressOnSite,"Horaires et adresse visibles")+yes(H.ldTypes.some(t=>LOCAL_TYPES.test(t)),"Données structurées « commerce local »")+yes(track.includes("Pixel Meta"),"Pixel Meta (mesure des publicités)")+'</ul>':'';
+ const info=[d.cms&&"Réalisé avec "+d.cms,d.domain&&d.domain.created&&"domaine enregistré en "+new Date(d.domain.created).getFullYear(),H&&H.copyrightYear&&"mention © "+H.copyrightYear,track.length&&"suivi : "+track.join(", ")].filter(Boolean).join(" · ");
+ return '<div class="siteblock">'+(shot?'<img class="shot" src="'+esc(shot)+'" alt="Capture du site sur téléphone" loading="lazy">':'')+'<div style="flex:1 1 280px;min-width:0">'
+  +(ps?'<div class="kpis">'+kpiBox(ps.scores.perf??"—","Performance",scoreColor(ps.scores.perf))+kpiBox(ps.scores.seo??"—","SEO",scoreColor(ps.scores.seo))+kpiBox(ps.scores.a11y??"—","Accessibilité",scoreColor(ps.scores.a11y))+kpiBox(ps.scores.bp??"—","Bonnes pratiques",scoreColor(ps.scores.bp))+'</div><p class="muted" style="margin:8px 0 0">Contenu principal affiché en <b>'+esc(ps.lab.lcp||"—")+'</b> · stabilité visuelle <b>'+esc(ps.lab.cls||"—")+'</b> · blocage <b>'+esc(ps.lab.tbt||"—")+'</b>'+(ps.field.lcp?'<br>Mesures réelles des visiteurs : LCP '+cwvLabel(ps.field.lcp,"s")+" · INP "+cwvLabel(ps.field.inp,"ms")+" · CLS "+cwvLabel(ps.field.cls,"cls"):'')+'</p>':'<p class="muted">Vitesse non mesurée lors de cet audit.</p>')
+  +checks+(info?'<p class="muted" style="margin:6px 0 0">'+esc(info)+'</p>':'')+'<p class="muted" style="margin:4px 0 0"><small>'+esc(state.biz.site||"")+(ps?" · "+esc(ps.via||"")+" · "+esc(ps.fetchedAt):"")+'</small></p></div></div>';
 }
 function compBlock(forReport){
  const d=state.data||{},p=d.place,comps=d.competitors||[],R=d.rankings||(d.ranking?[d.ranking]:[]);
@@ -494,7 +625,8 @@ function compBlock(forReport){
    +hbars("Photos publiées","Google en renvoie 10 au maximum",mk(c=>c.photos??null,(p.photos||[]).length),v=>v>=10?"10+":String(v))
    +(top.some(c=>c.perf!=null)||d.psi?hbars("Vitesse du site sur mobile","Score PageSpeed / 100",mk(c=>c.perf??null,d.psi&&d.psi.scores.perf),v=>String(v)):"")+'</div>';
  }
- if(comps.length){h+='<h3 style="margin-top:14px">Concurrents les plus visibles</h3><div class="tablewrap"><table class="t"><thead><tr><th>Établissement</th><th>Meilleure position</th><th>Note</th><th>Avis</th><th>Photos</th><th>Site</th><th>Distance</th></tr></thead><tbody>'
+ if(comps.length&&!p){h+='<h3 style="margin-top:14px">Commerces similaires à proximité</h3><p class="muted">Source : OpenStreetMap. Ajoutez une clé Google pour comparer notes, avis et positions.</p><div class="tablewrap"><table class="t"><thead><tr><th>Établissement</th><th>Site web</th><th>Distance</th></tr></thead><tbody>'+comps.map(c=>'<tr><td>'+esc(c.name)+'</td><td>'+(c.website?"Oui":"Non")+'</td><td>'+(c.dist!=null?fr1(c.dist)+" km":"—")+'</td></tr>').join("")+'</tbody></table></div>';return h}
+ if(comps.length){h+='<h3 style="margin-top:14px">Concurrents les plus visibles</h3><div class="tablewrap"><table class="t comp"><thead><tr><th>Établissement</th><th>Meilleure position</th><th>Note</th><th>Avis</th><th>Photos</th><th>Site</th><th>Distance</th></tr></thead><tbody>'
   +(p?'<tr class="me"><td>'+esc(myName)+' (audité)</td><td>'+(R.some(r=>r.rank)?"n° "+Math.min(...R.filter(r=>r.rank).map(r=>r.rank)):"absent")+'</td><td>'+(p.rating!=null?fr1(p.rating):"—")+'</td><td>'+(p.userRatingCount??"—")+'</td><td>'+((p.photos||[]).length>=10?"10+":(p.photos||[]).length)+'</td><td>'+(d.psi?d.psi.scores.perf+"/100":p.websiteUri?"Oui":"Non")+'</td><td>—</td></tr>':'')
   +comps.map(c=>'<tr><td>'+(c.url&&!forReport?'<a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.name)+'</a>':esc(c.name))+'</td><td>'+(c.bestRank?"n° "+c.bestRank+(c.hits>1?" ("+c.hits+" recherches)":""):"—")+'</td><td>'+(c.rating!=null?fr1(c.rating):"—")+'</td><td>'+(c.count??"—")+'</td><td>'+(c.photos!=null?(c.photos>=10?"10+":c.photos):"—")+'</td><td>'+(c.perf!=null?c.perf+"/100":c.website?"Oui":"Non")+'</td><td>'+(c.dist!=null?fr1(c.dist)+" km":"—")+'</td></tr>').join("")+'</tbody></table></div>'}
  return h;
@@ -507,8 +639,9 @@ function googleBlock(){
 }
 function renderAutoSummary(){
  const d=state.data||{};
+ $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
  if(!d.fetchedAt){$("autoSummary").innerHTML='<p class="muted">Les résultats apparaîtront ici après l\'analyse.</p>';return}
- $("autoSummary").innerHTML=kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')+compBlock(false)+(d.psi?'<h3 style="margin-top:14px">Site web sur mobile</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Voir le rapport complet →</button><button class="btn" data-go2="pitch">Rédiger le message prospect →</button></div>';
+ $("autoSummary").innerHTML=kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')+compBlock(false)+((d.psi||d.html)?'<h3 style="margin-top:14px">Site web sur mobile</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Voir le rapport complet →</button><button class="btn" data-go2="pitch">Rédiger le message prospect →</button></div>';
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
@@ -527,7 +660,7 @@ function renderReport(){
   +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"");
  const gHtml=d.place?googleBlock():'<ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Fiche Google : '+(safeUrl(b.maps)?'<a href="'+esc(safeUrl(b.maps))+'">ouvrir la fiche</a>':"non renseignée")+'</li><li>Note : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul>';
  const social=(d.socials||[]).length?'<p>Réseaux déclarés : '+d.socials.map(s=>esc(s.net)).join(", ")+'.</p>':'';
- const siteHtml=d.psi?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' — analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce.')+'</p>';
+ const siteHtml=(d.psi||d.html||d.shotUrl)?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' — analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce.')+'</p>';
  const completed=ai.filter(t=>t.presence==="yes"||t.presence==="no"),rate=completed.length?Math.round(completed.filter(t=>t.presence==="yes").length/completed.length*100):null;
  const aiItems=AI_TARGETS.map(a=>{const ts=completed.filter(t=>t.platform===a.name);const yes=ts.filter(t=>t.presence==="yes").length;return {label:a.name,value:ts.length?Math.round(yes/ts.length*100):null}});
  const aiHtml='<p>Taux de présence : <b>'+(rate===null?"non mesuré":rate+"%")+'</b> ('+completed.length+' réponse(s) oui/non sur '+ai.length+' test(s)). Chaque test est une observation datée : les réponses varient selon la question et le moment.</p>'+(completed.length?'<div class="charts">'+hbars("Présence par assistant","% des tests où le commerce est cité",aiItems,v=>v+" %")+'</div>':'')
@@ -565,7 +698,7 @@ function buildPitch(){
 
 /* ---------- Navigation ---------- */
 const VIEWS=["auto","home","audit","report","pitch","campaign","research","webcheck","tools","settings"];
-const TITLES={auto:["Audit automatique","Un nom, une ville : l'application collecte les données réelles pour vous."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche internet","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Analyse réelle du site sur mobile."],home:["Tableau de bord","Synthèse du commerce et du diagnostic."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Clé Google, signature et sauvegardes."]};
+const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données réelles pour vous."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche internet","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Analyse réelle du site sur mobile."],home:["Tableau de bord","Synthèse du commerce et du diagnostic."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Clé Google, signature et sauvegardes."]};
 function nav(v){VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}window.scrollTo({top:0,behavior:"smooth"})}
 
 /* ---------- Boîte à outils (liens préremplis) ---------- */
@@ -677,7 +810,6 @@ function bind(){
  $("autoCity").addEventListener("keydown",e=>{if(e.key==="Enter")runAuto()});
  $("runAuto").onclick=runAuto;$("autoToReport").onclick=()=>nav("report");
  $("notes").addEventListener("input",()=>{update();persistLocal()});
- $("save").onclick=()=>{read();toast(persistLocal()?"Audit enregistré dans ce navigateur.":"Sauvegarde impossible : exportez vos audits depuis Réglages.");renderClientSelect()};
  $("pdf").onclick=$("printReport").onclick=()=>{nav("report");setTimeout(()=>window.print(),300)};
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
  $("clientSelect").onchange=e=>switchTo(e.target.value);

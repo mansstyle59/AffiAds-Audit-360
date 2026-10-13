@@ -1,5 +1,7 @@
 # AffiAds Audit 360°
 
+**Fonctionne gratuitement, sans compte ni clé** : tapez le nom d'un commerce, choisissez-le dans la liste, l'audit démarre tout seul.
+
 Application web (ordinateur, tablette, téléphone) qui réalise **automatiquement** l'audit de visibilité en ligne d'un commerce, à partir de données réelles et datées, puis produit un rapport client et un message de prospection.
 
 ## Ce que fait l'audit automatique
@@ -18,9 +20,22 @@ Le **rapport client** comprend une page de couverture avec jauge de score, une s
 
 Autres fonctions : plusieurs clients enregistrés, export/import des audits (fichier JSON), rapport PDF, export CSV des tests IA, application installable sur l'écran d'accueil du téléphone.
 
-## Clé Google (recommandée)
+## Sources gratuites et open source (sans clé)
 
-Sans clé, l'analyse se limite à OpenStreetMap et à PageSpeed (quota gratuit partagé, souvent épuisé). Avec une **clé Google gratuite**, tout fonctionne :
+| Source | Ce qu'elle apporte | Projet |
+|---|---|---|
+| Photon (OpenStreetMap) | Suggestions pendant la saisie, type de commerce | [komoot/photon](https://github.com/komoot/photon) |
+| Nominatim + Overpass (OpenStreetMap) | Coordonnées, site, téléphone, horaires, réseaux déclarés, commerces similaires | [osm-search/Nominatim](https://github.com/osm-search/Nominatim), [drolbr/Overpass-API](https://github.com/drolbr/Overpass-API) |
+| Jina Reader | Lecture complète du site : titre, description, boutons d'appel/WhatsApp/réservation, liens réseaux, Pixel Meta et Analytics, données structurées, cohérence téléphone/horaires/adresse | [jina-ai/reader](https://github.com/jina-ai/reader) |
+| Microlink | Capture du site sur téléphone, technologies (Wix, WordPress…), Lighthouse de secours | [microlinkhq](https://github.com/microlinkhq) |
+| Google Lighthouse / PageSpeed | Vitesse, SEO, accessibilité, Core Web Vitals | [GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) |
+| RDAP | Date d'enregistrement du nom de domaine | standard public de l'IETF |
+
+Les services gratuits ont des limites d'usage (par exemple environ 25 analyses Microlink par jour et par appareil) : largement suffisant pour des audits de prospection.
+
+## Clé Google (facultative)
+
+Sans clé, l'application fonctionne avec les sources ci-dessus. Une **clé Google gratuite** ajoute la note, les avis, les photos de la fiche Google, les concurrents Google et les positions sur les recherches :
 
 1. Créez un projet sur [Google Cloud](https://console.cloud.google.com/projectcreate).
 2. Activez **Places API (New)** et **PageSpeed Insights API**.
