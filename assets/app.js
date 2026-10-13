@@ -1399,15 +1399,17 @@ function setReportFormat(f){settings.reportFormat=f;saveSettings(true);document.
 /* ---------- Message prospect ---------- */
 function buildPitch(){
  const b=state.biz,d=state.data||{},tone=$("pitchTone").value,who=$("pitchContact").value.trim();
- const sender=settings.senderName||"Denis",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"";
- let facts=(d.findings||[]).slice(0,tone==="sms"?2:3).map(f=>f.text);
- if(!facts.length)facts=issuesList().slice(0,3).map(p=>p.it.toLowerCase()+" : "+p.reco.charAt(0).toLowerCase()+p.reco.slice(1));
+ const sender=settings.senderName||"Denis",line=settings.senderLine||"AffiAds — Votre visibilité, notre expertise.",contact=settings.senderContact||"";
+ let facts=(d.findings||[]).slice(0,tone==="sms"?1:3).map(f=>String(f.text||"").trim()).filter(Boolean);
+ if(!facts.length)facts=issuesList().slice(0,tone==="sms"?1:3).map(p=>p.it.toLowerCase()+" : "+p.reco.charAt(0).toLowerCase()+p.reco.slice(1));
  const hello="Bonjour"+(who?" "+who:"")+",";
  const biz=b.name||"votre établissement",city=b.city?" à "+b.city:"";
- if(tone==="sms")return hello+" je suis "+sender+" ("+line.split("—")[0].trim()+"). J'ai fait un audit gratuit de la visibilité en ligne de "+biz+". "+(facts.length?"Exemple : "+facts[0]+" ":"")+"Je peux vous envoyer le rapport complet ? Sans engagement.";
- const bullets=facts.length?facts.map(f=>"• "+f).join("\n"):"• Plusieurs points simples à améliorer sur la fiche Google et les réseaux.";
- if(tone==="email")return "Objet : Audit de visibilité de "+biz+" — vos résultats\n\n"+hello+"\n\nJe m'appelle "+sender+" et j'accompagne les commerces dans leur visibilité en ligne : fiche Google, réseaux sociaux, vidéos et site mobile.\n\nJ'ai réalisé un audit gratuit de "+biz+city+" à partir des données publiques (fiche Google, avis, site, concurrents). Voici les principaux constats :\n\n"+bullets+"\n\nCe sont des points concrets, qui se corrigent rapidement. Je peux vous présenter le rapport complet en dix minutes, avec les actions prioritaires, gratuitement et sans engagement.\n\nSeriez-vous disponible cette semaine pour un court échange ?\n\nBien cordialement,\n"+sender+"\n"+line+(contact?"\n"+contact:"");
- return hello+"\n\nJe suis "+sender+", "+line+". J'ai fait un petit audit gratuit de la visibilité en ligne de "+biz+city+". Quelques constats :\n\n"+bullets+"\n\nJe peux vous envoyer le rapport complet avec les actions prioritaires, sans engagement. Ça vous intéresse ?\n\n"+sender;
+ const brand=line.split("—")[0].trim()||"AffiAds";
+ const teaser=facts.length?facts[0]:"quelques pistes concrètes pour améliorer votre présence en ligne";
+ if(tone==="sms")return hello+" je suis "+sender+" de "+brand+". J’ai réalisé un audit gratuit de la visibilité en ligne de "+biz+city+". J’ai repéré "+teaser+". Souhaitez-vous que je vous envoie le résumé ? C’est gratuit et sans engagement.";
+ const bullets=facts.length?facts.map(f=>"• "+f).join("\n"):"• Des pistes d’amélioration à vérifier sur votre fiche Google, votre site et vos réseaux sociaux.";
+ if(tone==="email")return "Objet : Votre visibilité en ligne — audit gratuit de "+biz+"\n\n"+hello+"\n\nJe suis "+sender+", de "+brand+". J’aide les professionnels à améliorer leur visibilité en ligne grâce à une communication adaptée : fiche Google, site internet, vidéos et réseaux sociaux.\n\nJ’ai préparé un premier audit de "+biz+city+" à partir des informations publiques disponibles. Voici quelques points relevés :\n\n"+bullets+"\n\nJe peux vous transmettre le rapport complet et vous expliquer les actions à prioriser, simplement et sans engagement.\n\nSouhaitez-vous que je vous l’envoie ?\n\nBien cordialement,\n"+sender+"\n"+line+(contact?"\n"+contact:"");
+ return hello+"\n\nJe suis "+sender+", de "+brand.+"".replace("","");"+". J’ai réalisé un audit gratuit de la visibilité en ligne de "+biz+city+".\n\nJ’ai relevé quelques pistes concrètes, notamment :\n\n"+bullets+"\n\nJe peux vous envoyer le rapport avec les points à améliorer et les actions à prioriser. Vous pourrez le consulter tranquillement, sans engagement.\n\nEst-ce que cela vous intéresserait ?\n\n"+sender+"\n"+line+(contact?"\n"+contact:"");
 }
 
 /* ---------- Navigation ---------- */
