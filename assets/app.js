@@ -1433,6 +1433,8 @@ if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventLis
 /* ---------- Écran d'accueil et code d'accès ---------- */
 const LOCK_KEY="affiads-lock",LOCK_SESSION="affiads-unlocked";
 const Lock={cfg:null,mode:"unlock",first:"",entry:"",lastActive:Date.now(),timer:null};
+/* Couleur de la barre d’état (iPhone / Android) : violet de l’écran d’accueil, puis couleur de marque dans l’appli */
+function setBarColor(c){const m=$("themeColor");if(m)m.setAttribute("content",c)}
 function lockLoad(){try{Lock.cfg=JSON.parse(localStorage.getItem(LOCK_KEY)||"null")}catch(e){Lock.cfg=null}}
 function lockSave(){try{if(Lock.cfg)localStorage.setItem(LOCK_KEY,JSON.stringify(Lock.cfg));else localStorage.removeItem(LOCK_KEY)}catch(e){}}
 function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
@@ -1457,7 +1459,7 @@ function buildPad(){
  $("pinPad").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>pinKey(b.dataset.k)));
 }
 function showGate(mode){
- Lock.mode=mode;Lock.entry="";Lock.first="";$("gateLoad").hidden=true;$("gateTag").hidden=true;document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
+ setBarColor("#5544f7");Lock.mode=mode;Lock.entry="";Lock.first="";$("gateLoad").hidden=true;$("gateTag").hidden=true;document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
  $("gateForgot").hidden=mode!=="unlock";$("gateBio").hidden=!((mode==="unlock"||mode==="verify")&&Lock.cfg&&Lock.cfg.bio);$("gateBio").textContent="Déverrouiller avec "+bioLabel();
  $("gateCancel").hidden=!(mode==="verify"||mode==="change");$("rememberWrap").hidden=mode==="verify";$("rememberMe").checked=mode==="create"||!Lock.cfg||lockDelay()<0||mode==="unlock";
  if(mode==="unlock")gateText("Entrez votre code","Votre code protège vos audits et votre clé sur cet appareil.");
@@ -1467,7 +1469,7 @@ function showGate(mode){
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
 function applyRemember(){const cb=$("rememberMe");if(!Lock.cfg||!cb||$("rememberWrap").hidden)return;if(cb.checked)Lock.cfg.delay=-1;else if(lockDelay()<0)Lock.cfg.delay=1440;Lock.cfg.forceLock=false;lockSave()}
-function hideGate(){if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function hideGate(){setBarColor("#4a3aff");if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
@@ -1511,7 +1513,7 @@ async function bioUnlock(){
  return false;
 }
 function requireOwner(why,then){if(!Lock.cfg||!Lock.cfg.hash){then();return}Lock.onVerify=then;Lock.verifyWhy=why;showGate("verify");if(Lock.cfg.bio)bioUnlock()}
-function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;Lock.onVerify=null;Lock.verifyWhy="";const g=$("gate");document.body.classList.remove("locked");g.classList.add("hidden");Lock.mode="unlock"}
+function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;setBarColor("#4a3aff");Lock.onVerify=null;Lock.verifyWhy="";const g=$("gate");document.body.classList.remove("locked");g.classList.add("hidden");Lock.mode="unlock"}
 function lockNow(manual){if(Lock.cfg&&Lock.cfg.hash){if(manual!==false){Lock.cfg.forceLock=true;lockSave()}setSession(false);showGate("unlock")}}
 function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow(false)}
 function initLock(){
