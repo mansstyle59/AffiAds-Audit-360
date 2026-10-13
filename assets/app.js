@@ -1396,6 +1396,43 @@ function renderOnePage(){
 }
 function setReportFormat(f){settings.reportFormat=f;saveSettings(true);document.body.classList.toggle("rep-one",f!=="full");document.querySelectorAll("[data-repfmt]").forEach(b=>b.classList.toggle("on",b.dataset.repfmt===f))}
 
+/* ---------- Vrai fichier PDF (fonctionne aussi dans l’appli installée sur iPhone, où « Imprimer » ne marche pas) ---------- */
+const libCache={};
+function loadLib(url,test){if(test())return Promise.resolve();if(libCache[url])return libCache[url];libCache[url]=new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=url;sc.onload=()=>test()?ok():ko(new Error("bibliothèque PDF"));sc.onerror=()=>{delete libCache[url];ko(new Error("Chargement impossible (connexion ?)"))};document.head.appendChild(sc)});return libCache[url]}
+function pdfName(){return ("Audit AffiAds - "+(state.biz.name||"commerce")+(state.biz.city?" - "+state.biz.city:"")).replace(/[\\/:*?"<>|]+/g," ").trim()+".pdf"}
+let pdfBusy=false;
+async function makePdf(){
+ if(pdfBusy)return;pdfBusy=true;
+ const btns=[$("pdf"),$("printReport")];btns.forEach(b=>{if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent="Création du PDF…"}});
+ let holder=null;
+ try{
+  await Promise.all([loadLib("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",()=>!!window.html2canvas),loadLib("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",()=>!!(window.jspdf&&window.jspdf.jsPDF))]);
+  renderOnePage();
+  holder=document.createElement("div");holder.className="pdfhold";
+  const page=$("report1").cloneNode(true);page.removeAttribute("id");page.classList.add("pdfpage");holder.appendChild(page);document.body.appendChild(holder);
+  try{await document.fonts.ready}catch(e){}
+  await sleep(120);
+  const canvas=await html2canvas(page,{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794});
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
+  let w=210,h=canvas.height*210/canvas.width;if(h>297){w=w*297/h;h=297}
+  doc.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",(210-w)/2,0,w,h);
+  doc.setProperties({title:pdfName().replace(/\.pdf$/,""),author:settings.senderName||"AffiAds",creator:"AffiAds Audit 360°"});
+  const blob=doc.output("blob");showPdfSheet(blob);
+ }catch(e){toast("PDF impossible pour le moment : "+(e&&e.message||"erreur")+". Réessayez dans un instant.")}
+ finally{if(holder)holder.remove();pdfBusy=false;btns.forEach(b=>{if(b){b.disabled=false;b.textContent=b.dataset.t||b.textContent}})}
+}
+function showPdfSheet(blob){
+ const old=$("pdfSheet");if(old)old.remove();
+ const name=pdfName(),file=new File([blob],name,{type:"application/pdf"}),url=URL.createObjectURL(blob);
+ const canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+ const el=document.createElement("div");el.id="pdfSheet";el.className="pdfsheet";el.setAttribute("role","dialog");el.setAttribute("aria-label","PDF prêt");
+ el.innerHTML='<div class="pdfcard"><div class="pdfico" aria-hidden="true">PDF</div><b>Votre PDF est prêt</b><span>'+esc(name)+' · '+Math.max(1,Math.round(blob.size/1024))+' Ko</span><div class="pdfacts">'+(canShare?'<button type="button" class="btn primary" id="pdfShare">Envoyer ou enregistrer</button>':'')+'<a class="btn'+(canShare?'':' primary')+'" id="pdfOpen" href="'+url+'" download="'+esc(name)+'" target="_blank" rel="noopener">'+(canShare?"Ouvrir le PDF":"Télécharger le PDF")+'</a><button type="button" class="btn" id="pdfClose">Fermer</button></div><small>« Envoyer ou enregistrer » ouvre le menu de partage : WhatsApp, Mail, Messages, ou « Enregistrer dans Fichiers ».</small></div>';
+ document.body.appendChild(el);
+ const close=()=>{el.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};
+ $("pdfClose").onclick=close;el.addEventListener("click",e=>{if(e.target===el)close()});
+ if(canShare)$("pdfShare").onclick=async()=>{try{await navigator.share({files:[file],title:name.replace(/\.pdf$/,"")});close()}catch(e){if(e&&e.name!=="AbortError")toast("Partage impossible : utilisez « Ouvrir le PDF ».")}};
+}
+
 /* ---------- Message prospect ---------- */
 function buildPitch(){
  const b=state.biz,d=state.data||{},tone=$("pitchTone").value,who=$("pitchContact").value.trim();
@@ -1542,7 +1579,8 @@ function bind(){
  $("autoCity").addEventListener("keydown",e=>{if(e.key==="Enter")runAuto()});
  $("runAuto").onclick=runAuto;$("autoToReport").onclick=()=>nav("report");
  $("notes").addEventListener("input",()=>{update();persistLocal()});
- $("pdf").onclick=$("printReport").onclick=()=>{nav("report");renderOnePage();setTimeout(()=>window.print(),300)};
+ $("pdf").onclick=$("printReport").onclick=()=>{nav("report");makePdf()};
+ $("printFull").onclick=()=>{nav("report");setReportFormat("full");setTimeout(()=>window.print(),300)};
  document.querySelectorAll("[data-repfmt]").forEach(b=>b.onclick=()=>setReportFormat(b.dataset.repfmt));
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
  $("clientChip").onclick=()=>nav("clients");
@@ -1924,7 +1962,7 @@ const INTENTS=[
  {re:/(trouv|cherch|retrouv|ouvr|affich|montr|ou est|où est)/,run:botFind},
  {re:/(supprim|efface).*(audit|client)/,run:()=>botSay("Pour supprimer un audit, ouvrez l’écran Clients et touchez la corbeille à côté du commerce. La suppression est aussi appliquée à vos autres appareils.",[["Ouvrir Clients",()=>{botToggle(false);nav("clients")}]])},
  {re:/(cle|clé|api|google cloud|places|pagespeed|gemini|generative)/,run:()=>botSay("La clé Google (qui commence par « AIza ») se crée dans Google Cloud → Identifiants → Créer des identifiants → Clé API. Activez Places API (New), PageSpeed Insights API et Generative Language API (pour Gemini), puis cochez-les dans les restrictions de la clé.",[["Ouvrir les réglages",()=>{botToggle(false);nav("settings");setTimeout(()=>{$("help-key").open=true},300)}],["Google Cloud",()=>window.open("https://console.cloud.google.com/apis/credentials?project=affiads-audit","_blank","noopener")]])},
- {re:/(pdf|imprim|rapport)/,run:()=>botSay("Le rapport client se prépare automatiquement après chaque audit. Touchez « PDF » en haut pour l’enregistrer ou l’imprimer.",[["Ouvrir le rapport",()=>{botToggle(false);nav("report")}],["Enregistrer en PDF",()=>{botToggle(false);nav("report");setTimeout(()=>window.print(),400)}]])},
+ {re:/(pdf|imprim|rapport)/,run:()=>botSay("Touchez « PDF » en haut de l’écran : l’appli crée un PDF d’une page, que vous pouvez envoyer par WhatsApp ou Mail, ou enregistrer dans Fichiers.",[["Créer le PDF",()=>{botToggle(false);nav("report");makePdf()}],["Voir le rapport",()=>{botToggle(false);nav("report")}]])},
  {re:/(message|prospect|whatsapp|mail|e-mail|email)/,run:()=>botSay("Le message de prospection est rédigé à partir des constats de l’audit, au format Instagram, e-mail ou WhatsApp.",[["Rédiger le message",()=>{botToggle(false);nav("pitch")}]])},
  {re:/(sombre|clair|theme|thème|dark)/,run:q=>{const t=/sombre|dark/.test(norm(q))?"dark":/clair/.test(norm(q))?"light":"auto";settings.theme=t;saveSettings();applyTheme();botSay("Thème "+({dark:"sombre",light:"clair",auto:"automatique"})[t]+" appliqué.")}},
  {re:/(score|calcul|note sur 100)/,run:botScore},
