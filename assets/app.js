@@ -174,7 +174,8 @@ function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.i
 function saveSettings(keepStamp){if(!keepStamp)settings.updatedAt=Date.now();try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}if(!keepStamp&&typeof syncSoon==="function")syncSoon()}
 function auditLabel(s){const d=s.biz&&s.biz.date||s.createdAt||"";return (s.biz&&s.biz.name?s.biz.name:"Nouveau client")+(s.biz&&s.biz.city?", "+s.biz.city:"")+(d?" ("+new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+")":"")}
 function renderClientSelect(){
- const all=Object.values(db.audits).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
+ const isBlank=a=>!(a.biz&&a.biz.name)&&!(a.data&&a.data.fetchedAt)&&!Object.keys(a.checks||{}).length;
+ const all=Object.values(db.audits).filter(a=>a.id===state.id||!isBlank(a)).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
  const q=norm(($("clientSearch")&&$("clientSearch").value)||"");
  const list=all.filter(a=>!q||norm((a.biz&&a.biz.name||"")+" "+(a.biz&&a.biz.city||"")).includes(q));
  $("clientChipName").textContent=state.biz&&state.biz.name?state.biz.name:"Nouveau client";
@@ -187,7 +188,7 @@ function renderClientSelect(){
 function wOf(k){return (RECO[k]&&RECO[k][1])||2}
 function wScore(ks,checks,issues){let tot=0,okw=0;ks.forEach(k=>{if(checks&&checks[k]){tot+=wOf(k);if(!(issues&&issues[k]))okw+=wOf(k)}});return tot?Math.round(okw/tot*100):null}
 function scoreOf(a){return wScore(keys,a.checks,a.issues)}
-function switchTo(id){read();persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
+function switchTo(id){read();const old=state;if(old.id!==id&&!(old.biz&&old.biz.name)&&!(old.data&&old.data.fetchedAt)&&!Object.keys(old.checks||{}).length){delete db.audits[old.id]}else persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
 function hydrate(){
  fields.forEach(id=>{$(id).value=state.biz[id]??(id==="date"?today():"")});
  if(!$("type").value)$("type").value=BIZ_TYPES[0].label;
@@ -605,10 +606,12 @@ function setAuto(k,status,evidence,source){state.auto[k]={status,evidence,source
 let running=false;
 async function runAuto(){
  if(running)return;
+ if(navigator.onLine===false){toast("Pas de connexion internet : connectez-vous puis relancez l’audit.");return}
  const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
  running=true;document.body.classList.add("scanning");closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
  steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];let googleBlocked=null;
+ const backup=JSON.parse(JSON.stringify({auto:state.auto,checks:state.checks,issues:state.issues,data:state.data,biz:state.biz}));
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
  state.biz.name=name;state.biz.city=city;state.biz.date=today();
  let site=$("autoSite").value.trim();
@@ -617,7 +620,7 @@ async function runAuto(){
   setStep("geo","run","Localisation");
   let center=null;
   if(state.biz.osmPick){center={lat:state.biz.osmPick.lat,lng:state.biz.osmPick.lng,label:"Position de l'établissement choisi"};setStep("geo","ok","Établissement localisé",state.biz.pickLabel||"")}
-  else{try{center=await nominatimCity(city);setStep("geo",center?"ok":"warn",center?"Ville localisée":"Ville introuvable sur OpenStreetMap",center?center.label:"Les recherches se feront sans centre géographique.")}catch(e){setStep("geo","warn","Localisation indisponible",e.message)}}
+  else{try{center=await nominatimCity(city);setStep("geo",center?"ok":"warn",center?"Ville localisée":"Ville introuvable sur OpenStreetMap",center?center.label:"Les recherches se feront sans centre géographique.")}catch(e){const f=frErr(e);if(f.code==="network"){const er=new Error("offline");er.stop="offline";throw er}setStep("geo","warn","Localisation indisponible",f.text)}}
   data.center=center;
   /* 2. Fiche Google */
   let place=null;
@@ -657,7 +660,7 @@ async function runAuto(){
    setStep("photos","run","Récupération des photos de la fiche");
    try{data.photoList=await photoUris(p,6);setStep("photos",data.photoList.length?"ok":"warn",data.photoList.length?data.photoList.length+" photos récupérées · "+own+" / "+ph+" publiées par le propriétaire":"Photos non disponibles","Les photos s’affichent dans les résultats et le rapport.")}catch(e){setStep("photos","warn","Photos non disponibles",frErr(e).text)}
    setAuto("0-4",ph<5?"issue":"info",ph<5?"Seulement "+ph+" photo(s) sur la fiche Google.":ph+" photos mises en avant par Google (l’outil en lit 10 au maximum). Récence et qualité à contrôler visuellement.",src);
-   if(ph<5)findings.push({sev:2,text:"Très peu de photos sur la fiche Google ("+ph+")."});
+   if(ph<5)findings.push({sev:2,text:ph?"Très peu de photos sur la fiche Google ("+ph+").":"Aucune photo sur la fiche Google : c’est souvent la première chose regardée avant de choisir."});
    const rv=(p.reviews||[]).map(r=>({rating:r.rating,when:r.relativePublishTimeDescription||"",time:r.publishTime||"",text:(r.text&&r.text.text||r.originalText&&r.originalText.text||"").slice(0,280)}));
    data.reviews=rv;
    const last=rv.map(r=>Date.parse(r.time)).filter(Boolean).sort((a,b)=>b-a)[0];const daysSince=last?Math.round((Date.now()-last)/864e5):null;data.daysSinceReview=daysSince;
@@ -667,7 +670,7 @@ async function runAuto(){
    const neg=rv.filter(r=>r.rating&&r.rating<=3);
    if(rv.length){setAuto("3-0","info",rv.filter(r=>r.rating>=4).length+" avis positifs parmi les "+rv.length+" plus pertinents (extraits dans le rapport).",src);setAuto("3-1",neg.length?"issue":"info",neg.length?neg.length+" avis à 3 étoiles ou moins parmi les "+rv.length+" plus pertinents : critiques à lire dans le rapport.":"Aucun avis négatif parmi les "+rv.length+" plus pertinents.",src)}
    const st=p.businessStatus||"";setAuto("0-9",st&&st!=="OPERATIONAL"?"issue":"ok",st==="OPERATIONAL"?"Fiche active (ouverte).":st==="CLOSED_TEMPORARILY"?"Fiche marquée « fermée temporairement ».":st==="CLOSED_PERMANENTLY"?"Fiche marquée « définitivement fermée ».":"Statut non communiqué.",src);
-   if(st&&st!=="OPERATIONAL")findings.push({sev:3,text:"Google affiche le commerce comme fermé ("+st.toLowerCase().replace(/_/g," ")+")."});
+   if(st&&st!=="OPERATIONAL")findings.push({sev:3,text:"Google affiche le commerce comme "+(st==="CLOSED_PERMANENTLY"?"définitivement fermé":st==="CLOSED_TEMPORARILY"?"fermé temporairement":"inactif")+" : les clients qui le cherchent pensent qu’il n’ouvre plus."});
    setAuto("0-8",(data.duplicates||[]).length?"issue":"ok",(data.duplicates||[]).length?"Fiche(s) au nom très proche à moins de 1 km : "+data.duplicates.map(d=>d.name).join(", ")+". À vérifier : doublon ou autre établissement.":"Aucun doublon évident dans les résultats.",src);
    if((data.duplicates||[]).length)findings.push({sev:2,text:"Une autre fiche Google au nom très proche existe à moins de 1 km ("+data.duplicates.map(d=>d.name).join(", ")+") : s’il s’agit d’un doublon, il disperse les avis et peut tromper les clients."});
    if(p.editorialSummary&&p.editorialSummary.text)setAuto("0-2","info","Résumé Google : « "+p.editorialSummary.text+" ». Description du propriétaire et lien de réservation à vérifier.",src);
@@ -682,6 +685,10 @@ async function runAuto(){
     if(socials.length)setAuto("2-0","info","Réseaux déclarés sur OpenStreetMap : "+socials.map(s=>s[0]).join(", ")+". Activité à vérifier.","OpenStreetMap");
     setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?(o.me.tags&&(o.me.tags.website||o.me.tags["contact:website"])?"Site web trouvé. ":""):"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+(o.compError?"Commerces voisins non chargés : serveur saturé, réessayez plus tard.":o.competitors.length+" commerce(s) similaire(s) à proximité."));
    }catch(e){setStep("osm","warn","OpenStreetMap indisponible",frErr(e).text)}}
+  const foundAny=!!(place||(data.osm&&data.osm.me)||state.biz.osmPick);
+  if(!foundAny&&hasKey()&&!googleBlocked){const er=new Error("notfound");er.stop="notfound";throw er}
+  data.unverified=!foundAny;data.partial=!place;
+  const srcChecked=[place&&"la fiche Google",data.osm&&data.osm.me&&"OpenStreetMap"].filter(Boolean);
   /* 4. Visibilité locale sur plusieurs recherches + concurrents */
   const queries=keywordList(type,city);state.biz.keyword=$("autoKeyword").value.trim()||queries.map(q=>q.replace(new RegExp("\\s*"+rxEscape(city)+"$","i"),"")).join(", ");
   if(hasKey()){
@@ -690,6 +697,7 @@ async function runAuto(){
    else for(const [qi,q] of queries.entries()){
     setStep("rank"+qi,"run","Position sur « "+q+" »");
     try{const list=await placesSearch(q,RANK_FIELDS,20,data.loc||center);
+     if(!list.length){setStep("rank"+qi,"warn","Aucun résultat Google pour « "+q+" »","Recherche trop précise : modifiez les mots-clés dans les options.");continue}
      const rows=list.map((p,i)=>({rank:i+1,id:p.id,name:p.displayName&&p.displayName.text,rating:p.rating,count:p.userRatingCount,photos:(p.photos||[]).length,ownerPhotos:ownerPhotoCount(p),url:p.googleMapsUri,website:p.websiteUri||"",address:p.formattedAddress,dist:distKm(data.loc||center,p.location&&{lat:p.location.latitude,lng:p.location.longitude}),me:myId?p.id===myId:similar(p.displayName&&p.displayName.text,name)}));
      const mine=rows.find(r=>r.me);data.rankings.push({query:q,rank:mine?mine.rank:null,total:rows.length,rows,fetchedAt:data.fetchedAt});
      rows.filter(r=>!r.me).forEach(r=>{const a=agg[r.id]||(agg[r.id]={...r,bestRank:r.rank,hits:0,ranks:{}});a.hits++;a.ranks[qi]=r.rank;if(r.rank<a.bestRank)a.bestRank=r.rank});
@@ -719,7 +727,7 @@ async function runAuto(){
    try{const g=await visibilityGrid(gq,data.loc,place.id,1.5);data.grid=g;
     setStep("grid",g.top3>=6?"ok":"warn","Top 3 depuis "+g.top3+" point(s) sur "+g.total+" · visible depuis "+g.found+" / "+g.total,"Points espacés de 1,5 km autour du commerce.");
     setAuto("3-5",(state.auto["3-5"]&&state.auto["3-5"].status==="issue")||g.top3<6?"issue":"ok",(state.auto["3-5"]?state.auto["3-5"].evidence+" ":"")+"Carte de visibilité : top 3 depuis "+g.top3+" / "+g.total+" points autour du commerce.","Google Places, "+data.fetchedAt);
-    if(g.top3<g.total)findings.push({sev:g.top3<=3?3:2,text:"Carte de visibilité sur « "+gq+" » : le commerce n’est dans le top 3 que depuis "+g.top3+" point(s) sur "+g.total+" autour de lui"+(g.found<g.total?", et il est invisible (hors des 20 premiers) depuis "+(g.total-g.found)+" point(s)":"")+"."});
+    if(g.top3<g.total)findings.push({sev:g.top3<=3?3:2,text:"Carte de visibilité sur « "+gq+" » : le commerce "+(g.top3?"n’est dans le top 3 que depuis "+g.top3+" point"+(g.top3>1?"s":""):"n’est dans le top 3 depuis aucun point")+" sur "+g.total+" autour de lui"+(g.found<g.total?", et il est invisible (hors des 20 premiers) depuis "+(g.total-g.found)+" point(s)":"")+"."});
    }catch(e){const f=frErr(e);setStep("grid","warn","Carte de visibilité non mesurée",f.text,f.link)}
   }
   /* 4 ter. Bing (et moteurs alimentés par Bing : DuckDuckGo, Copilot, Ecosia) */
@@ -742,7 +750,7 @@ async function runAuto(){
   const compSites=hasKey()&&$("autoCompSpeed").checked?(data.competitors||[]).filter(c=>normalizeUrl(c.website)).slice(0,3):[];
   if(compSites.length)setStep("psic","run","Vitesse des sites concurrents",compSites.map(c=>c.name).join(", "));
   const compJobs=compSites.map(c=>pageSpeed(normalizeUrl(c.website).href,["performance"]).then(r=>{c.perf=r.scores.perf;c.lcp=r.lab.lcp}).catch(()=>{c.perf=null}));
-  if(!u){setAuto("1-0","issue","Aucun site web indiqué sur la fiche Google ni sur OpenStreetMap. Si un site existe, ajoutez-le dans les options et relancez.","Audit automatique, "+data.fetchedAt);const cw=(data.competitors||[]).slice(0,5),cws=cw.filter(c=>c.website).length;findings.push({sev:3,text:"Aucun site web n'est indiqué sur la fiche Google ni sur OpenStreetMap."+(cw.length>=3?" "+cws+" des "+cw.length+" concurrents les plus visibles en ont un.":"")});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
+  if(!u){const where=srcChecked.length?srcChecked.join(" ni sur "):"";if(!where){setAuto("1-0","info","Aucun site trouvé automatiquement : le commerce n’a été trouvé ni sur Google ni sur OpenStreetMap. Si un site existe, ajoutez-le dans les options et relancez.","Audit automatique, "+data.fetchedAt)}else{setAuto("1-0","issue","Aucun site web indiqué sur "+where+". Si un site existe, ajoutez-le dans les options et relancez.","Audit automatique, "+data.fetchedAt);const cw=(data.competitors||[]).slice(0,5),cws=cw.filter(c=>c.website).length;findings.push({sev:3,text:"Aucun site web n'est indiqué sur "+where+"."+(cw.length>=3?" "+cws+" des "+cw.length+" concurrents les plus visibles en ont un.":"")})}setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
   else{
    state.biz.site=u.href;
    setStep("psi","run","Vitesse et qualité du site (Lighthouse mobile)","Compter 20 à 60 secondes.");
@@ -817,7 +825,7 @@ async function runAuto(){
    const searched=!!sc.engine;
    setAuto("2-0",F.Facebook||F.Instagram?"ok":searched?"issue":"info",(F.Facebook||F.Instagram)?"Comptes trouvés : "+list.join(", ")+". Fréquence des publications à vérifier.":(searched?"Aucun compte Facebook ni Instagram trouvé (site, OpenStreetMap et recherche Bing).":"Aucun compte relié depuis le site ou OpenStreetMap ; la recherche web n’a pas répondu : à vérifier à la main."),"Recherche des réseaux, "+data.fetchedAt);
    setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok trouvé.":"Aucun compte TikTok trouvé : à envisager si la clientèle visée y est présente.","Recherche des réseaux, "+data.fetchedAt);
-   setAuto("2-4",list.length?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
+   setAuto("2-4",list.length||!searched?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
    if(!F.Facebook&&!F.Instagram){if(searched)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce (ni sur son site, ni par recherche) : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."})}
    else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux trouvés : "+list.join(", ")+". Non trouvé"+(miss.length>1?"s":"")+" : "+miss.join(", ")+" (aucun compte relié ni trouvé par recherche)."})}
    setStep("social",list.length?"ok":"warn",list.length?"Réseaux trouvés : "+list.join(", "):"Aucun réseau social trouvé",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non trouvés : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"");
@@ -850,7 +858,12 @@ async function runAuto(){
   $("progDetails").open=false;$("progTitle").textContent="Analyse terminée : voir les "+steps.length+" étapes";
   $("autoSummaryCard").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
   toast("Audit terminé : résultats ci-dessous.");
- }catch(e){setStep("fatal","err","Erreur inattendue",frErr(e).text)}
+ }catch(e){
+  if(e&&e.stop){Object.assign(state,{auto:backup.auto,checks:backup.checks,issues:backup.issues,data:backup.data||{},biz:{...backup.biz,name,city}});
+   if(e.stop==="offline")setStep("net","err","Pas de connexion internet","Connectez-vous (Wi-Fi ou données mobiles) puis relancez l’audit. Les résultats précédents de ce client n’ont pas été modifiés.");
+   else setStep("notfound","err","Commerce introuvable : « "+name+" » à "+city,"Aucune fiche Google ni OpenStreetMap ne correspond. Vérifiez l’orthographe et la ville, puis tapez le début du nom et choisissez le commerce dans la liste qui s’affiche.");
+   toast(e.stop==="offline"?"Pas de connexion internet.":"Commerce introuvable : vérifiez le nom.");renderChecklist();update();renderAutoSummary();
+  }else setStep("fatal","err","Erreur inattendue",frErr(e).text)}
  finally{running=false;document.body.classList.remove("scanning");$("runAuto").disabled=false;$("runAuto").textContent="Relancer l'audit";state.data.steps=steps;persistLocal()}
 }
 function hydrateBizFields(){fields.forEach(id=>{if(state.biz[id]!==undefined&&state.biz[id]!==null)$(id).value=state.biz[id]});$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||""}
@@ -917,12 +930,13 @@ function googleBlock(){
  +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
  +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
 }
+function partialNote(){const d=state.data||{};if(!d.fetchedAt||!d.partial)return "";return '<div class="partial"><b>Audit partiel</b><span>'+(d.unverified?"Le commerce n’a été trouvé ni sur Google ni sur OpenStreetMap : les résultats reposent sur Bing, les réseaux sociaux et le site s’il est connu. Vérifiez le nom ou ajoutez une clé Google.":"La fiche Google n’a pas été analysée"+(hasKey()?" (clé Google à corriger)":" (pas de clé Google)")+" : note, avis, photos et positions Google ne sont pas inclus dans le score.")+'</span></div>'}
 function renderAutoSummary(){
  const d=state.data||{};
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
  if(!d.fetchedAt){$("autoSummaryCard").classList.add("hidden");$("autoSummary").innerHTML="";return}
  $("autoSummaryCard").classList.remove("hidden");const sc=calc().score;
- $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
+ $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+partialNote()+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
@@ -990,7 +1004,7 @@ function renderReport(){
  const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div>'
   +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'
   +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
-  +scoreTile(totals.score)+kpiRow()
+  +scoreTile(totals.score)+partialNote()+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
   +'<div class="coverfoot"><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>';
  const toc='<div class="toc"><h3>Sommaire</h3><ol><li>Synthèse</li><li>Fiche Google, photos et réseaux sociaux</li><li>Visibilité locale et concurrence</li><li>Visibilité sur Bing</li><li>Visibilité dans les assistants IA</li><li>Site web sur mobile</li><li>Plan d’action</li><li>Ce qu’AffiAds peut apporter</li><li>Méthode et détail des contrôles</li></ol></div>';
@@ -1248,7 +1262,7 @@ async function pinHash(pin,saltB64){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);
  return b64(await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},key,256));
 }
-async function pinSet(pin){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));Lock.cfg={salt,hash:await pinHash(pin,salt),len:pin.length,delay:(Lock.cfg&&Lock.cfg.delay)??-1,forceLock:false,fails:0,until:0,v:2,bio:Lock.cfg&&Lock.cfg.bio||null};lockSave()}
+async function pinSet(pin){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));Lock.cfg={salt,hash:await pinHash(pin,salt),len:pin.length,delay:(Lock.cfg&&Lock.cfg.delay)??-1,forceLock:false,v:3,fails:0,until:0,bio:Lock.cfg&&Lock.cfg.bio||null};lockSave()}
 const LOCK_SEEN="affiads-last-seen";
 function lockDelay(){return Lock.cfg?(Lock.cfg.delay??1440):1440}
 function markSeen(){Lock.lastActive=Date.now();try{localStorage.setItem(LOCK_SEEN,String(Lock.lastActive))}catch(e){}}
@@ -1322,7 +1336,7 @@ function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;Lock.on
 function lockNow(manual){if(Lock.cfg&&Lock.cfg.hash){if(manual!==false){Lock.cfg.forceLock=true;lockSave()}setSession(false);showGate("unlock")}}
 function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow(false)}
 function initLock(){
- lockLoad();if(Lock.cfg&&Lock.cfg.hash&&!Lock.cfg.v){Lock.cfg.v=2;if((Lock.cfg.delay??5)<=5)Lock.cfg.delay=1440;lockSave()}buildPad();
+ lockLoad();if(Lock.cfg&&Lock.cfg.hash&&(Lock.cfg.v||0)<3){const d=Lock.cfg.delay??5;if(d>=0&&(d<=5||d===1440))Lock.cfg.delay=-1;Lock.cfg.v=3;lockSave()}buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
  document.addEventListener("keydown",e=>{if(!document.body.classList.contains("locked")||$("gateLock").hidden)return;if(/^\d$/.test(e.key)){e.preventDefault();pinKey(e.key)}else if(e.key==="Backspace"){e.preventDefault();pinKey("del")}else if(e.key==="Enter"&&!(e.target&&e.target.closest&&e.target.closest("button"))){e.preventDefault();pinKey("ok")}});
