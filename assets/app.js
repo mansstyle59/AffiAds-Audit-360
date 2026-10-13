@@ -284,7 +284,7 @@ async function nominatimCity(city){
 }
 const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 async function overpass(q){
- const jobs=OVERPASS.map(u=>fetchJson(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)},22000));
+ const jobs=OVERPASS.map(u=>fetchJson(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)},35000));
  try{return await Promise.any(jobs)}catch(e){const err=new Error("serveurs OpenStreetMap saturés");err.status=408;throw err}
 }
 /* Fiche OpenStreetMap du commerce : rapide via Nominatim (par identifiant, sinon par nom + ville) */
@@ -300,8 +300,9 @@ async function osmMe(name,city){
 function rxEscape(s){return s.replace(/[.*+?^${}()|[\]\\"]/g,"\\$&")}
 const ACC={a:"[aàâä]",e:"[eéèêë]",i:"[iîï]",o:"[oôö]",u:"[uùûü]",c:"[cç]",y:"[yÿ]"};
 function rxWord(w){return w.split("").map(ch=>ACC[ch]||rxEscape(ch)).join("")}
-async function osmLookup(name,center,type){
- let meN=null;try{meN=await osmMe(name,state.biz.city||"")}catch(e){}
+async function osmLookup(name,center,type,light){
+ let meN=null;try{meN=await osmMe(name,state.biz.city||"")}catch(e){if(light)throw e}
+ if(light)return {me:meN,competitors:[]};
  if(meN&&meN.loc&&meN.loc.lat)center=meN.loc;
  const words=norm(name).split(" ").filter(w=>w.length>2).slice(0,4);
  const pat=words.length?words.map(rxWord).join(".*"):rxEscape(name);
@@ -679,19 +680,19 @@ async function runAuto(){
   }
   /* 3. OpenStreetMap */
   if(center){setStep("osm","run","Recherche OpenStreetMap");
-   try{const o=await osmLookup(name,data.loc||center,type);data.osm=o;const t=o.me&&o.me.tags||{};
+   try{const o=await osmLookup(name,data.loc||center,type,!!place&&hasKey());data.osm=o;const t=o.me&&o.me.tags||{};
     if(!site&&(t.website||t["contact:website"]))site=t.website||t["contact:website"];
     const socials=[["Facebook",t["contact:facebook"]||t.facebook],["Instagram",t["contact:instagram"]||t.instagram],["TikTok",t["contact:tiktok"]]].filter(x=>x[1]);data.socials=socials.map(s=>({net:s[0],url:s[1]}));
     if(!place&&o.me){state.biz.phone=state.biz.phone||t.phone||t["contact:phone"]||"";state.biz.address=state.biz.address||[t["addr:housenumber"],t["addr:street"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" ");if(t.opening_hours){data.hours=[t.opening_hours];setAuto("0-0","info","Horaires OpenStreetMap : "+t.opening_hours+". À comparer avec la fiche Google.","OpenStreetMap")}}
     if(socials.length)setAuto("2-0","info","Réseaux déclarés sur OpenStreetMap : "+socials.map(s=>s[0]).join(", ")+". Activité à vérifier.","OpenStreetMap");
     setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?(o.me.tags&&(o.me.tags.website||o.me.tags["contact:website"])?"Site web trouvé. ":""):"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+(o.compError?"Commerces voisins non chargés : serveur saturé, réessayez plus tard.":o.competitors.length+" commerce(s) similaire(s) à proximité."));
-   }catch(e){setStep("osm","warn","OpenStreetMap indisponible",frErr(e).text)}}
+   }catch(e){if(place)setStep("osm","skip","OpenStreetMap non consulté","Serveur OpenStreetMap lent pour le moment : sans incidence sur l’audit, la fiche Google a bien été analysée.");else setStep("osm","warn","OpenStreetMap indisponible","Serveur lent pour le moment : les commerces voisins n’ont pas pu être chargés. Ajoutez une clé Google pour ne plus en dépendre, ou relancez plus tard.")}}
   const foundAny=!!(place||(data.osm&&data.osm.me)||state.biz.osmPick);
   if(!foundAny&&hasKey()&&!googleBlocked){const er=new Error("notfound");er.stop="notfound";throw er}
   data.unverified=!foundAny;data.partial=!place;
   const srcChecked=[place&&"la fiche Google",data.osm&&data.osm.me&&"OpenStreetMap"].filter(Boolean);
   /* 4. Visibilité locale sur plusieurs recherches + concurrents */
-  const queries=keywordList(type,city);state.biz.keyword=$("autoKeyword").value.trim()||queries.map(q=>q.replace(new RegExp("\\s*"+rxEscape(city)+"$","i"),"")).join(", ");
+  const queries=keywordList(type,city);const bingEarly=Promise.allSettled([bingSearch(queries[0]),bingSearch(name+" "+city)]);state.biz.keyword=$("autoKeyword").value.trim()||queries.map(q=>q.replace(new RegExp("\\s*"+rxEscape(city)+"$","i"),"")).join(", ");
   if(hasKey()){
    data.rankings=[];const myId=place&&place.id;const agg={};
    if(googleBlocked&&["disabled","badkey","referer","billing"].includes(googleBlocked))setStep("rank","skip","Positions et concurrents Google non mesurés","Ils seront analysés dès que la clé Google fonctionnera.");
@@ -726,7 +727,7 @@ async function runAuto(){
   if(hasKey()&&place&&data.loc&&!(googleBlocked&&["disabled","badkey","referer","billing"].includes(googleBlocked))){
    const gq=queries[0];setStep("grid","run","Carte de visibilité : 9 points autour du commerce","« "+gq+" »");
    try{const g=await visibilityGrid(gq,data.loc,place.id,1.5);data.grid=g;
-    setStep("grid",g.top3>=6?"ok":"warn","Top 3 depuis "+g.top3+" point(s) sur "+g.total+" · visible depuis "+g.found+" / "+g.total,"Points espacés de 1,5 km autour du commerce.");
+    setStep("grid",g.top3>=6?"ok":"warn","Top 3 depuis "+g.top3+" point"+(g.top3>1?"s":"")+" sur "+g.total+" · visible depuis "+g.found+" / "+g.total,"Points espacés de 1,5 km autour du commerce.");
     setAuto("3-5",(state.auto["3-5"]&&state.auto["3-5"].status==="issue")||g.top3<6?"issue":"ok",(state.auto["3-5"]?state.auto["3-5"].evidence+" ":"")+"Carte de visibilité : top 3 depuis "+g.top3+" / "+g.total+" points autour du commerce.","Google Places, "+data.fetchedAt);
     if(g.top3<g.total)findings.push({sev:g.top3<=3?3:2,text:"Carte de visibilité sur « "+gq+" » : le commerce "+(g.top3?"n’est dans le top 3 que depuis "+g.top3+" point"+(g.top3>1?"s":""):"n’est dans le top 3 depuis aucun point")+" sur "+g.total+" autour de lui"+(g.found<g.total?", et il est invisible (hors des 20 premiers) depuis "+(g.total-g.found)+" point(s)":"")+"."});
    }catch(e){const f=frErr(e);setStep("grid","warn","Carte de visibilité non mesurée",f.text,f.link)}
@@ -734,7 +735,7 @@ async function runAuto(){
   /* 4 ter. Bing (et moteurs alimentés par Bing : DuckDuckGo, Copilot, Ecosia) */
   {const siteHost=hostOf((normalizeUrl(site)||{}).href||"");const kq=queries[0],bq=name+" "+city;
    setStep("bing","run","Recherche sur Bing","« "+kq+" » et « "+bq+" »");
-   const [rk,rb]=await Promise.allSettled([bingSearch(kq),bingSearch(bq)]);
+   const [rk,rb]=await bingEarly;
    const mk=(r,q)=>{if(r.status!=="fulfilled")return null;const rows=r.value.rows.slice(0,10).map((x,i)=>({...x,pos:i+1,match:matchBiz(x,name,siteHost)}));const hit=rows.find(x=>x.match);return {query:q,engine:r.value.engine,rows,pos:hit?hit.pos:null,hitType:hit?hit.match:null}};
    const K=mk(rk,kq),B=mk(rb,bq);data.bing={keyword:K,brand:B,fetchedAt:nowLabel()};
    if(K||B){
