@@ -638,3 +638,5 @@ body.locked .botfab,body.locked .botpanel,body.botopen .botfab{display:none}
 .remember{display:inline-flex;align-items:center;gap:10px;margin-top:18px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;min-height:44px}
 .remember input{width:22px;height:22px;accent-color:#ffb81f}
 .remember[hidden]{display:none}
+.partial{display:flex;flex-direction:column;gap:3px;margin:14px 0 4px;padding:12px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--surface));font-size:14px;line-height:1.45;color:var(--ink)}
+.partial b{font-size:14.5px}
