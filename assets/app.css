@@ -510,3 +510,36 @@ table.printwrap{width:100%;border-collapse:collapse}table.printwrap>thead>tr>td,
  .aiq .box,.offer,.gridwrap,.photostrip,.toc,.covertop{break-inside:avoid}
  .sec>h2{margin-top:0}
 }
+
+/* ===== Écran d'accueil et code d'accès ===== */
+body.locked{overflow:hidden}
+body.locked .layout{visibility:hidden}
+.gate{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px 20px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(120% 80% at 50% 0%,#5b48ff 0%,#3b2be0 45%,#17134a 100%);color:#fff;overflow:auto;transition:opacity .25s ease,transform .25s ease}
+.gate.leaving{opacity:0;transform:scale(1.03)}
+.gatebox{width:100%;max-width:340px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.gatelogo{width:96px;height:96px;filter:drop-shadow(0 18px 30px #0b062e88);animation:gateIn .7s cubic-bezier(.2,.8,.2,1) both}
+.gatebrand{margin:14px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em;animation:gateIn .7s .08s cubic-bezier(.2,.8,.2,1) both}
+.gatebrand span{display:block;font-size:14px;font-weight:600;color:#d9d4ff;letter-spacing:0;margin-top:2px}
+.gatelock{width:100%;margin-top:26px;animation:gateIn .45s ease-out both}
+.gatelock[hidden]{display:none}
+.gatelock h1{color:#fff;font-size:21px;font-weight:750;margin:0}
+.gatehint{color:#d9d4ff;font-size:14px;line-height:1.5;margin:6px 0 18px}
+.pindots{display:flex;justify-content:center;gap:14px;min-height:18px}
+.pindots i{width:15px;height:15px;border-radius:50%;border:2px solid #ffffffb3;transition:background .12s,transform .12s}
+.pindots i.on{background:#ffb81f;border-color:#ffb81f;transform:scale(1.08)}
+.pindots.shake{animation:shake .38s}
+.gatemsg{min-height:22px;margin:10px 0 6px;font-size:14px;color:#d9d4ff}
+.gatemsg.bad{color:#ffd27a;font-weight:650}
+.pininput{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:14px 22px;justify-content:center;margin-top:8px}
+.pinpad button{width:72px;height:72px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:600 26px var(--font);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);touch-action:manipulation;transition:background .12s}
+.pinpad button:active{background:#ffffff40}
+.pinpad button[data-k="del"],.pinpad button.ok{background:transparent;font-size:18px;font-weight:700}
+.pinpad button:focus-visible{outline:3px solid #ffb81f;outline-offset:2px}
+.gatelinks{margin-top:18px}
+.linkbtn{background:none;border:0;color:#d9d4ff;font:600 14px var(--font);text-decoration:underline;cursor:pointer;min-height:44px;padding:0 10px}
+@keyframes gateIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@media(prefers-reduced-motion:reduce){.gatelogo,.gatebrand,.gatelock,.pindots.shake{animation:none}.gate{transition:none}}
+@media(max-height:640px){.gatelogo{width:64px;height:64px}.gatelock{margin-top:14px}.pinpad{grid-template-columns:repeat(3,62px);gap:10px 18px}.pinpad button{width:62px;height:62px}}
+@media print{.gate{display:none!important}}

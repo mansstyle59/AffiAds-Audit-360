@@ -20,6 +20,8 @@ Le **rapport client** comprend une page de couverture avec jauge de score, une s
 
 **Analyses avancées** : photos publiées par le propriétaire (et vraies photos de la fiche), **carte de visibilité** (position depuis 9 points autour du commerce), **visibilité sur Bing** (résultats Bing France, qui alimentent aussi DuckDuckGo et Copilot), **test IA automatique** avec Gemini et la Recherche Google (API « Generative Language » à activer sur la clé). Rapport PDF professionnel de 9 sections avec en-tête et pied de page sur chaque page.
 
+**Code d’accès** : écran d’accueil animé et code de 4 à 6 chiffres (créé au premier lancement) qui protège l’appli sur chaque appareil ; verrouillage automatique réglable, limitation des essais, code stocké sous forme chiffrée (PBKDF2). Sans serveur, le code protège l’accès sur l’appareil, pas le site public.
+
 **Version 2026** : menu regroupé (Prospection, Analyse détaillée, Outils), barre d'onglets flottante effet verre sur téléphone, écran **Clients** avec l'historique des audits, **mode sombre** automatique, transitions entre écrans, **installation sur l'écran d'accueil** et interface disponible hors ligne, **partage natif** du résumé et du message, test du **Mode IA de Google**, checklist mise à jour (fin des questions-réponses Google, vidéos courtes verticales).
 
 Autres fonctions : plusieurs clients enregistrés, export/import des audits (fichier JSON), rapport PDF, export CSV des tests IA, application installable sur l'écran d'accueil du téléphone.
