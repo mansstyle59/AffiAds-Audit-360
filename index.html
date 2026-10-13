@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=2026-12">
+<link rel="stylesheet" href="assets/app.css?v=2026-13">
 <title>AffiAds Audit 360°</title>
 </head>
 <body class="locked">
@@ -194,15 +194,24 @@
 <div class="card"><h2>Sauvegarde des audits</h2><p class="muted">Les audits sont enregistrés dans ce navigateur. Exportez-les pour les garder en sécurité ou les ouvrir sur un autre appareil.</p><div class="actions"><button class="btn" id="exportJson">Exporter tous les audits</button><label class="btn" for="importJson" style="display:inline-flex;align-items:center">Importer un fichier<input id="importJson" type="file" accept="application/json,.json" hidden></label></div></div>
 </div></section>
 
-<button type="button" id="botFab" class="botfab" aria-label="Ouvrir l’assistant AffiAds" aria-expanded="false" aria-controls="botPanel"><img src="assets/logo-64.png" alt="" width="34" height="34"><span class="botdot" aria-hidden="true"></span></button>
+<button type="button" id="botFab" class="botfab" aria-label="Ouvrir l’assistant AffiAds" aria-expanded="false" aria-controls="botPanel"><img src="assets/logo-192.png" alt="" width="62" height="62"><span class="botdot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-4 4v-4H5z"/></svg></span></button>
 <section id="botPanel" class="botpanel" role="dialog" aria-label="Assistant AffiAds" hidden>
- <header class="bothead"><img src="assets/logo-64.png" alt="" width="30" height="30"><div><b>Assistant AffiAds</b><span>Réservé au propriétaire de l’appli</span></div><button type="button" id="botClose" class="botx" aria-label="Fermer l’assistant">✕</button></header>
+ <header class="bothead">
+  <span class="botav"><img src="assets/logo-64.png" alt="" width="32" height="32"></span>
+  <div><b>Assistant AffiAds</b><span><i class="online" aria-hidden="true"></i>Disponible · réservé à vous</span></div>
+  <button type="button" id="botNew" class="botx" aria-label="Nouvelle conversation" title="Nouvelle conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg></button>
+  <button type="button" id="botClose" class="botx" aria-label="Fermer l’assistant" title="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+ </header>
  <div id="botLog" class="botlog" aria-live="polite"></div>
- <div id="botChips" class="botchips"></div>
- <form id="botForm" class="botform" autocomplete="off"><label for="botInput" class="sr">Votre question</label><input id="botInput" placeholder="Posez votre question…" enterkeyhint="send"><button class="btn primary" type="submit" aria-label="Envoyer">Envoyer</button></form>
+ <div id="botChips" class="botchips" aria-label="Suggestions"></div>
+ <form id="botForm" class="botform" autocomplete="off">
+  <label for="botInput" class="sr">Votre question</label>
+  <div class="botfield"><textarea id="botInput" rows="1" placeholder="Écrivez votre question…" enterkeyhint="send"></textarea><button type="button" id="botMic" class="botmic" aria-label="Dicter la question" title="Dicter" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+  <button class="botsend" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+ </form>
 </section>
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-12"></script>
+<script src="assets/app.js?v=2026-13"></script>
 </body>
 </html>
