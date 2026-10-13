@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=2026-9">
+<link rel="stylesheet" href="assets/app.css?v=2026-10">
 <title>AffiAds Audit 360°</title>
 </head>
 <body class="locked">
@@ -29,7 +29,7 @@
    <p id="gateMsg" class="gatemsg" role="status" aria-live="polite"></p>
    <input id="pinInput" class="pininput" type="password" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Code d’accès">
    <div class="pinpad" id="pinPad"></div>
-   <button type="button" id="gateBio" class="biobtn" hidden>Déverrouiller avec Face ID / Touch ID</button><div class="gatelinks"><button type="button" id="gateForgot" class="linkbtn">Code oublié ?</button></div>
+   <button type="button" id="gateBio" class="biobtn" hidden>Déverrouiller avec Face ID / Touch ID</button><div class="gatelinks"><button type="button" id="gateForgot" class="linkbtn">Code oublié ?</button><button type="button" id="gateCancel" class="linkbtn" hidden>Annuler</button></div>
   </div>
  </div>
 </div>
@@ -193,8 +193,15 @@
 <div class="card"><h2>Sauvegarde des audits</h2><p class="muted">Les audits sont enregistrés dans ce navigateur. Exportez-les pour les garder en sécurité ou les ouvrir sur un autre appareil.</p><div class="actions"><button class="btn" id="exportJson">Exporter tous les audits</button><label class="btn" for="importJson" style="display:inline-flex;align-items:center">Importer un fichier<input id="importJson" type="file" accept="application/json,.json" hidden></label></div></div>
 </div></section>
 
+<button type="button" id="botFab" class="botfab" aria-label="Ouvrir l’assistant AffiAds" aria-expanded="false" aria-controls="botPanel"><img src="assets/logo-64.png" alt="" width="34" height="34"><span class="botdot" aria-hidden="true"></span></button>
+<section id="botPanel" class="botpanel" role="dialog" aria-label="Assistant AffiAds" hidden>
+ <header class="bothead"><img src="assets/logo-64.png" alt="" width="30" height="30"><div><b>Assistant AffiAds</b><span>Réservé au propriétaire de l’appli</span></div><button type="button" id="botClose" class="botx" aria-label="Fermer l’assistant">✕</button></header>
+ <div id="botLog" class="botlog" aria-live="polite"></div>
+ <div id="botChips" class="botchips"></div>
+ <form id="botForm" class="botform" autocomplete="off"><label for="botInput" class="sr">Votre question</label><input id="botInput" placeholder="Posez votre question…" enterkeyhint="send"><button class="btn primary" type="submit" aria-label="Envoyer">Envoyer</button></form>
+</section>
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-9"></script>
+<script src="assets/app.js?v=2026-10"></script>
 </body>
 </html>
