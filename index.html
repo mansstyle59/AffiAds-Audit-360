@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=2026-2">
+<link rel="stylesheet" href="assets/app.css?v=2026-3">
 <title>AffiAds Audit 360°</title>
 </head>
 <body>
@@ -163,13 +163,14 @@
 <div class="field"><label for="googleKey">Clé API Google</label><input id="googleKey" type="password" placeholder="AIza..." autocomplete="off"></div>
 <div class="actions" style="margin-top:12px"><button class="btn primary" id="saveKey">Enregistrer la clé</button><button class="btn" id="testKey">Tester la clé</button><button class="btn" id="removeKey">Retirer la clé</button></div>
 <div id="keyStatus" class="muted" style="margin-top:10px"></div>
-<details class="help"><summary>Comment obtenir la clé (5 minutes)</summary><ol>
-<li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> et créez un projet « AffiAds Audit ».</li>
-<li>Activez <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a> et <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">PageSpeed Insights API</a>.</li>
-<li>Dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Identifiants</a>, créez une « Clé API ».</li>
-<li><b>Important :</b> restreignez-la : « Sites web », puis ajoutez l'adresse de votre application (ex. <code>https://mansstyle59.github.io/*</code>), et limitez-la à ces deux API.</li>
-<li>Collez la clé ici puis cliquez sur « Tester la clé ».</li></ol>
-<p>Places API demande d'associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre largement un usage d'audit courant. Vérifiez les tarifs en vigueur et fixez une alerte de budget dans Google Cloud.</p></details>
+<details class="help" id="help-key"><summary>Comment obtenir la bonne clé (5 minutes)</summary><ol>
+<li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> et créez un projet « AffiAds Audit » (ou gardez le vôtre).</li>
+<li>Activez <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a> puis <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">PageSpeed Insights API</a> : bouton « Activer » sur chaque page.</li>
+<li>Ouvrez <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">API et services → Identifiants</a>, touchez « Créer des identifiants », puis <b>« Clé API »</b>. N’utilisez pas Vertex AI, Gemini ou AI Studio : leurs clés ne fonctionnent pas ici.</li>
+<li>Vérifiez que la clé commence par <b>AIza</b>.</li>
+<li>Restreignez-la : « Sites web » → <code>https://mansstyle59.github.io/*</code>, et « Restreindre la clé » → Places API (New) et PageSpeed Insights API.</li>
+<li>Collez-la ici, puis « Tester la clé ».</li></ol>
+<p>Places API demande d’associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre un usage d’audit courant. Fixez une alerte de budget dans Google Cloud par sécurité.</p></details>
 </div>
 <div class="card s5"><h2>Signature des messages</h2><div class="field"><label for="senderName">Votre prénom</label><input id="senderName" placeholder="Denis"></div><div class="field" style="margin-top:10px"><label for="senderLine">Signature</label><input id="senderLine" placeholder="AffiAds — Votre image, notre expertise"></div><div class="field" style="margin-top:10px"><label for="senderContact">Contact (facultatif)</label><input id="senderContact" placeholder="e-mail ou téléphone"></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="saveSender">Enregistrer</button></div></div>
 <div class="card"><h2>Sauvegarde des audits</h2><p class="muted">Les audits sont enregistrés dans ce navigateur. Exportez-les pour les garder en sécurité ou les ouvrir sur un autre appareil.</p><div class="actions"><button class="btn" id="exportJson">Exporter tous les audits</button><label class="btn" for="importJson" style="display:inline-flex;align-items:center">Importer un fichier<input id="importJson" type="file" accept="application/json,.json" hidden></label></div></div>
@@ -177,6 +178,6 @@
 
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-2"></script>
+<script src="assets/app.js?v=2026-3"></script>
 </body>
 </html>
