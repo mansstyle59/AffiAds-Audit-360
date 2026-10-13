@@ -123,11 +123,11 @@ function loadAll(){
 }
 function fixState(s){s=s||blankState();["checks","issues","auto","biz","campaign","data"].forEach(k=>{if(!s[k]||typeof s[k]!=="object")s[k]={}});["aiTests","campaignPrompts"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});if(!s.id)s.id=uid();return s}
 function markSaved(ok){const el=$("savedState");if(!el)return;el.textContent=ok?"✓ Enregistré":"⚠ Non enregistré";el.classList.toggle("bad",!ok)}
-function persistLocal(){const ok=persistRaw();markSaved(ok);return ok}
+function persistLocal(){const ok=persistRaw();markSaved(ok);if(typeof syncSoon==="function")syncSoon();return ok}
 function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.id]=state;db.current=state.id;try{localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e){
  /* Quota dépassé : on retire la capture d'écran, la plus lourde */
  try{Object.values(db.audits).forEach(a=>{if(a.data&&a.data.psi)delete a.data.psi.shot});localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e2){return false}}}
-function saveSettings(){try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
+function saveSettings(keepStamp){if(!keepStamp)settings.updatedAt=Date.now();try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}if(!keepStamp&&typeof syncSoon==="function")syncSoon()}
 function auditLabel(s){const d=s.biz&&s.biz.date||s.createdAt||"";return (s.biz&&s.biz.name?s.biz.name:"Nouveau client")+(s.biz&&s.biz.city?", "+s.biz.city:"")+(d?" ("+new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+")":"")}
 function renderClientSelect(){
  const all=Object.values(db.audits).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
@@ -138,7 +138,7 @@ function renderClientSelect(){
  $("clientList").innerHTML=list.length?list.map(a=>{const sc=scoreOf(a),nm=a.biz&&a.biz.name||"Nouveau client",f=(a.data&&a.data.findings||[]).length;
   return '<div class="clientrow'+(a.id===state.id?" cur":"")+'"><button class="open" data-open="'+esc(a.id)+'"><span class="tile xs"><span class="sig"></span><span class="n">'+(sc??"—")+'</span></span><span class="who"><b>'+esc(nm)+'</b><span>'+esc([a.biz&&a.biz.city,a.biz&&a.biz.date?frDate(a.biz.date):""].filter(Boolean).join(", "))+(f?". "+f+" opportunité"+(f>1?"s":""):"")+'</span></span></button><button class="btn iconbtn del" data-del="'+esc(a.id)+'" aria-label="Supprimer '+esc(nm)+'" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div>'}).join(""):'<p class="muted" style="padding:14px 0">'+(q?"Aucun client ne correspond à cette recherche.":"Aucun audit pour l’instant.")+'</p>';
  $("clientList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{switchTo(b.dataset.open);nav("auto")});
- $("clientList").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=db.audits[b.dataset.del];if(!a||!confirm("Supprimer définitivement l’audit « "+auditLabel(a)+" » de cet appareil ?"))return;delete db.audits[a.id];if(a.id===state.id){const ids=Object.keys(db.audits);state=ids.length?fixState(db.audits[ids[0]]):blankState();persistLocal();hydrate()}else{try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}renderClientSelect()}toast("Audit supprimé.")});
+ $("clientList").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=db.audits[b.dataset.del];if(!a||!confirm("Supprimer définitivement l’audit « "+auditLabel(a)+" » de cet appareil ?"))return;(db.deleted=db.deleted||{})[a.id]=new Date().toISOString();delete db.audits[a.id];if(a.id===state.id){const ids=Object.keys(db.audits);state=ids.length?fixState(db.audits[ids[0]]):blankState();persistLocal();hydrate()}else{try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}renderClientSelect();syncSoon()}toast("Audit supprimé.")});
 }
 function scoreOf(a){const ks=keys;let n=ks.filter(k=>a.checks&&a.checks[k]).length,bad=ks.filter(k=>a.checks&&a.checks[k]&&a.issues&&a.issues[k]).length;return n?Math.round((n-bad)/n*100):null}
 function switchTo(id){read();persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
@@ -290,7 +290,7 @@ async function fetchHtml(url){
  let last;for(const f of tries){try{const t=await f();if(t&&t.length>200&&/<(html|head|body)[\s>]/i.test(t))return t;last=new Error("page vide ou illisible")}catch(e){last=e}}
  throw last||new Error("page illisible");
 }
-const SOCIAL_RX=[["Facebook",/(^|\.)facebook\.com$|(^|\.)fb\.com$/],["Instagram",/(^|\.)instagram\.com$/],["TikTok",/(^|\.)tiktok\.com$/],["YouTube",/(^|\.)youtube\.com$|(^|\.)youtu\.be$/],["LinkedIn",/(^|\.)linkedin\.com$/],["X / Twitter",/(^|\.)(twitter|x)\.com$/],["Pinterest",/(^|\.)pinterest\.[a-z]+$/]];
+const SOCIAL_RX=[["Facebook",/(^|\.)facebook\.com$|(^|\.)fb\.com$/],["Instagram",/(^|\.)instagram\.com$/],["TikTok",/(^|\.)tiktok\.com$/],["YouTube",/(^|\.)youtube\.com$|(^|\.)youtu\.be$/],["LinkedIn",/(^|\.)linkedin\.com$/],["X / Twitter",/(^|\.)(twitter|x)\.com$/],["Pinterest",/(^|\.)pinterest\.[a-z]+$/],["Snapchat",/(^|\.)snapchat\.com$/]];
 const BOOKING_RX=/thefork|lafourchette|zenchef|resy\.com|sevenrooms|guestonline|planity|treatwell|calendly|doctolib|booking\.com|airbnb|ubereats|deliveroo|just-?eat|bookingpage|tablebooker|mybusinessplanner|kalendes|simplybook|resengo|covermanager|opentable/i;
 const TRACK_RX=[["Pixel Meta",/connect\.facebook\.net|fbq\(/],["Google Tag Manager",/googletagmanager\.com\/gtm|GTM-[A-Z0-9]{4,}/],["Google Analytics",/googletagmanager\.com\/gtag|google-analytics\.com|gtag\(/],["Pixel TikTok",/analytics\.tiktok\.com|ttq\.load/],["Microsoft Clarity",/clarity\.ms/],["Hotjar",/hotjar\.com/],["Google Ads",/googleadservices|AW-[0-9]{6,}/]];
 const CMS_RX=[["Wix",/wix\.com|_wixCssImports|wixstatic/i],["WordPress",/wp-content|wp-includes/i],["Shopify",/cdn\.shopify|Shopify\.theme/i],["Squarespace",/squarespace/i],["Webflow",/webflow/i],["Jimdo",/jimdo/i],["PrestaShop",/prestashop/i],["Google Sites",/sites\.google/i],["Site.pro / SitW",/site123|sitew/i]];
@@ -451,6 +451,18 @@ async function geminiAsk(question){
 function aiMentions(text,name){const t=norm(text),tk=toks(name);return tk.length?tk.every(w=>t.includes(w)):false}
 function aiRank(text,name){const lines=String(text).split(/\n+/).filter(l=>/^\s*(\d+[.)]|[-*•])\s+/.test(l));const i=lines.findIndex(l=>aiMentions(l,name));return i>=0?i+1:null}
 
+/* Réseaux sociaux : site du commerce + OpenStreetMap + recherche Bing ciblée */
+const NETS=[["Facebook","facebook.com"],["Instagram","instagram.com"],["TikTok","tiktok.com"],["YouTube","youtube.com"],["Snapchat","snapchat.com"]];
+function netOf(host){host=String(host||"").replace(/^(www|m|fr-fr|fr)\./,"");const n=NETS.find(([,d])=>host===d||host.endsWith("."+d)||(d==="youtube.com"&&host==="youtu.be")||(d==="facebook.com"&&host==="fb.com"));return n?n[0]:null}
+function profileOk(u){try{const x=new URL(u);return !/\/(sharer|share|intent|dialog|plugins|login|hashtag|explore|search|watch\?)/i.test(x.pathname+x.search)&&x.pathname.length>1}catch(e){return false}}
+async function socialScan(name,city,known){
+ const found={};(known||[]).forEach(s=>{const n=netOf(hostOf(s.url))||s.net;if(n&&NETS.some(x=>x[0]===n)&&!found[n])found[n]={url:s.url,src:s.src||"site"}});
+ const q='"'+name+'" '+city+' (site:facebook.com OR site:instagram.com OR site:tiktok.com OR site:youtube.com OR site:snapchat.com)';
+ let rows=[],engine="";try{const r=await bingSearch(q);rows=r.rows;engine=r.engine}catch(e){}
+ const tk=toks(name);
+ rows.forEach(r=>{const n=netOf(r.host);if(!n||found[n]||!profileOk(r.url))return;const t=norm(r.title+" "+decodeURIComponent(r.url).replace(/[-_./]/g," "));const hit=tk.filter(w=>t.includes(w)).length;if(tk.length&&hit>=Math.max(1,Math.ceil(tk.length*0.6)))found[n]={url:r.url,src:"recherche",title:r.title}});
+ return {found,engine,checked:NETS.map(n=>n[0])};
+}
 /* ---------- Audit automatique ---------- */
 let steps=[];
 function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||"",link:link||null});renderAutoSteps(steps)}
@@ -683,6 +695,17 @@ async function runAuto(){
   }
   if(compJobs.length){await Promise.all(compJobs);const done=compSites.filter(c=>c.perf!=null);setStep("psic",done.length?"ok":"warn",done.length?"Vitesse comparée avec "+done.length+" site(s) concurrent(s)":"Vitesse des concurrents non mesurée",done.map(c=>c.name+" : "+c.perf+"/100").join(" · "));
    const mine=data.psi&&data.psi.scores.perf;const faster=done.filter(c=>mine!=null&&c.perf>mine);if(mine!=null&&faster.length)findings.push({sev:2,text:faster.length+" concurrent(s) sur "+done.length+" ont un site plus rapide sur mobile ("+faster.map(c=>c.name+" : "+c.perf+"/100").join(", ")+", contre "+mine+"/100)."});}
+  /* 5 bis. Réseaux sociaux */
+  setStep("social","run","Présence sur les réseaux sociaux","Facebook, Instagram, TikTok, YouTube, Snapchat");
+  try{const known=[...(data.socials||[]).map(s=>({...s,src:"site ou OpenStreetMap"}))];const sc=await socialScan(name,city,known);data.social=sc;
+   const F=sc.found,list=NETS.map(n=>n[0]).filter(n=>F[n]);
+   setAuto("2-0",F.Facebook||F.Instagram?"ok":"issue",(F.Facebook||F.Instagram)?"Comptes trouvés : "+list.join(", ")+". Fréquence des publications à vérifier.":"Aucun compte Facebook ni Instagram trouvé (site, OpenStreetMap et recherche Bing).","Recherche des réseaux, "+data.fetchedAt);
+   setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok trouvé.":"Aucun compte TikTok trouvé : à envisager si la clientèle visée y est présente.","Recherche des réseaux, "+data.fetchedAt);
+   setAuto("2-4",list.length?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
+   if(!F.Facebook&&!F.Instagram)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."});
+   else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux trouvés : "+list.join(", ")+". Absent de : "+miss.join(", ")+"."})}
+   setStep("social",list.length?"ok":"warn",list.length?"Réseaux trouvés : "+list.join(", "):"Aucun réseau social trouvé",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non trouvés : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"");
+  }catch(e){setStep("social","warn","Réseaux sociaux non vérifiés",frErr(e).text)}
   /* 6. Visibilité IA : Gemini avec Recherche Google, puis questions prêtes pour les autres assistants */
   $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=typeInfo(type).kw||type;$("campaignService").value="";
   if(!state.campaignPrompts.length||state.campaign.name!==name)getCampaignPrompts(true);
@@ -783,11 +806,16 @@ function renderAutoSummary(){
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
  if(!d.fetchedAt){$("autoSummaryCard").classList.add("hidden");$("autoSummary").innerHTML="";return}
  $("autoSummaryCard").classList.remove("hidden");const sc=calc().score;
- $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
+ $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
 /* ---------- Blocs d'affichage v5 ---------- */
+function socialBlock(forReport){
+ const S=(state.data||{}).social;if(!S)return "";
+ return '<div class="socials">'+NETS.map(([n])=>{const f=S.found[n];let handle="";if(f){try{handle=decodeURIComponent(new URL(f.url).pathname).replace(/^\/|\/$/g,"").split("/")[0]}catch(e){}}
+  return '<div class="soc '+(f?"on":"off")+'"><span class="sname">'+esc(n)+'</span><span class="sstate">'+(f?(forReport?esc(handle?"@"+handle.replace(/^@/,""):"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle.replace(/^@/,""):"Voir le compte")+'</a>'):"Non trouvé")+'</span></div>'}).join("")+'</div><p class="muted"><small>Recherche sur le site du commerce, OpenStreetMap et Bing. Un compte peut exister sans être trouvé s’il n’est relié nulle part : c’est déjà un signal de faible visibilité. Activité récente à vérifier sur chaque compte.</small></p>';
+}
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
  const comps=(d.competitors||[]).filter(c=>c.ownerPhotos!=null);const med=comps.length?comps.map(c=>c.ownerPhotos).sort((a,b)=>a-b)[Math.floor(comps.length/2)]:null;
@@ -815,6 +843,25 @@ function offersBlock(issues){
  return '<div class="offers">'+list.map(([o,ps],i)=>'<div class="offer'+(i===0?" first":"")+'"><b>'+esc(o)+'</b><small>'+ps.length+' point'+(ps.length>1?"s":"")+' traité'+(ps.length>1?"s":"")+'</small><ul>'+ps.slice(0,4).map(p=>'<li>'+esc(p.it)+'</li>').join("")+'</ul></div>').join("")+'</div>';
 }
 
+/* Ce qu'AffiAds peut apporter, et ce qu'il ne fait pas : adapté aux constats de l'audit */
+function scopeBlock(issues){
+ const d=state.data||{},has=k=>issues.some(p=>p.k===k);
+ const can=[
+  ["Fiche Google optimisée",(has("0-0")||has("0-1")||has("0-2")||has("0-7")||has("0-8")||has("0-9")?"Corriger et compléter les points relevés : ":"Compléter et tenir à jour : ")+"catégories, description, services, horaires, liens et doublons."],
+  ["Photos et vidéos sur mesure","Photos professionnelles et pubs vidéo verticales (15 s et plus, format Reels) au goût du commerce, pour la fiche Google, le site et les réseaux"+(d.ownerPhotos!=null&&d.ownerPhotos<4?", là où l’audit montre peu de photos du propriétaire.":".")],
+  ["Réseaux sociaux","Contenus réguliers pour Instagram, Facebook, TikTok et YouTube, avec une identité cohérente partout."],
+  ["Site web mobile",normalizeUrl(state.biz.site)?"Améliorer le site existant : vitesse, boutons d’appel et de réservation, infos pratiques et données pour Google et les IA.":"Créer un site mobile simple : infos pratiques, carte, bouton d’appel, liens vers les réseaux."],
+  ["Collecte d’avis","Outils simples pour obtenir plus d’avis récents (QR code, message après la visite) et réponses aux avis."],
+  ["Présence sur Bing et les assistants IA","Fiches et annuaires cohérents (Bing Places, PagesJaunes, TripAdvisor…) pour être mieux cité par Bing, Gemini, ChatGPT et Copilot."],
+  ["Suivi des progrès","Nouvel audit après les actions pour mesurer l’évolution, avec les mêmes indicateurs datés."]];
+ const cannot=[
+  "Garantir une position précise sur Google, Bing ou dans les réponses des IA : leurs classements dépendent de leurs propres algorithmes.",
+  "Promettre une hausse de chiffre d’affaires : AffiAds améliore la visibilité et l’image, les résultats commerciaux dépendent aussi de l’offre, des prix et de l’accueil.",
+  "Supprimer des avis négatifs authentiques, ni publier de faux avis : seuls les avis contraires aux règles de Google peuvent être signalés.",
+  "Agir sans les accès du propriétaire : la fiche Google, les réseaux et le site restent la propriété du commerce, qui donne les accès nécessaires.",
+  "Remplacer l’expérience client : la qualité du service, des produits et de l’accueil reste la première source de bons avis."];
+ return '<div class="twocol scope"><div class="box good"><h3>Ce qu’AffiAds peut apporter</h3><ul>'+can.map(([t,x])=>'<li><b>'+esc(t)+'</b><br><span class="muted">'+esc(x)+'</span></li>').join("")+'</ul></div><div class="box neutral"><h3>Ce qu’AffiAds ne fait pas</h3><ul>'+cannot.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div></div>';
+}
 /* ---------- Rapport client v5 ---------- */
 function sec(n,title,body,cls){return '<section class="sec'+(cls?" "+cls:"")+'"><h2><span class="num">'+n+'</span>'+esc(title)+'</h2>'+body+'</section>'}
 function renderReport(){
@@ -830,14 +877,14 @@ function renderReport(){
   +scoreTile(totals.score)+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
   +'<div class="coverfoot"><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>';
- const toc='<div class="toc"><h3>Sommaire</h3><ol><li>Synthèse</li><li>Fiche Google et photos</li><li>Visibilité locale et concurrence</li><li>Visibilité sur Bing</li><li>Visibilité dans les assistants IA</li><li>Site web sur mobile</li><li>Plan d’action</li><li>Proposition AffiAds</li><li>Méthode et détail des contrôles</li></ol></div>';
+ const toc='<div class="toc"><h3>Sommaire</h3><ol><li>Synthèse</li><li>Fiche Google, photos et réseaux sociaux</li><li>Visibilité locale et concurrence</li><li>Visibilité sur Bing</li><li>Visibilité dans les assistants IA</li><li>Site web sur mobile</li><li>Plan d’action</li><li>Ce qu’AffiAds peut apporter</li><li>Méthode et détail des contrôles</li></ol></div>';
  const syn='<p class="lead">'+esc(b.name||"Le commerce")+' obtient un score indicatif de <b>'+(totals.score??"—")+'/100</b> : '+esc(vt.toLowerCase())+'. '+esc(vsub)+' L’analyse porte sur '+totals.n+' contrôles ; '+issues.length+' point'+(issues.length>1?"s":"")+' à améliorer '+(issues.length>1?"ont":"a")+' été identifié'+(issues.length>1?"s":"")+'.</p>'
   +'<div class="twocol"><div class="box good"><h3>Points forts</h3>'+(good.length?'<ul>'+good.slice(0,6).map(g=>'<li><b>'+esc(g.it)+'</b>'+(g.ev?'<br><span class="muted">'+esc(g.ev)+'</span>':'')+'</li>').join("")+'</ul>':'<p class="muted">À confirmer après vérification.</p>')+'</div><div class="box bad"><h3>Opportunités prioritaires</h3>'+(issues.length?'<ul>'+issues.slice(0,6).map(p=>'<li><b>'+esc(p.it)+'</b><br><span class="muted">'+esc(p.reco)+'</span></li>').join("")+'</ul>':'<p class="muted">Aucune priorité relevée.</p>')+'</div></div>'
   +'<h3 style="margin-top:20px">Score par catégorie</h3><div class="catbars">'+gs.map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("")+'</div>'
   +((d.findings||[]).length>3?'<h3 style="margin-top:20px">Tous les constats</h3>'+findingsHtml():'')
   +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"");
  const gHtml=(d.place?googleBlock():'<ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Note : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul><p class="muted">Ajoutez une clé Google pour analyser la fiche, les avis et les photos.</p>')
-  +(d.place?'<h3 style="margin-top:18px">Photos de la fiche</h3>'+photosBlock():'')+((d.socials||[]).length?'<p>Réseaux sociaux liés : '+d.socials.map(s=>esc(s.net)).join(", ")+'.</p>':'');
+  +(d.place?'<h3 style="margin-top:18px">Photos de la fiche</h3>'+photosBlock():'')+(socialBlock(true)?'<h3 style="margin-top:18px">Réseaux sociaux</h3>'+socialBlock(true):((d.socials||[]).length?'<p>Réseaux sociaux liés : '+d.socials.map(s=>esc(s.net)).join(", ")+'.</p>':''));
  const vis=(gridBlock()?'<h3>Carte de visibilité</h3>'+gridBlock():'')+(compBlock(true)||'<p class="muted">Concurrence non analysée : ajoutez une clé Google pour comparer notes, avis et positions.</p>');
  const bing=bingBlock(true)||'<p class="muted">Bing n’a pas pu être interrogé lors de cet audit.</p>';
  const completed=ai.filter(t=>!t.auto&&(t.presence==="yes"||t.presence==="no"));
@@ -852,13 +899,13 @@ function renderReport(){
  const closing='<div class="closing"><b style="font-size:17px">Prochaine étape</b><p class="muted" style="margin:6px 0 12px">Un échange de 10 minutes pour parcourir ce rapport et choisir ensemble les actions prioritaires. Démo et devis gratuits, sans engagement.</p><div class="brandline"><img src="assets/logo-64.png" alt="" width="36" height="36"><div><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<br><span class="muted">'+esc(contact)+'</span>':'')+'</div></div></div>';
  const body=cover+toc
   +sec(1,"Synthèse",syn)
-  +sec(2,"Fiche Google et photos",gHtml)
+  +sec(2,"Fiche Google, photos et réseaux sociaux",gHtml)
   +sec(3,"Visibilité locale et concurrence",vis,"newpage")
   +sec(4,"Visibilité sur Bing",bing+'<p class="muted"><small>Bing alimente aussi DuckDuckGo, Ecosia et Microsoft Copilot.</small></p>')
   +sec(5,"Visibilité dans les assistants IA",aiHtml)
   +sec(6,"Site web sur mobile",siteHtml)
   +sec(7,"Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre.</p>'+plan,"newpage")
-  +sec(8,"Proposition AffiAds",'<p>Les actions ci-dessus regroupées par prestation, de la plus utile à la moins urgente :</p>'+offersBlock(issues)+closing,"newpage")
+  +sec(8,"Ce qu’AffiAds peut apporter",scopeBlock(issues)+'<h3 style="margin-top:20px">Proposition adaptée à cet audit</h3><p>Les actions du plan regroupées par prestation, de la plus utile à la moins urgente :</p>'+offersBlock(issues)+closing,"newpage")
   +sec(9,"Méthode et détail des contrôles",method);
  const head='<div class="phead"><span><img src="assets/logo-64.png" alt="" width="18" height="18"> AffiAds Audit 360°</span><span>'+esc(b.name||"")+(b.city?" · "+esc(b.city):"")+'</span></div>';
  const foot='<div class="pfoot"><span>'+esc(line)+(contact?" · "+esc(contact):"")+'</span><span>Audit du '+esc(frDate(b.date||today()))+'</span></div>';
@@ -1101,7 +1148,7 @@ function showGate(mode){
  else if(mode==="change")gateText("Nouveau code","Choisissez un nouveau code de 4 à 6 chiffres.");
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
-function hideGate(){setSession(true);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function hideGate(){setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
@@ -1152,8 +1199,90 @@ function initLock(){
  },reduce?0:900);
 }
 
+/* ---------- Synchronisation chiffrée entre appareils (Supabase) ----------
+   Le secret (128 bits) ne quitte jamais les appareils reliés : le serveur reçoit
+   seulement son empreinte SHA-256 (identifiant) et des données chiffrées AES-GCM. */
+const SYNC_URL="https://vfxblubjsxwseacmslnu.supabase.co/rest/v1/rpc/",SYNC_KEY="sb_publishable_HojETqgwpBMQ_cjDzMNaAg_WGCFMaED",SYNC_LS="affiads-sync";
+const Sync={secret:"",id:"",key:null,timer:null,busy:false,last:null,err:""};
+function b64u(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+async function syncPrepare(secret){
+ const enc=new TextEncoder();
+ const idBuf=await crypto.subtle.digest("SHA-256",enc.encode("affiads-id:"+secret));
+ Sync.id=[...new Uint8Array(idBuf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+ const kBuf=await crypto.subtle.digest("SHA-256",enc.encode("affiads-key:"+secret));
+ Sync.key=await crypto.subtle.importKey("raw",kBuf,"AES-GCM",false,["encrypt","decrypt"]);Sync.secret=secret;
+}
+async function rpc(fn,args){const r=await fetch(SYNC_URL+fn,{method:"POST",headers:{"apikey":SYNC_KEY,"Content-Type":"application/json"},body:JSON.stringify(args)});const t=await r.text();if(!r.ok){let m=t;try{m=JSON.parse(t).message||t}catch(e){}throw new Error(m)}return t?JSON.parse(t):null}
+async function syncEncrypt(obj){const iv=crypto.getRandomValues(new Uint8Array(12));const c=await crypto.subtle.encrypt({name:"AES-GCM",iv},Sync.key,new TextEncoder().encode(JSON.stringify(obj)));return {data:b64(c),iv:b64(iv)}}
+async function syncDecrypt(data,iv){const p=await crypto.subtle.decrypt({name:"AES-GCM",iv:Uint8Array.from(atob(iv),c=>c.charCodeAt(0))},Sync.key,Uint8Array.from(atob(data),c=>c.charCodeAt(0)));return JSON.parse(new TextDecoder().decode(p))}
+function syncSnapshot(){
+ const audits={};Object.values(db.audits).forEach(a=>{const c=JSON.parse(JSON.stringify(a));if(c.data&&c.data.psi)delete c.data.psi.shot;audits[c.id]=c});
+ const {theme,...shared}=settings;
+ return {v:1,audits,deleted:db.deleted||{},settings:shared,settingsAt:settings.updatedAt||0};
+}
+function syncMerge(remote){
+ let changed=false;db.deleted=db.deleted||{};
+ Object.entries(remote.deleted||{}).forEach(([id,t])=>{if(!db.deleted[id]||db.deleted[id]<t){db.deleted[id]=t;changed=true}});
+ Object.values(remote.audits||{}).forEach(r=>{const l=db.audits[r.id];const rt=String(r.updatedAt||r.createdAt||"");if(db.deleted[r.id]&&String(db.deleted[r.id])>=rt)return;if(!l||String(l.updatedAt||"")<rt){db.audits[r.id]=fixState(r);changed=true}});
+ Object.keys(db.audits).forEach(id=>{const a=db.audits[id];if(db.deleted[id]&&String(db.deleted[id])>=String(a.updatedAt||a.createdAt||"")){delete db.audits[id];changed=true}});
+ const isBlank=x=>!(x.biz&&x.biz.name)&&!(x.data&&x.data.fetchedAt)&&!Object.keys(x.checks||{}).length&&!(x.aiTests||[]).length;
+ const ids=Object.keys(db.audits);if(ids.length>1)ids.forEach(id=>{if(isBlank(db.audits[id])&&Object.keys(db.audits).length>1){delete db.audits[id];changed=true}});
+ if(remote.settings&&(remote.settingsAt||0)>(settings.updatedAt||0)){const theme=settings.theme;settings={...settings,...remote.settings,theme,updatedAt:remote.settingsAt};saveSettings();changed=true}
+ return changed;
+}
+function syncSetStatus(t,bad){Sync.err=bad?t:"";const el=$("syncStatus");if(el){el.textContent=t;el.classList.toggle("keybad",!!bad)}const sv=$("savedState");if(sv&&Sync.secret&&!bad)sv.textContent="Synchronisé"}
+async function syncNow(silent){
+ if(!Sync.secret||Sync.busy)return;Sync.busy=true;
+ try{
+  const res=await rpc("affiads_pull",{p_id:Sync.id});const row=res&&res[0];
+  if(row){const remote=await syncDecrypt(row.data,row.iv);if(syncMerge(remote)){const cur=db.audits[state.id]?state.id:Object.values(db.audits).sort((x,y)=>String(y.updatedAt||y.createdAt).localeCompare(String(x.updatedAt||x.createdAt))).map(x=>x.id)[0];if(cur){state=fixState(db.audits[cur]);db.current=cur}else{state=blankState();db.audits[state.id]=state;db.current=state.id}try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}if(!document.body.classList.contains("locked"))hydrate();else renderClientSelect()}}
+  const enc=await syncEncrypt(syncSnapshot());await rpc("affiads_push",{p_id:Sync.id,p_data:enc.data,p_iv:enc.iv});
+  Sync.last=new Date();syncSetStatus("Synchronisé à "+Sync.last.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+".");
+ }catch(e){syncSetStatus("Synchronisation impossible pour le moment ("+frErr(e).text+"). Vos données restent sur cet appareil.",true);if(!silent)toast("Synchronisation impossible pour le moment.")}
+ finally{Sync.busy=false}
+}
+function syncSoon(){if(!Sync.secret)return;clearTimeout(Sync.timer);Sync.timer=setTimeout(()=>syncNow(true),2500)}
+function syncLink(){return location.origin+location.pathname+"#sync="+Sync.secret}
+async function syncEnable(secret,isJoin){
+ await syncPrepare(secret);try{localStorage.setItem(SYNC_LS,secret)}catch(e){}
+ syncSetStatus(isJoin?"Récupération de vos données…":"Activation…");await syncNow(false);renderSyncCard();
+ if(!Sync.err)toast(isJoin?"Appareil relié : vos audits sont à jour.":"Synchronisation activée. Scannez le QR code avec votre autre appareil.");
+}
+async function syncInit(){
+ let s="";try{s=localStorage.getItem(SYNC_LS)||""}catch(e){}
+ if(s){await syncPrepare(s);syncNow(true)}
+ renderSyncCard();
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncNow(true)});
+ window.addEventListener("online",()=>syncNow(true));
+ setInterval(()=>{if(!document.hidden)syncNow(true)},120000);
+}
+let qrLib=null;
+function loadQr(){if(window.qrcode)return Promise.resolve();if(qrLib)return qrLib;qrLib=new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js";sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc)});return qrLib}
+async function renderSyncCard(){
+ const box=$("syncBox");if(!box)return;
+ if(!Sync.secret){box.innerHTML='<p class="muted">Retrouvez les mêmes audits, clients et réglages sur votre téléphone et votre ordinateur. Les données sont chiffrées sur l’appareil avant l’envoi.</p><div class="actions"><button class="btn primary" id="syncOn">Activer la synchronisation</button></div><details class="help"><summary>J’ai déjà activé la synchronisation sur un autre appareil</summary><p>Sur l’autre appareil, ouvrez Réglages → Synchronisation et scannez le QR code avec l’appareil photo de celui-ci. Ou collez le lien de liaison ici :</p><div class="field"><label for="syncPaste" class="sr">Lien de liaison</label><input id="syncPaste" placeholder="https://…#sync=…" autocomplete="off"></div><div class="actions" style="margin-top:10px"><button class="btn" id="syncJoin">Relier cet appareil</button></div></details>';
+  $("syncOn").onclick=async()=>{if(!crypto.subtle){toast("Ce navigateur ne permet pas le chiffrement.");return}const sec=b64u(crypto.getRandomValues(new Uint8Array(16)));await syncEnable(sec,false)};
+  $("syncJoin").onclick=async()=>{const m=$("syncPaste").value.match(/sync=([A-Za-z0-9_-]{20,})/);if(!m){toast("Lien de liaison invalide.");return}await syncEnable(m[1],true)};
+  return}
+ box.innerHTML='<p class="keyok" id="syncStatus">'+esc(Sync.err||(Sync.last?"Synchronisé à "+Sync.last.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+".":"Synchronisation active."))+'</p><div class="syncpair"><div id="syncQr" class="syncqr" aria-label="QR code de liaison"></div><div><b>Relier un autre appareil</b><ol class="muted"><li>Ouvrez l’appareil photo du téléphone.</li><li>Visez ce QR code et touchez le lien.</li><li>Saisissez ou créez le code d’accès : les audits apparaissent.</li></ol><div class="actions"><button class="btn" id="syncCopy">Copier le lien</button><button class="btn" id="syncRun">Synchroniser maintenant</button></div></div></div><p class="muted"><small>Gardez ce lien pour vous : il donne accès à vos audits.</small></p><div class="actions"><button class="btn" id="syncOff">Arrêter sur cet appareil</button></div>';
+ if(Sync.err)$("syncStatus").classList.add("keybad");
+ $("syncCopy").onclick=()=>copyText(syncLink(),"Lien de liaison copié.");
+ $("syncRun").onclick=()=>syncNow(false);
+ $("syncOff").onclick=()=>{if(!confirm("Arrêter la synchronisation sur cet appareil ? Les données restent sur l’appareil et en ligne pour vos autres appareils."))return;try{localStorage.removeItem(SYNC_LS)}catch(e){}Sync.secret="";Sync.id="";Sync.key=null;$("savedState").textContent="Enregistré";renderSyncCard()};
+ try{await loadQr();const q=qrcode(0,"M");q.addData(syncLink());q.make();$("syncQr").innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}catch(e){$("syncQr").innerHTML='<p class="muted">QR code indisponible : utilisez « Copier le lien ».</p>'}
+}
+/* Lien de liaison ouvert depuis le QR code */
+let pendingSync="";
+{const m=location.hash.match(/^#sync=([A-Za-z0-9_-]{20,})$/);if(m){pendingSync=m[1];history.replaceState(null,"",location.pathname+"#settings")}}
+async function syncHandlePending(){
+ if(!pendingSync)return;const s=pendingSync;pendingSync="";
+ if(Sync.secret===s){toast("Cet appareil est déjà relié.");return}
+ if(!confirm("Relier cet appareil à votre synchronisation AffiAds ? Les audits des deux appareils seront réunis."))return;
+ await syncEnable(s,true);nav("clients");
+}
+
 /* ---------- Démarrage ---------- */
-bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();
+bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();syncInit();
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
