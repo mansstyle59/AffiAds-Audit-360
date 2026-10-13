@@ -123,7 +123,7 @@ function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.i
  /* Quota dépassé : on retire la capture d'écran, la plus lourde */
  try{Object.values(db.audits).forEach(a=>{if(a.data&&a.data.psi)delete a.data.psi.shot});localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e2){return false}}}
 function saveSettings(){try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
-function auditLabel(s){return (s.biz&&s.biz.name?s.biz.name:"Nouveau client")+(s.biz&&s.biz.city?" · "+s.biz.city:"")+" — "+(s.biz&&s.biz.date||s.createdAt||"")}
+function auditLabel(s){const d=s.biz&&s.biz.date||s.createdAt||"";return (s.biz&&s.biz.name?s.biz.name:"Nouveau client")+(s.biz&&s.biz.city?", "+s.biz.city:"")+(d?" ("+new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+")":"")}
 function renderClientSelect(){$("clientSelect").innerHTML=Object.values(db.audits).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))).map(s=>'<option value="'+esc(s.id)+'"'+(s.id===state.id?" selected":"")+'>'+esc(auditLabel(s))+'</option>').join("")}
 function switchTo(id){read();persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
 function hydrate(){
@@ -166,7 +166,7 @@ function update(){
 /* ---------- Clé Google ---------- */
 function hasKey(){return !!(settings.googleKey&&settings.googleKey.trim())}
 function renderKeyNotice(){
- $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Mode gratuit actif</span> Aucune clé nécessaire : site, réseaux, concurrents OpenStreetMap et IA. <a href="#" data-goto="settings" style="color:#fff;font-weight:800;white-space:nowrap">Ajouter les avis Google →</a>';
+ $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Gratuit</span> Site, réseaux, concurrents à proximité et IA analysés sans clé. <a href="#" data-goto="settings">Ajouter les avis Google</a>';
  const a=$("keyNotice").querySelector("[data-goto]");if(a)a.onclick=e=>{e.preventDefault();nav("settings")};
  $("googleKey").value=settings.googleKey||"";
  $("keyStatus").innerHTML=hasKey()?'<span class="keyok">Clé enregistrée dans ce navigateur.</span>':'Aucune clé enregistrée.';
@@ -372,7 +372,8 @@ function keywordList(type,city){
 let steps=[];
 function setStep(id,status,title,detail){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||""});renderAutoSteps(steps)}
 function renderAutoSteps(list){
- if(!running){$("progTitle").textContent=list&&list.length?"✓ Analyse terminée — "+list.length+" étapes (détail)":"Progression";$("progDetails").open=!(list&&list.length)}
+ $("progCard").classList.toggle("hidden",!(list&&list.length)&&!running);
+ if(!running){$("progTitle").textContent=list&&list.length?"Analyse terminée : voir les "+list.length+" étapes":"Progression";$("progDetails").open=!(list&&list.length)}
  if(!list||!list.length){$("autoSteps").innerHTML='<p class="muted">Aucune analyse lancée pour ce client.</p>';return}
  const ico={run:'<span class="spin">◌</span>',ok:"✓",warn:"!",err:"✕",skip:"–"};
  $("autoSteps").innerHTML=list.map(s=>'<div class="step '+s.status+'"><span class="ico">'+(ico[s.status]||"•")+'</span><div><b>'+esc(s.title)+'</b>'+(s.detail?'<small>'+esc(s.detail)+'</small>':'')+'</div></div>').join("");
@@ -383,7 +384,7 @@ async function runAuto(){
  if(running)return;
  const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
- running=true;closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
+ running=true;document.body.classList.add("scanning");closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
  steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
  state.biz.name=name;state.biz.city=city;state.biz.date=today();
@@ -568,22 +569,23 @@ async function runAuto(){
   state.pitch=buildPitch();
   persistLocal();
   renderClientSelect();renderChecklist();update();renderAutoSummary();renderPlaceChoice();$("pitchText").value=state.pitch;renderTools();
-  $("progDetails").open=false;$("progTitle").textContent="✓ Analyse terminée — "+steps.length+" étapes (détail)";
-  $("autoSummaryCard").scrollIntoView({behavior:"smooth",block:"start"});
+  $("progDetails").open=false;$("progTitle").textContent="Analyse terminée : voir les "+steps.length+" étapes";
+  $("autoSummaryCard").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
   toast("Audit terminé : résultats ci-dessous.");
  }catch(e){setStep("fatal","err","Erreur inattendue",e.message)}
- finally{running=false;$("runAuto").disabled=false;$("runAuto").textContent="⚡ Relancer l'audit automatique";state.data.steps=steps;persistLocal()}
+ finally{running=false;document.body.classList.remove("scanning");$("runAuto").disabled=false;$("runAuto").textContent="Relancer l'audit";state.data.steps=steps;persistLocal()}
 }
 function hydrateBizFields(){fields.forEach(id=>{if(state.biz[id]!==undefined&&state.biz[id]!==null)$(id).value=state.biz[id]});$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||""}
 
 function kpiBox(v,label,cls){return '<div class="kpi '+(cls||"")+'"><b>'+v+'</b><span>'+label+'</span></div>'}
 function cwvLabel(m,unit){if(!m)return "—";const v=unit==="s"?fr1(m.p75/1000)+" s":unit==="cls"?fr1(m.p75/100):m.p75+" ms";return v+" ("+({FAST:"bon",AVERAGE:"moyen",SLOW:"mauvais"}[m.cat]||"—")+")"}
-function verdict(score){return score===null?["Audit à compléter","Lancez l'audit automatique ou cochez les contrôles."]:score>=85?["Bonne visibilité","Les fondamentaux sont en place ; quelques optimisations restent possibles."]:score>=60?["Visibilité à renforcer","Plusieurs points freinent la découverte du commerce par de nouveaux clients."]:["Visibilité insuffisante","Des points importants empêchent le commerce d'être trouvé et choisi en ligne."]}
-function gauge(score,onDark){
- const r=46,c=2*Math.PI*r,v=score==null?0:Math.max(0,Math.min(100,score)),col=score==null?"#9aa3b5":score>=85?"#16765d":score>=60?"#d99a1e":"#c23b50";
- const track=onDark?"#ffffff33":"#eceff5",ink=onDark?"#fff":"#17171c",sub=onDark?"#e6e3ff":"#697386";const [t,sx]=verdict(score);
- return '<div class="gauge"><svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Score '+(score??"non calculé")+' sur 100"><circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+track+'" stroke-width="11"/><circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+(onDark?"#ffd56b":col)+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+(c*v/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" font-size="30" font-weight="850" fill="'+ink+'" font-family="system-ui,sans-serif">'+(score??"—")+'</text><text x="60" y="82" text-anchor="middle" font-size="11" fill="'+sub+'" font-family="system-ui,sans-serif">/ 100</text></svg><div class="verdict"><b>'+t+'</b><span>'+sx+'<br>Score indicatif calculé sur les contrôles effectués.</span></div></div>';
+function verdict(score){return score===null?["Audit à compléter","Lancez l'audit ou cochez les contrôles de la checklist."]:score>=85?["Bonne visibilité","Les fondamentaux sont en place ; quelques optimisations restent possibles."]:score>=60?["Visibilité à renforcer","Plusieurs points freinent la découverte du commerce par de nouveaux clients."]:["Visibilité insuffisante","Des points importants empêchent le commerce d'être trouvé et choisi en ligne."]}
+function scoreTile(score,small){
+ const [t,sx]=verdict(score);
+ return '<div class="scoretile"><div class="tile'+(small?" sm":"")+'" role="img" aria-label="Score '+(score??"non calculé")+' sur 100"><span class="sig"></span><span class="n">'+(score??"—")+'</span><span class="d">sur 100</span></div><div class="verdict"><b>'+esc(t)+'</b><span>'+esc(sx)+'</span></div></div>';
 }
+function gauge(score){return scoreTile(score,true)}
+function frDate(iso){if(!iso)return "";const d=new Date(iso.length===10?iso+"T12:00:00":iso);return isNaN(d)?iso:d.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}
 function hbars(title,sub,items,fmt){
  const vals=items.map(i=>i.value).filter(v=>v!=null&&!isNaN(v));if(!vals.length)return "";
  const max=Math.max(...vals,1);
@@ -640,8 +642,9 @@ function googleBlock(){
 function renderAutoSummary(){
  const d=state.data||{};
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
- if(!d.fetchedAt){$("autoSummary").innerHTML='<p class="muted">Les résultats apparaîtront ici après l\'analyse.</p>';return}
- $("autoSummary").innerHTML=kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')+compBlock(false)+((d.psi||d.html)?'<h3 style="margin-top:14px">Site web sur mobile</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Voir le rapport complet →</button><button class="btn" data-go2="pitch">Rédiger le message prospect →</button></div>';
+ if(!d.fetchedAt){$("autoSummaryCard").classList.add("hidden");$("autoSummary").innerHTML="";return}
+ $("autoSummaryCard").classList.remove("hidden");const sc=calc().score;
+ $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+compBlock(false)+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
@@ -652,10 +655,10 @@ function renderReport(){
  const totals=calc(),b=state.biz,ai=state.aiTests,d=state.data||{};
  const issues=issuesList(),good=strengths();
  const [vt]=verdict(totals.score);
- const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AFFIADS · AUDIT 360°</div><div class="eyebrow" style="margin-top:18px">Audit de visibilité en ligne</div><h1>'+esc(b.name||"Commerce à renseigner")+'</h1><div class="meta">'+esc(b.type||"")+(b.city?" · "+esc(b.city):"")+" · audit du "+esc(b.date||today())+(d.fetchedAt?" · données collectées le "+esc(d.fetchedAt):"")+'</div>'+gauge(totals.score,true)+kpiRow()+'<div class="coverfoot">Rapport préparé par '+esc((settings.senderName?settings.senderName+" — ":"")+(settings.senderLine||"AffiAds"))+(settings.senderContact?" · "+esc(settings.senderContact):"")+'</div></div>';
+ const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div><span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Commerce à renseigner")+'</h1><div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.date?", audité le "+esc(frDate(b.date)):"")+(d.fetchedAt?". Données publiques collectées le "+esc(d.fetchedAt)+".":"")+'</div>'+scoreTile(totals.score)+kpiRow()+'<div class="coverfoot">Rapport préparé par '+esc((settings.senderName?settings.senderName+", ":"")+(settings.senderLine||"AffiAds"))+(settings.senderContact?" ("+esc(settings.senderContact)+")":"")+'</div></div>';
  const syn='<p>'+esc(b.name||"Le commerce")+' obtient un score indicatif de <b>'+(totals.score??"—")+'/100</b> ('+esc(vt.toLowerCase())+'), calculé sur '+totals.n+' contrôles. '+(issues.length?(()=>{const q=issues.filter(p=>prioLabel(p)[0]==="Gain rapide").length;return issues.length+' point(s) à améliorer ont été identifiés'+(q?', dont '+q+' gain(s) rapide(s) à faible effort.':'.')})():'Aucun point bloquant n’a été relevé.')+'</p>'
-  +'<div class="twocol"><div class="box good"><h3>Ce qui fonctionne</h3>'+(good.length?'<ul>'+good.slice(0,5).map(g=>'<li><b>'+esc(g.it)+'</b>'+(g.ev?'<br><span class="muted">'+esc(g.ev)+'</span>':'')+'</li>').join("")+'</ul>':'<p class="muted">À confirmer après vérification.</p>')+'</div><div class="box bad"><h3>Priorités</h3>'+(issues.length?'<ul>'+issues.slice(0,5).map(p=>'<li><b>'+esc(p.it)+'</b><br><span class="muted">'+esc(p.reco)+'</span></li>').join(""):'<p class="muted">Aucune priorité relevée.</p>')+'</div></div>'
-  +((d.findings||[]).length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')
+  +'<div class="twocol"><div class="box good"><h3>Points forts</h3>'+(good.length?'<ul>'+good.slice(0,5).map(g=>'<li><b>'+esc(g.it)+'</b>'+(g.ev?'<br><span class="muted">'+esc(g.ev)+'</span>':'')+'</li>').join("")+'</ul>':'<p class="muted">À confirmer après vérification.</p>')+'</div><div class="box bad"><h3>Opportunités prioritaires</h3>'+(issues.length?'<ul>'+issues.slice(0,5).map(p=>'<li><b>'+esc(p.it)+'</b><br><span class="muted">'+esc(p.reco)+'</span></li>').join(""):'<p class="muted">Aucune priorité relevée.</p>')+'</div></div>'
+  +((d.findings||[]).length?'<h3 style="margin-top:22px">Ce que nous avons constaté</h3>'+findingsHtml():'')
   +'<h3 style="margin-top:14px">Score par catégorie</h3><div class="catbars">'+groupScores().map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("")+'</div>'
   +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"");
  const gHtml=d.place?googleBlock():'<ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Fiche Google : '+(safeUrl(b.maps)?'<a href="'+esc(safeUrl(b.maps))+'">ouvrir la fiche</a>':"non renseignée")+'</li><li>Note : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul>';
@@ -698,8 +701,9 @@ function buildPitch(){
 
 /* ---------- Navigation ---------- */
 const VIEWS=["auto","home","audit","report","pitch","campaign","research","webcheck","tools","settings"];
-const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données réelles pour vous."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche internet","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Analyse réelle du site sur mobile."],home:["Tableau de bord","Synthèse du commerce et du diagnostic."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Clé Google, signature et sauvegardes."]};
-function nav(v){VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}window.scrollTo({top:0,behavior:"smooth"})}
+const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données publiques pour vous."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche internet","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Analyse réelle du site sur mobile."],home:["Tableau de bord","Synthèse du commerce et du diagnostic."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Clé Google, signature et sauvegardes."]};
+function closeMore(){const n=document.querySelector(".nav");n.classList.remove("open");$("navMore").setAttribute("aria-expanded","false")}
+function nav(v){closeMore();VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===v));$("navMore").classList.toggle("active",!["auto","report","pitch"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}window.scrollTo({top:0,behavior:"smooth"})}
 
 /* ---------- Boîte à outils (liens préremplis) ---------- */
 function renderTools(){
@@ -796,6 +800,9 @@ function buildResearch(){
 function bind(){
  const opts=BIZ_TYPES.map(t=>'<option>'+esc(t.label)+'</option>').join("");$("type").innerHTML=opts;$("autoType").innerHTML=opts;
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));
+ $("navMore").addEventListener("click",e=>{e.stopPropagation();const n=document.querySelector(".nav"),o=!n.classList.contains("open");n.classList.toggle("open",o);$("navMore").setAttribute("aria-expanded",String(o))});
+ document.addEventListener("click",e=>{if(!e.target.closest(".nav"))closeMore()});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMore()});
  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));
  fields.forEach(id=>$(id).addEventListener("input",()=>{read();renderReport();persistLocal()}));
  $("autoType").addEventListener("change",()=>{$("autoType").dataset.touched="1";if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords($("autoType").value)});
