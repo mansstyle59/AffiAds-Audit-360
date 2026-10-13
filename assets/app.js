@@ -199,7 +199,7 @@ function hydrate(){
  $("autoName").value=state.biz.name||"";$("autoCity").value=state.biz.city||"";$("autoType").value=state.biz.type||BIZ_TYPES[0].label;$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||"";
  ["autoType","autoKeyword"].forEach(id=>delete $(id).dataset.touched);if(state.biz.keyword)$("autoKeyword").dataset.touched="1";setPickInfo();renderPlaceChoice();closeSuggest();
  renderClientSelect();renderChecklist();update();drawAiTests();renderCampaignPrompts();renderAutoSteps(state.data.steps||[]);renderAutoSummary();$("pitchText").value=state.pitch||"";renderTools();renderKeyNotice();
- $("socUrl").value="";$("socNiche").value="";renderSocial();
+ $("socUrl").value="";$("socNiche").value="";renderSocial();setReportFormat(settings.reportFormat||"one");
 }
 
 /* ---------- Checklist & score ---------- */
@@ -642,6 +642,7 @@ function renderAutoSteps(list){
  if(!list||!list.length){$("autoSteps").innerHTML='<p class="muted">Aucune analyse lancée pour ce client.</p>';return}
  const ico={run:'<span class="spin">◌</span>',ok:"✓",warn:"!",err:"✕",skip:"–"};
  $("autoSteps").innerHTML=list.map(s=>'<div class="step '+s.status+'"><span class="ico">'+(ico[s.status]||"•")+'</span><div><b>'+esc(s.title)+'</b>'+(s.detail?'<small>'+esc(s.detail)+'</small>':'')+(s.link?'<a class="steplink" href="'+esc(s.link.href)+'"'+(String(s.link.href).startsWith("#")?'':' target="_blank" rel="noopener"')+'>'+esc(s.link.label)+'</a>':'')+'</div></div>').join("");
+ glossify($("autoSteps"));
 }
 function setAuto(k,status,evidence,source){state.auto[k]={status,evidence,source:source||"",at:today()};if(status==="ok"||status==="issue"){state.checks[k]=true;state.issues[k]=status==="issue"}}
 let running=false;
@@ -777,9 +778,9 @@ async function runAuto(){
   if(hasKey()&&place&&data.loc&&!(googleBlocked&&["disabled","badkey","referer","billing"].includes(googleBlocked))){
    const gq=queries[0];setStep("grid","run","Carte de visibilité : 9 points autour du commerce","« "+gq+" »");
    try{const g=await visibilityGrid(gq,data.loc,place.id,1.5);data.grid=g;
-    setStep("grid",g.top3>=6?"ok":"warn","Top 3 depuis "+g.top3+" point"+(g.top3>1?"s":"")+" sur "+g.total+" · visible depuis "+g.found+" / "+g.total,"Points espacés de 1,5 km autour du commerce.");
-    setAuto("3-5",(state.auto["3-5"]&&state.auto["3-5"].status==="issue")||g.top3<6?"issue":"ok",(state.auto["3-5"]?state.auto["3-5"].evidence+" ":"")+"Carte de visibilité : top 3 depuis "+g.top3+" / "+g.total+" points autour du commerce.","Google Places, "+data.fetchedAt);
-    if(g.top3<g.total)findings.push({sev:g.top3<=3?3:2,text:"Carte de visibilité sur « "+gq+" » : le commerce "+(g.top3?"n’est dans le top 3 que depuis "+g.top3+" point"+(g.top3>1?"s":""):"n’est dans le top 3 depuis aucun point")+" sur "+g.total+" autour de lui"+(g.found<g.total?", et il est invisible (hors des 20 premiers) depuis "+(g.total-g.found)+" point(s)":"")+"."});
+    setStep("grid",g.top3>=6?"ok":"warn","Carte : dans les 3 premiers depuis "+g.top3+" endroit"+(g.top3>1?"s":"")+" sur "+g.total,gridVerdict(g)[1]);
+    setAuto("3-5",(state.auto["3-5"]&&state.auto["3-5"].status==="issue")||g.top3<6?"issue":"ok",(state.auto["3-5"]?state.auto["3-5"].evidence+" ":"")+"Carte : dans les 3 premiers depuis "+g.top3+" endroits sur "+g.total+" autour du commerce.","Google Places, "+data.fetchedAt);
+    if(g.top3<g.total)findings.push({sev:g.top3<=3?3:2,text:"Google Maps, recherche « "+gq+" » faite depuis 9 endroits autour du commerce : "+gridVerdict(g)[1].replace(/^./,c=>c.toLowerCase())});
    }catch(e){const f=frErr(e);setStep("grid","warn","Carte de visibilité non mesurée",f.text,f.link)}
   }
   /* 4 ter. Bing (et moteurs alimentés par Bing : DuckDuckGo, Copilot, Ecosia) */
@@ -996,7 +997,8 @@ function renderAutoSummary(){
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
  if(!d.fetchedAt){$("autoSummaryCard").classList.add("hidden");$("autoSummary").innerHTML="";return}
  $("autoSummaryCard").classList.remove("hidden");const sc=calc().score;
- $("autoSummary").innerHTML='<h2 style="margin-bottom:4px">'+esc(state.biz.name||"Résultats")+'</h2>'+bizLine()+scoreTile(sc)+partialNote()+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
+ $("autoSummary").innerHTML='<h2 style="margin-bottom:4px">'+esc(state.biz.name||"Résultats")+'</h2>'+bizLine()+scoreTile(sc)+partialNote()+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Où le commerce est vu sur Google Maps</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
+ glossify($("autoSummary"));
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
@@ -1012,10 +1014,26 @@ function photosBlock(){
  return '<div class="photohead"><b>'+(d.ownerPhotos??0)+' / '+(d.photos??0)+'</b><span>photos publiées par le propriétaire, parmi celles que Google met en avant'+(med!=null?'. Médiane des concurrents : '+med:'')+'.</span></div>'
   +(L.length?'<div class="photostrip">'+L.map(ph=>'<figure><img src="'+esc(ph.uri)+'" alt="Photo de la fiche Google" loading="lazy" referrerpolicy="no-referrer"><figcaption>'+(ph.owner?'Propriétaire':'Client'+(ph.author?' · '+esc(ph.author):''))+'</figcaption></figure>').join("")+'</div>':'');
 }
+/* Carte de visibilité : vraie carte OpenStreetMap, pastilles = position du commerce vue depuis chaque endroit */
+function gridDir(dx,dy){return ({"0,1":"au nord","0,-1":"au sud","1,0":"à l’est","-1,0":"à l’ouest","1,1":"au nord-est","-1,1":"au nord-ouest","1,-1":"au sud-est","-1,-1":"au sud-ouest","0,0":"au commerce même"})[dx+","+dy]}
+function ordFr(n){return n===1?"1er":n+"e"}
+function gridVerdict(g){
+ const ok=g.points.filter(p=>p.ok),weak=ok.filter(p=>!p.rank||p.rank>3);
+ const where=weak.map(p=>gridDir(p.dx,p.dy)+" ("+(p.rank?ordFr(p.rank):"absent")+")");
+ if(!weak.length)return ["Excellent","Quand un client cherche « "+g.query+" » autour du commerce, il le voit dans les 3 premiers résultats partout, jusqu’à environ 2 km.","g"];
+ if(g.top3>=6)return ["Bon","Le commerce est dans les 3 premiers presque partout autour de lui. Plus faible "+where.join(", ")+".","g"];
+ if(g.top3>=1)return ["À renforcer","Il n’est dans les 3 premiers que depuis "+g.top3+" endroit"+(g.top3>1?"s":"")+" sur "+g.total+". Ailleurs, les clients voient d’abord ses concurrents : "+where.slice(0,4).join(", ")+(where.length>4?"…":"")+".","m"];
+ return ["Faible","Depuis aucun des "+g.total+" endroits testés le commerce n’apparaît dans les 3 premiers : les clients voisins voient d’abord ses concurrents.","b"];
+}
 function gridBlock(){
  const g=(state.data||{}).grid;if(!g)return "";
- const cell=pt=>{const r=pt.rank,cls=!pt.ok?"na":r&&r<=3?"g":r&&r<=10?"m":"b";return '<div class="gcell '+cls+(pt.dx===0&&pt.dy===0?" me":"")+'" title="'+(pt.ok?(r?"Position "+r:"Hors des 20 premiers"):"Non mesuré")+'"><b>'+(pt.ok?(r||"20+"):"–")+'</b></div>'};
- return '<div class="gridwrap"><div class="ggrid" role="img" aria-label="Carte de visibilité : top 3 depuis '+g.top3+' points sur '+g.total+'">'+g.points.map(cell).join("")+'</div><div class="gtext"><b>Top 3 depuis '+g.top3+' point'+(g.top3>1?"s":"")+' sur '+g.total+'</b><span>Position du commerce sur « '+esc(g.query)+' » vue depuis 9 points espacés de '+String(g.spacingKm).replace(".",",")+' km autour de lui (le centre est le commerce).</span><span class="glegend"><i class="g"></i>1 à 3 <i class="m"></i>4 à 10 <i class="b"></i>au-delà</span></div></div>';
+ const c=g.points.find(p=>p.dx===0&&p.dy===0)||g.points[4];const Z=13,T=256,W=330,H=330;
+ const wx=(lng)=>(lng+180)/360*T*2**Z,wy=(lat)=>{const r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*T*2**Z};
+ const x0=wx(c.lng)-W/2,y0=wy(c.lat)-H/2;let tiles="";
+ for(let tx=Math.floor(x0/T);tx<=Math.floor((x0+W)/T);tx++)for(let ty=Math.floor(y0/T);ty<=Math.floor((y0+H)/T);ty++)tiles+='<img src="https://tile.openstreetmap.org/'+Z+'/'+tx+'/'+ty+'.png" alt="" style="left:'+((tx*T-x0)/W*100).toFixed(2)+'%;top:'+((ty*T-y0)/H*100).toFixed(2)+'%;width:'+(T/W*100).toFixed(2)+'%;height:'+(T/H*100).toFixed(2)+'%" loading="lazy" onerror="this.remove()">';
+ const pins=g.points.map(p=>{const r=p.rank,cls=!p.ok?"na":r&&r<=3?"g":r&&r<=10?"m":"b";const me=p.dx===0&&p.dy===0;return '<span class="gpin '+cls+(me?" me":"")+'" style="left:'+((wx(p.lng)-x0)/W*100).toFixed(2)+'%;top:'+((wy(p.lat)-y0)/H*100).toFixed(2)+'%" title="'+esc(gridDir(p.dx,p.dy))+' : '+(p.ok?(r?ordFr(r)+" sur Google":"pas dans les 20 premiers"):"non mesuré")+'">'+(p.ok?(r?(r>20?"20+":ordFr(r)):"absent"):"?")+'</span>'}).join("");
+ const [vt,vx,vc]=gridVerdict(g);
+ return '<div class="gridwrap"><div class="gmap" role="img" aria-label="Carte : position du commerce sur Google depuis 9 endroits autour de lui">'+tiles+'<span class="gveil"></span>'+pins+'<span class="gosm">© OpenStreetMap</span></div><div class="gtext"><span class="gverdict '+vc+'">'+esc(vt)+'</span><b>'+esc(vx)+'</b><span>Comment lire la carte : on a fait la recherche « '+esc(g.query)+' » comme un client placé à 9 endroits autour du commerce (le point entouré, au centre), espacés d’environ '+String(g.spacingKm).replace(".",",")+' km. Chaque pastille indique la place du commerce dans les résultats Google à cet endroit.</span><span class="glegend"><i class="g"></i>1er à 3e : vu tout de suite <i class="m"></i>4e à 10e : il faut faire défiler <i class="b"></i>au-delà : quasi invisible</span></div></div>';
 }
 function bingBlock(forReport){
  const B=(state.data||{}).bing;if(!B||(!B.keyword&&!B.brand))return "";
@@ -1074,7 +1092,7 @@ function renderReport(){
   +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"");
  const gHtml=(d.place?googleBlock():'<ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Note : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul><p class="muted">Ajoutez une clé Google pour analyser la fiche, les avis et les photos.</p>')
   +(d.place?'<h3 style="margin-top:18px">Photos de la fiche</h3>'+photosBlock():'')+(socialBlock(true)?'<h3 style="margin-top:18px">Réseaux sociaux</h3>'+socialBlock(true):((d.socials||[]).length?'<p>Réseaux sociaux liés : '+d.socials.map(s=>esc(s.net)).join(", ")+'.</p>':''));
- const vis=(gridBlock()?'<h3>Carte de visibilité</h3>'+gridBlock():'')+(compBlock(true)||'<p class="muted">Concurrence non analysée : ajoutez une clé Google pour comparer notes, avis et positions.</p>');
+ const vis=(gridBlock()?'<h3>Où le commerce est vu sur Google Maps</h3>'+gridBlock():'')+(compBlock(true)||'<p class="muted">Concurrence non analysée : ajoutez une clé Google pour comparer notes, avis et positions.</p>');
  const bing=bingBlock(true)||'<p class="muted">Bing n’a pas pu être interrogé lors de cet audit.</p>';
  const completed=ai.filter(t=>!t.auto&&(t.presence==="yes"||t.presence==="no"));
  const aiHtml=(aiAutoBlock(true)||'<p class="muted">Test automatique non réalisé : ajoutez une clé Google avec Gemini activé.</p>')
@@ -1103,7 +1121,8 @@ function renderReport(){
  const body=cover+toc+S.map((x,i)=>sec(i+1,x[0],x[1],x[2])).join("");
  const head='<div class="phead"><span><img src="assets/logo-64.png" alt="" width="18" height="18"> AffiAds Audit 360°</span><span>'+esc(b.name||"")+(b.city?" · "+esc(b.city):"")+'</span></div>';
  const foot='<div class="pfoot"><span>'+esc(line)+(contact?" · "+esc(contact):"")+'</span><span>Audit du '+esc(frDate(b.date||today()))+'</span></div>';
- $("report").innerHTML='<table class="printwrap"><thead><tr><td>'+head+'</td></tr></thead><tbody><tr><td>'+body+'</td></tr></tbody><tfoot><tr><td>'+foot+'</td></tr></tfoot></table>';
+ glossClose();$("report").innerHTML='<table class="printwrap"><thead><tr><td>'+head+'</td></tr></thead><tbody><tr><td>'+body+'</td></tr></tbody><tfoot><tr><td>'+foot+'</td></tr></tfoot></table>';
+ glossify($("report"));renderOnePage();
 }
 
 /* ---------- Audit d'un compte Instagram ou d'une chaîne YouTube ----------
@@ -1275,9 +1294,107 @@ function renderSocial(){
  $("socFound").innerHTML=chips;$("socFound").querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>{$("socUrl").value=b.dataset.soc;$("socNet").value="auto";runSocial()});
  if(!$("socNiche").value&&state.biz&&state.biz.name)$("socNiche").value=[kwOf(state.biz.type),state.biz.city].filter(Boolean).join(" à ");
  const parts=["instagram","youtube"].filter(n=>A[n]).map(n=>socBlock(A[n],false)+(n==="instagram"?socManualHtml():""));
- box.innerHTML=parts.join("")||'<p class="muted" style="margin-top:12px">Aucun compte analysé pour ce client.</p>';
+ box.innerHTML=(parts.join("")||'<p class="muted" style="margin-top:12px">Aucun compte analysé pour ce client.</p>');glossify(box);
  box.querySelectorAll("[data-man]").forEach(b=>b.onclick=()=>{state.socialManual=state.socialManual||{};state.socialManual[b.dataset.man]=b.dataset.v==="1";const r=(state.socialAudits||{}).instagram;if(r){const a=igAnalyze(r.data,r.niche);r.C=a.C;r.M=a.M;r.score=socScore(r.C)}persistLocal();renderSocial();update()});
 }
+
+/* ---------- Bulles d'explication : chaque mot technique devient touchable ----------
+   [terme(s), titre, explication simple, phrase à dire au client] */
+const GLOSS=[
+ [["SEO","SEO technique","référencement"],"SEO (référencement)","Tout ce qui aide Google à comprendre une page et à la montrer quand quelqu’un fait une recherche : titre, description, textes, vitesse, liens.","« C’est ce qui permet à votre site de sortir quand un client tape votre métier et votre ville sur Google. »"],
+ [["Core Web Vitals"],"Core Web Vitals","Trois mesures de Google sur le confort réel des visiteurs : vitesse d’affichage (LCP), réactivité aux clics (INP) et stabilité de la page (CLS). Google les prend en compte dans son classement.","« Google mesure si votre site est agréable sur téléphone, et en tient compte pour vous classer. »"],
+ [["LCP","contenu principal affiché"],"Affichage du contenu principal (LCP)","Temps qu’il faut pour que le plus gros élément de la page (photo, titre) s’affiche sur téléphone. Bon : moins de 2,5 secondes.","« Au-delà de 3 secondes d’attente, une bonne partie des visiteurs repart. »"],
+ [["INP"],"Réactivité (INP)","Temps de réaction quand on touche un bouton ou un menu. Bon : moins de 200 millisecondes.","« Le site doit réagir tout de suite quand on appuie sur un bouton. »"],
+ [["CLS","stabilité visuelle"],"Stabilité de la page (CLS)","Mesure si les éléments bougent pendant le chargement (le bouton qui se décale au moment où on appuie). Bon : moins de 0,1.","« Rien ne doit bouger sous le doigt du client pendant le chargement. »"],
+ [["Lighthouse","PageSpeed"],"Lighthouse / PageSpeed","L’outil officiel de Google qui teste un site sur téléphone et donne des notes sur 100 : performance, SEO, accessibilité, bonnes pratiques.","« C’est le test de Google lui-même, pas une opinion. »"],
+ [["Performance","performance mobile"],"Performance mobile","Note de vitesse du site sur un téléphone moyen (sur 100). Au-dessus de 90 : très bien ; en dessous de 50 : lent.","« Votre site est noté sur sa vitesse par Google, comme un contrôle technique. »"],
+ [["accessibilité","Accessibilité"],"Accessibilité","Facilité d’utilisation pour tous, y compris les malvoyants : contrastes, tailles, descriptions des images.","« Un site lisible par tous est aussi mieux compris par Google. »"],
+ [["bonnes pratiques","Bonnes pratiques"],"Bonnes pratiques","Note de sécurité et de qualité technique du site (connexion sécurisée, erreurs, images bien dimensionnées).",""],
+ [["HTTPS"],"HTTPS (connexion sécurisée)","Le petit cadenas dans la barre d’adresse. Sans lui, le navigateur affiche « Non sécurisé » et Google pénalise le site.","« Sans cadenas, le téléphone du client affiche "+"« site non sécurisé » : ça fait fuir. »"],
+ [["Pixel Meta"],"Pixel Meta","Petit code installé sur le site qui mesure les visites venant de Facebook et Instagram. Indispensable pour savoir si une publicité rapporte des clients.","« Sans lui, on fait de la pub à l’aveugle. »"],
+ [["Google Tag Manager"],"Google Tag Manager","Outil qui sert de « boîte » pour installer les codes de mesure (Google Analytics, Pixel Meta…) sans toucher au site.",""],
+ [["Google Analytics"],"Google Analytics","Outil gratuit de Google qui compte les visiteurs du site, d’où ils viennent et ce qu’ils regardent.",""],
+ [["données structurées"],"Données structurées","Informations cachées dans le site, écrites pour Google et les IA : adresse, horaires, téléphone, type de commerce. Elles aident à apparaître correctement dans les résultats.","« C’est une fiche d’identité de votre commerce, lisible par les robots. »"],
+ [["méta-description"],"Méta-description","Le petit texte de 2 lignes affiché sous le titre dans les résultats Google. Bien écrit, il donne envie de cliquer.",""],
+ [["H1","titre principal (H1)"],"Titre principal (H1)","Le grand titre de la page. Google s’en sert pour comprendre le sujet : il doit contenir l’activité et la ville.",""],
+ [["Bing"],"Bing","Le moteur de recherche de Microsoft. Il alimente aussi DuckDuckGo, Ecosia et l’assistant Copilot, et il est utilisé par défaut sur beaucoup d’ordinateurs Windows.","« Environ un ordinateur sur dix cherche avec Bing sans le savoir. »"],
+ [["Copilot"],"Copilot","L’assistant IA de Microsoft (Windows, Edge, Bing). Il s’appuie sur les résultats de Bing.",""],
+ [["Gemini"],"Gemini","L’assistant IA de Google. L’appli lui pose les mêmes questions qu’un client et regarde s’il cite le commerce.","« De plus en plus de gens demandent à une IA où aller : il faut qu’elle vous connaisse. »"],
+ [["Mode IA"],"Mode IA de Google","Nouvelle façon de chercher sur Google : une réponse rédigée par l’IA, avec quelques adresses recommandées, au lieu d’une liste de liens.",""],
+ [["médiane"],"Médiane","La valeur du milieu : la moitié des concurrents fait mieux, l’autre moitié fait moins bien. Plus juste qu’une moyenne quand un concurrent a des chiffres énormes.",""],
+ [["Engagement","engagement"],"Engagement","Part des personnes qui réagissent (j’aime, commentaires) par rapport à celles qui voient le contenu. Repère courant : 2 % ou plus.","« Ça montre si votre public est vraiment intéressé, pas seulement le nombre d’abonnés. »"],
+ [["Shorts"],"Shorts","Vidéos verticales de moins d’une minute sur YouTube, l’équivalent des Reels. C’est le format qui fait venir le plus de nouveaux abonnés.",""],
+ [["Reels"],"Reels","Vidéos verticales courtes d’Instagram et Facebook, montrées à des personnes qui ne suivent pas encore le compte.","« C’est la vitrine qui passe devant des gens qui ne vous connaissent pas encore. »"],
+ [["SIRENE","registre SIRENE"],"Registre SIRENE","Le registre officiel de l’État où sont inscrites toutes les entreprises françaises, avec leur activité et leur date de création.",""],
+ [["OpenStreetMap"],"OpenStreetMap","Carte libre et gratuite, utilisée par Apple Plans, de nombreuses applis et des GPS. Y figurer aide à être trouvé ailleurs que sur Google.",""],
+ [["Google Business Profile","fiche Google"],"Fiche Google (Google Business Profile)","La fiche du commerce qui s’affiche sur Google Maps et à droite des résultats : adresse, horaires, photos, avis. C’est souvent le premier contact avec un client.","« C’est votre vitrine sur Google : la plupart des clients la voient avant de venir. »"],
+ [["score indicatif"],"Score indicatif","Note sur 100 calculée par l’appli : la part des points vérifiés qui sont réussis, en comptant plus les points les plus importants (avis, position locale). Ce n’est pas une note officielle de Google.","« C’est un repère pour mesurer les progrès d’un audit à l’autre. »"],
+ [["balise viewport","viewport"],"Balise viewport","Une ligne de code qui indique au téléphone d’afficher le site à la bonne taille. Sans elle, le site apparaît minuscule sur mobile.",""],
+ [["Linktree"],"Linktree","Une page qui regroupe plusieurs liens. Pratique sur Instagram, mais ce n’est pas un vrai site : Google la référence très peu.",""],
+ [["chapitres"],"Chapitres YouTube","Repères horaires dans la description (00:00 Introduction…). Google les affiche directement dans ses résultats.",""],
+ [["hashtags"],"Hashtags","Mots précédés de # qui classent une publication par thème. 3 à 5 hashtags précis valent mieux que 30 génériques.",""],
+ [["indexable","indexables"],"Page indexable","Une page que Google a le droit d’enregistrer et de montrer dans ses résultats.",""],
+ [["Carte :","3 premiers"],"Les 3 premiers sur Google Maps","Sur Google Maps, les 3 premiers commerces s’affichent tout de suite (le « pack local ») ; les autres ne se voient qu’en faisant défiler. Ce sont eux qui reçoivent la majorité des appels et des visites.","« Être dans les 3 premiers, c’est être vu sans que le client cherche. »"]
+];
+let glossRx=null;const glossMap={};
+function glossInit(){
+ const terms=[];GLOSS.forEach((g,i)=>g[0].forEach(t=>{terms.push(t);glossMap[t.toLowerCase()]=i}));
+ terms.sort((a,b)=>b.length-a.length);
+ glossRx=new RegExp("(?<![\\p{L}\\d])("+terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}\\d])","u");
+}
+function glossify(root){
+ if(!root)return;if(!glossRx)glossInit();
+ const seen=new Set(),walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&n.parentElement.closest("a,button,script,style,input,textarea,select,option,svg,.gl,.gpop,.cover h1,h2")?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+ const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+ nodes.forEach(n=>{let text=n.nodeValue,m=text.match(glossRx);if(!m)return;
+  const frag=document.createDocumentFragment();let changed=false;
+  while(m){const i=glossMap[m[1].toLowerCase()];const before=text.slice(0,m.index);if(before)frag.appendChild(document.createTextNode(before));
+   if(i!=null&&!seen.has(i)){seen.add(i);const b=document.createElement("button");b.type="button";b.className="gl";b.dataset.gl=i;b.textContent=m[1];b.setAttribute("aria-label",m[1]+" : explication");frag.appendChild(b);changed=true}
+   else frag.appendChild(document.createTextNode(m[1]));
+   text=text.slice(m.index+m[1].length);m=text.match(glossRx)}
+  if(!changed)return;if(text)frag.appendChild(document.createTextNode(text));n.parentNode.replaceChild(frag,n)});
+}
+function glossClose(){const p=$("gpop");if(p)p.remove()}
+function glossOpen(btn){
+ glossClose();const g=GLOSS[+btn.dataset.gl];if(!g)return;
+ const p=document.createElement("div");p.id="gpop";p.className="gpop";p.setAttribute("role","dialog");p.setAttribute("aria-label",g[1]);
+ p.innerHTML='<button type="button" class="gpx" aria-label="Fermer">✕</button><b>'+esc(g[1])+'</b><p>'+esc(g[2])+'</p>'+(g[3]?'<p class="gsay"><span>À dire au client</span>'+esc(g[3])+'</p>':'');
+ document.body.appendChild(p);
+ const r=btn.getBoundingClientRect(),w=Math.min(330,innerWidth-24);p.style.width=w+"px";
+ let left=Math.min(Math.max(12,r.left+r.width/2-w/2),innerWidth-w-12);let top=r.bottom+8;
+ const h=p.offsetHeight;if(top+h>innerHeight-12&&r.top-h-8>12)top=r.top-h-8;
+ p.style.left=left+"px";p.style.top=Math.max(12,top)+"px";
+ p.querySelector(".gpx").onclick=glossClose;
+}
+document.addEventListener("click",e=>{const b=e.target.closest(".gl");if(b){e.preventDefault();e.stopPropagation();glossOpen(b);return}if(!e.target.closest("#gpop"))glossClose()},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")glossClose()});
+window.addEventListener("scroll",glossClose,{passive:true});
+
+/* ---------- Rapport en 1 page (format par défaut du PDF) ---------- */
+function firstSentence(t,max){t=String(t||"").trim();const m=t.match(/^.+?[.!?](\s|$)/);t=m?m[0].trim():t;return t.length>(max||170)?t.slice(0,(max||170)-1).replace(/\s\S*$/,"")+"…":t}
+function renderOnePage(){
+ const box=$("report1");if(!box)return;
+ const b=state.biz,d=state.data||{},c=calc(),[vt,vsub]=verdict(c.score),issues=issuesList(),good=strengths(),p=d.place,ps=d.psi,vis=d.visibility;
+ const sender=settings.senderName||"",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"",r=b.reg,ni=r&&nafInfo(r.naf);
+ const sub=[ni?ni[0]:b.type,b.city,r&&r.date?"ouvert en "+fmtOpen(r.date):""].filter(Boolean).join(" · ");
+ const k=(v,l,cls)=>'<div class="k1 '+(cls||"")+'"><b>'+v+'</b><span>'+esc(l)+'</span></div>';
+ const kp=[p&&p.rating!=null?k(fr1(p.rating)+"/5","Note Google",p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"",p&&p.userRatingCount!=null?k(p.userRatingCount,"Avis Google",p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"",vis?k(vis.top3+"/"+vis.n,"Recherches où il est dans les 3 premiers",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):"",d.grid?k(d.grid.top3+"/"+d.grid.total,"Endroits où il est vu en tête sur Maps",d.grid.top3>=6?"good":d.grid.top3?"mid":"bad"):"",ps&&ps.scores.perf!=null?k(ps.scores.perf+"/100","Vitesse du site sur mobile",scoreColor(ps.scores.perf)):(d.fetchedAt&&!normalizeUrl(b.site)?k("Aucun","Site web à lui","bad"):"")].filter(Boolean).slice(0,4).join("");
+ const F=(d.findings||[]).slice(0,4).map(f=>firstSentence(f.text,230));
+ const G=good.slice(0,4).map(g=>g.it);
+ const A=issues.slice(0,5);
+ const by={};issues.forEach(x=>{if(x.offer)(by[x.offer]=by[x.offer]||0),by[x.offer]+=x.prio});const offers=Object.entries(by).sort((a,b2)=>b2[1]-a[1]).slice(0,3).map(x=>x[0]);
+ box.innerHTML='<div class="op">'
+  +'<div class="ophead"><span class="opbrand"><img src="assets/logo-64.png" alt="" width="26" height="26">AffiAds Audit 360°</span><span>Audit de visibilité · '+esc(frDate(b.date||today()))+'</span></div>'
+  +'<h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')
+  +'<div class="oprow"><div class="opscore">'+scoreTile(c.score,true)+'</div><div class="opk">'+kp+'</div></div>'
+  +(d.partial&&d.fetchedAt?'<p class="opnote">Audit partiel : la fiche Google n’a pas été analysée.</p>':'')
+  +'<div class="op2"><div class="opbox good"><h3>Ce qui va bien</h3>'+(G.length?'<ul>'+G.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'<p>À confirmer lors de l’échange.</p>')+'</div><div class="opbox bad"><h3>Ce qui freine les clients</h3>'+(F.length?'<ul>'+F.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'<p>Aucun frein majeur relevé.</p>')+'</div></div>'
+  +'<h3 class="opt">Les '+A.length+' actions prioritaires</h3>'+(A.length?'<ol class="opacts">'+A.map(x=>'<li><b>'+esc(x.it)+'</b><span>'+esc(x.goal?firstSentence(x.goal,190):firstSentence(x.reco,190))+'</span></li>').join("")+'</ol>':'<p>Aucune action urgente.</p>')
+  +'<div class="opoffer"><div><h3>Ce qu’AffiAds vous propose</h3><p>'+(offers.length?offers.map(o=>'<span class="opchip">'+esc(o)+'</span>').join(""):'Un suivi régulier de votre visibilité.')+'</p><p class="opcta">Un échange de 10 minutes pour choisir ensemble les actions. Démo et devis gratuits, sans engagement.</p></div><div class="opsign"><b>'+esc(sender||"AffiAds")+'</b><span>'+esc(line)+'</span>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>'
+  +'<p class="opfoot">Données publiques relevées le '+esc(d.fetchedAt||frDate(today()))+' (Google, Bing, site, réseaux, registre SIRENE). Score indicatif, positions variables selon la personne et le lieu ; aucun résultat n’est garanti. Rapport détaillé disponible sur demande.</p>'
+  +'</div>';
+}
+function setReportFormat(f){settings.reportFormat=f;saveSettings(true);document.body.classList.toggle("rep-one",f!=="full");document.querySelectorAll("[data-repfmt]").forEach(b=>b.classList.toggle("on",b.dataset.repfmt===f))}
 
 /* ---------- Message prospect ---------- */
 function buildPitch(){
@@ -1369,7 +1486,7 @@ function drawAiTests(){
 }
 
 /* ---------- Tests web (PageSpeed réel) ---------- */
-function renderWebResults(rows){$("webResults").innerHTML=rows.map(r=>'<div class="priority"><b>'+esc(r.title)+'</b><small>'+esc(r.detail)+'</small></div>').join("")}
+function renderWebResults(rows){$("webResults").innerHTML=rows.map(r=>'<div class="priority"><b>'+esc(r.title)+'</b><small>'+esc(r.detail)+'</small></div>').join("");glossify($("webResults"))}
 async function runWebChecks(){
  const u=normalizeUrl($("webUrl").value||$("site").value);
  if(!u){renderWebResults([{title:"Adresse invalide",detail:"Entrez une adresse complète, par exemple https://exemple.fr"}]);return}
@@ -1423,7 +1540,8 @@ function bind(){
  $("autoCity").addEventListener("keydown",e=>{if(e.key==="Enter")runAuto()});
  $("runAuto").onclick=runAuto;$("autoToReport").onclick=()=>nav("report");
  $("notes").addEventListener("input",()=>{update();persistLocal()});
- $("pdf").onclick=$("printReport").onclick=()=>{nav("report");setTimeout(()=>window.print(),300)};
+ $("pdf").onclick=$("printReport").onclick=()=>{nav("report");renderOnePage();setTimeout(()=>window.print(),300)};
+ document.querySelectorAll("[data-repfmt]").forEach(b=>b.onclick=()=>setReportFormat(b.dataset.repfmt));
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
  $("clientChip").onclick=()=>nav("clients");
  document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{settings.theme=b.dataset.themeSet;saveSettings();applyTheme()});
