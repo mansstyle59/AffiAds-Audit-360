@@ -461,6 +461,32 @@ function bestOf(label){return typeInfo(label).f?"meilleure ":"meilleur "}
 function defaultKeywords(label){const k=typeInfo(label).kw;return k?k+", "+bestOf(label)+k:""}
 function applyDetectedType(label){if(!label||$("autoType").dataset.touched)return;$("autoType").value=label;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(label)}
 let sessionToken=uid(),suggestTimer=null,suggestItems=[],suggestIdx=-1,suggestSeq=0;
+/* ---------- Registre des entreprises (SIRENE, API publique de l'État, sans clé) : activité et date d'ouverture ---------- */
+const NAF={"56.10A":["Restauration traditionnelle","Restaurant"],"56.10B":["Cafétéria","Restaurant"],"56.10C":["Restauration rapide","Pizzeria / restauration rapide"],"56.21Z":["Traiteur","Traiteur"],"56.30Z":["Débit de boissons (bar, café)","Café / bar"],"10.71C":["Boulangerie-pâtisserie","Boulangerie"],"10.71D":["Pâtisserie","Boulangerie"],"47.24Z":["Boulangerie, pâtisserie (vente)","Boulangerie"],"10.13B":["Charcuterie","Boucherie / charcuterie"],"47.22Z":["Boucherie, charcuterie","Boucherie / charcuterie"],"47.25Z":["Caviste (boissons)","Caviste"],"47.11B":["Supérette, alimentation générale","Commerce de proximité"],"47.11C":["Supérette","Commerce de proximité"],"47.11D":["Supermarché","Commerce de proximité"],"47.29Z":["Alimentation spécialisée","Commerce de proximité"],"47.21Z":["Primeur (fruits et légumes)","Commerce de proximité"],"96.02A":["Coiffure","Salon / beauté"],"96.02B":["Soins de beauté","Institut de beauté / ongles"],"96.04Z":["Entretien corporel (spa, bien-être)","Santé / bien-être"],"96.09Z":["Autres services personnels","Autre commerce"],"93.13Z":["Salle de sport, fitness","Salle de sport / coach"],"93.11Z":["Installation sportive","Salle de sport / coach"],"85.51Z":["Enseignement sportif, coaching","Salle de sport / coach"],"86.21Z":["Médecin généraliste","Médecin"],"86.22C":["Médecin spécialiste","Médecin"],"86.23Z":["Dentiste","Dentiste"],"86.90E":["Kinésithérapie, rééducation","Kinésithérapeute / ostéopathe"],"86.90F":["Santé humaine (paramédical)","Kinésithérapeute / ostéopathe"],"47.73Z":["Pharmacie","Pharmacie"],"75.00Z":["Vétérinaire","Vétérinaire"],"47.78A":["Opticien","Opticien"],"47.71Z":["Habillement","Boutique / mode"],"47.72A":["Chaussures","Boutique / mode"],"47.77Z":["Bijouterie, horlogerie","Boutique / mode"],"47.76Z":["Fleuriste, animalerie","Fleuriste"],"47.59A":["Meubles","Magasin de meubles / déco"],"47.59B":["Équipement du foyer","Magasin de meubles / déco"],"43.22A":["Plomberie (eau, gaz)","Plombier / chauffagiste"],"43.22B":["Chauffage, climatisation","Plombier / chauffagiste"],"43.21A":["Électricité (bâtiment)","Électricien"],"43.34Z":["Peinture et vitrerie","Peintre / façadier"],"43.99C":["Maçonnerie","Maçon / rénovation"],"41.20A":["Construction de maisons","Maçon / rénovation"],"41.20B":["Construction de bâtiments","Maçon / rénovation"],"43.32A":["Menuiserie","Maçon / rénovation"],"43.32B":["Menuiserie métallique, serrurerie","Serrurier"],"43.91B":["Couverture","Maçon / rénovation"],"43.33Z":["Revêtement des sols et murs","Maçon / rénovation"],"43.39Z":["Finitions du bâtiment","Maçon / rénovation"],"81.30Z":["Paysagiste","Paysagiste"],"49.42Z":["Déménagement","Déménageur"],"49.32Z":["Taxi","Taxi / VTC"],"49.39A":["Transport de voyageurs","Taxi / VTC"],"45.20A":["Garage, entretien automobile","Garage / auto"],"45.20B":["Garage, entretien automobile","Garage / auto"],"45.11Z":["Vente de voitures","Garage / auto"],"85.53Z":["Auto-école","Auto-école"],"68.31Z":["Agence immobilière","Agence immobilière"],"74.20Z":["Photographe","Photographe"],"96.01B":["Pressing, blanchisserie","Pressing / cordonnerie"],"95.23Z":["Cordonnerie","Pressing / cordonnerie"],"69.10Z":["Avocat, notaire (juridique)","Avocat / notaire / comptable"],"69.20Z":["Expert-comptable","Avocat / notaire / comptable"],"55.10Z":["Hôtel","Hôtel / hébergement"],"55.20Z":["Hébergement touristique (gîte, chambre d’hôtes)","Gîte / chambre d’hôtes"],"93.29Z":["Activités de loisirs","Loisirs / activités"],"93.21Z":["Parc de loisirs","Loisirs / activités"]};
+const sireneCache={};
+function nafInfo(code){return NAF[code]||null}
+async function sireneSearch(name,city){
+ const key=norm(name)+"|"+norm(city||"");if(sireneCache[key])return sireneCache[key];
+ const job=(async()=>{
+  const r=await fetchJson("https://recherche-entreprises.api.gouv.fr/search?per_page=10&q="+encodeURIComponent(name),{},10000);
+  const out=[];(r.results||[]).forEach(e=>{
+   const etabs=[...(e.matching_etablissements||[]),...(e.siege?[e.siege]:[])];
+   etabs.forEach(t=>{if(!t||!t.siret||out.some(o=>o.siret===t.siret))return;
+    out.push({siret:t.siret,names:[...(t.liste_enseignes||[]),t.nom_commercial,e.nom_raison_sociale,e.nom_complet,e.sigle].filter(Boolean),commune:t.libelle_commune||"",cp:t.code_postal||"",adresse:t.adresse||"",date:t.date_creation||t.date_debut_activite||"",dateEnt:e.date_creation||"",naf:t.activite_principale||e.activite_principale||"",open:(t.etat_administratif||e.etat_administratif)!=="F"&&!t.date_fermeture})});
+  });return out;
+ })();
+ sireneCache[key]=job;job.catch(()=>{delete sireneCache[key]});return job;
+}
+function sameCity(a,b){const A=norm(a).replace(/\b(saint|sainte)\b/g,"st").replace(/\s+/g,""),B=norm(b).replace(/\b(saint|sainte)\b/g,"st").replace(/\s+/g,"");return !!A&&!!B&&(A===B||A.includes(B)||B.includes(A))}
+function regScore(x,name,addr){const exact=x.names.some(n=>norm(n)===norm(name)||norm(n).replace(/^(le|la|les|l) /,"")===norm(name).replace(/^(le|la|les|l) /,""))?3:1;const A=toks(addr||"").filter(w=>w.length>3&&!/^(france|rue|avenue|route|place|chemin|boulevard)$/.test(w));const hit=A.filter(w=>norm(x.adresse).includes(w)).length;return exact+hit*2}
+function sireneMatch(list,name,city,cp,addr){
+ if(addr!==undefined){const ok=list.filter(x=>x.open&&x.names.some(n=>similar(n,name))&&((cp&&x.cp===cp)||(city&&sameCity(x.commune,city))));return ok.map(x=>({x,s:regScore(x,name,addr)})).sort((a,b)=>b.s-a.s||String(b.x.date).localeCompare(String(a.x.date)))[0]?.x||null}
+ const ok=list.filter(x=>x.open&&x.names.some(n=>similar(n,name))&&((cp&&x.cp===cp)||(city&&sameCity(x.commune,city))));
+ return ok.sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0]||null;
+}
+function fmtOpen(d){if(!d)return "";const x=new Date(d+"T12:00:00");return isNaN(x)?"":x.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}
+function ageText(d){if(!d)return "";const m=Math.round((Date.now()-Date.parse(d))/(864e5*30.44));return m<1?"ouvert ce mois-ci":m<24?"ouvert il y a "+m+" mois":"ouvert il y a "+Math.floor(m/12)+" ans"}
+
 async function googleSuggest(input){
  const body={input,languageCode:"fr",includedRegionCodes:["fr","be","ch","lu","mc"],sessionToken};
  const r=await fetchJson("https://places.googleapis.com/v1/places:autocomplete",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify(body)},12000);
@@ -472,10 +498,19 @@ async function photonSuggest(input){
 }
 function cityFromSecondary(sec){const parts=String(sec||"").split(",").map(x=>x.trim()).filter(Boolean);if(parts.length>=2&&/france|belgique|suisse|luxembourg|monaco/i.test(parts[parts.length-1]))parts.pop();const last=parts[parts.length-1]||"";return last.replace(/^\d{4,5}\s*/,"").trim()}
 function closeSuggest(){$("suggest").classList.add("hidden");$("autoName").setAttribute("aria-expanded","false");suggestIdx=-1}
+function sgType(s){return (s.src==="google"?typeFromGoogle(s.types):typeFromOsm(s.key,s.value))||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1])||null}
+function sgMeta(s){const t=s.reg&&nafInfo(s.reg.naf)?nafInfo(s.reg.naf)[0]:sgType(s);const y=s.reg&&s.reg.date?s.reg.date.slice(0,4):"";if(!t&&!y)return s.regPending?'<em class="sgmeta"><i class="sgdot"></i>Recherche du type et de l’année d’ouverture…</em>':"";return '<em class="sgmeta">'+(t?'<i class="sgtag">'+esc(t)+'</i>':'')+(y?'<i class="sgtag yr">Ouvert en '+esc(y)+'</i>':'')+'</em>'}
+async function enrichSuggest(seq,typed){
+ const city=$("autoCity").value.trim();let list=[];
+ try{list=await sireneSearch(typed,city)}catch(e){suggestItems.forEach(s=>s.regPending=false);if(seq===suggestSeq)renderSuggest();return}
+ if(seq!==suggestSeq)return;
+ const pairs=[];suggestItems.forEach((s,i)=>{s.reg=null;s.regPending=false;const c=s.city||cityFromSecondary(s.secondary)||city;const cp=(String(s.secondary||"").match(/\b(\d{5})\b/)||[])[1]||"";list.filter(x=>x.open&&x.names.some(n=>similar(n,s.main))&&((cp&&x.cp===cp)||(c&&sameCity(x.commune,c)))).forEach(x=>pairs.push({i,x,sc:regScore(x,s.main,s.secondary)}))});
+ pairs.sort((a,b)=>b.sc-a.sc);const usedS=new Set(),usedI=new Set();pairs.forEach(p=>{if(usedS.has(p.x.siret)||usedI.has(p.i))return;usedS.add(p.x.siret);usedI.add(p.i);suggestItems[p.i].reg=p.x});renderSuggest();
+}
 function renderSuggest(){
  const box=$("suggest");
  if(!suggestItems.length){closeSuggest();return}
- box.innerHTML=suggestItems.map((s,i)=>'<button type="button" role="option" id="sg'+i+'" aria-selected="'+(i===suggestIdx)+'" data-sg="'+i+'"><b>'+esc(s.main)+'</b><span>'+esc(s.secondary||"")+'</span></button>').join("")+'<div class="src">'+(suggestItems[0].src==="google"?"Suggestions Google":"Suggestions OpenStreetMap — ajoutez une clé Google pour des résultats plus complets")+'</div>';
+ box.innerHTML=suggestItems.map((s,i)=>'<button type="button" role="option" id="sg'+i+'" aria-selected="'+(i===suggestIdx)+'" data-sg="'+i+'"><b>'+esc(s.main)+'</b><span>'+esc(s.secondary||"")+'</span>'+sgMeta(s)+'</button>').join("")+'<div class="src">'+(suggestItems[0].src==="google"?"Suggestions Google":"Suggestions OpenStreetMap — ajoutez une clé Google pour des résultats plus complets")+'</div>';
  box.classList.remove("hidden");$("autoName").setAttribute("aria-expanded","true");
  box.querySelectorAll("[data-sg]").forEach(b=>b.addEventListener("mousedown",e=>{e.preventDefault();pickSuggestion(suggestItems[Number(b.dataset.sg)])}));
 }
@@ -483,17 +518,18 @@ function queueSuggest(){
  clearTimeout(suggestTimer);
  const name=$("autoName").value.trim();if(name.length<3){suggestItems=[];closeSuggest();return}
  const q=name+($("autoCity").value.trim()?" "+$("autoCity").value.trim():"");
- suggestTimer=setTimeout(async()=>{const seq=++suggestSeq;try{let items=[];if(hasKey()){try{items=await googleSuggest(q)}catch(e){items=[]}}if(!items.length)items=await photonSuggest(q);if(seq!==suggestSeq)return;suggestItems=items;suggestIdx=-1;renderSuggest()}catch(e){suggestItems=[];closeSuggest()}},hasKey()?280:650);
+ suggestTimer=setTimeout(async()=>{const seq=++suggestSeq;try{let items=[];if(hasKey()){try{items=await googleSuggest(q)}catch(e){items=[]}}if(!items.length)items=await photonSuggest(q);if(seq!==suggestSeq)return;suggestItems=items;suggestIdx=-1;items.forEach(s=>s.regPending=true);renderSuggest();enrichSuggest(seq,name)}catch(e){suggestItems=[];closeSuggest()}},hasKey()?280:650);
 }
 function setPickInfo(){const b=state.biz;$("pickInfo").textContent=b.placeId?"✓ Établissement Google sélectionné : "+(b.pickLabel||b.name):b.osmPick?"✓ Établissement OpenStreetMap sélectionné : "+(b.pickLabel||b.name):""}
-function clearPick(){delete state.biz.placeId;delete state.biz.osmPick;delete state.biz.pickLabel;setPickInfo()}
+function clearPick(){delete state.biz.reg;delete state.biz.placeId;delete state.biz.osmPick;delete state.biz.pickLabel;setPickInfo()}
 function pickSuggestion(s){
  if(!s)return;closeSuggest();clearPick();
  $("autoName").value=s.main;
  const city=s.city||cityFromSecondary(s.secondary);if(city)$("autoCity").value=city;
  state.biz.pickLabel=s.main+(s.secondary?" — "+s.secondary:"");
- if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types))}
- else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType(typeFromOsm(s.key,s.value))}
+ state.biz.reg=s.reg||null;
+ if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types)||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1]))}
+ else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType(typeFromOsm(s.key,s.value)||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1]))}
  setPickInfo();persistLocal();
  if($("autoCity").value.trim()){try{$("runAuto").focus({preventScroll:true})}catch(e){}toast("Établissement choisi : touchez « Lancer l’audit » quand vous êtes prêt.")}else $("autoCity").focus();
 }
@@ -645,6 +681,16 @@ async function runAuto(){
    }catch(e){const f=frErr(e);googleBlocked=f.code;setStep("place","err",f.code==="disabled"?"Fiche Google : API à activer":f.code==="badkey"||f.code==="referer"?"Fiche Google : clé à corriger":"Fiche Google non disponible",f.text,f.link)}
   }else setStep("place","skip","Fiche Google non analysée","Ajoutez une clé Google dans Réglages pour obtenir note, avis, photos et concurrents.");
   state.biz.type=type;
+  /* 2 bis. Registre des entreprises (SIRENE) : activité officielle et date d'ouverture de l'établissement */
+  setStep("reg","run","Registre des entreprises (SIRENE)");
+  try{const gName=place&&place.displayName&&place.displayName.text;const cp=((place&&place.formattedAddress)||"").match(/\b(\d{5})\b/);
+   let reg=null;for(const n of [...new Set([gName,name].filter(Boolean))]){const L=await sireneSearch(n,city);reg=sireneMatch(L,n,city,cp&&cp[1],(place&&place.formattedAddress)||state.biz.address||"");if(reg)break}
+   if(!reg&&state.biz.reg&&similar(state.biz.reg.names[0]||"",name))reg=state.biz.reg;
+   state.biz.reg=reg||null;
+   if(reg){const ni=nafInfo(reg.naf);setStep("reg","ok",(ni?ni[0]:"Activité "+reg.naf)+(reg.date?" · ouvert en "+fmtOpen(reg.date):""),"Établissement inscrit au registre SIRENE"+(reg.dateEnt&&reg.dateEnt!==reg.date?" · entreprise créée en "+reg.dateEnt.slice(0,4):"")+". Date d’inscription de cet établissement, qui peut différer de l’ouverture au public (reprise, déménagement).");
+    if(ni&&!place&&!$("autoType").dataset.touched&&ni[1]!==type){type=ni[1];state.biz.type=type;$("autoType").value=type;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(type)}}
+   else setStep("reg","skip","Registre des entreprises : établissement non identifié","Nom commercial différent du nom déclaré, entreprise individuelle ou commerce hors de France.");
+  }catch(e){setStep("reg","skip","Registre des entreprises non consulté",frErr(e).text)}
   if(place){
    const p=place,loc=p.location?{lat:p.location.latitude,lng:p.location.longitude}:null;data.loc=loc;
    state.biz.maps=p.googleMapsUri||state.biz.maps;if(p.rating!=null)state.biz.rating=p.rating;if(p.userRatingCount!=null)state.biz.reviews=p.userRatingCount;
@@ -667,6 +713,7 @@ async function runAuto(){
    data.reviews=rv;
    const last=rv.map(r=>Date.parse(r.time)).filter(Boolean).sort((a,b)=>b-a)[0];const daysSince=last?Math.round((Date.now()-last)/864e5):null;data.daysSinceReview=daysSince;
    const rProb=[];if(p.rating!=null&&p.rating<4.2)rProb.push("note de "+fr1(p.rating)+"/5");if(p.userRatingCount!=null&&p.userRatingCount<50)rProb.push("seulement "+p.userRatingCount+" avis");if(p.rating==null)rProb.push("aucune note");
+   const ageM=state.biz.reg&&state.biz.reg.date?Math.round((Date.now()-Date.parse(state.biz.reg.date))/(864e5*30.44)):null;if(ageM!=null&&ageM<18&&rProb.length)rProb.push("à relativiser : établissement "+ageText(state.biz.reg.date));
    setAuto("0-5",rProb.length?"issue":"ok",(p.rating!=null?fr1(p.rating)+"/5 sur "+p.userRatingCount+" avis":"Aucun avis")+(daysSince!=null?" · parmi les 5 avis mis en avant par Google, le plus récent date de "+daysSince+" j":"")+(rProb.length?" — à améliorer : "+rProb.join(", ")+".":"."),src);
    if(rProb.length)findings.push({sev:3,text:"Avis Google : "+rProb.join(", ")+"."});
    const neg=rv.filter(r=>r.rating&&r.rating<=3);
@@ -929,16 +976,17 @@ function compBlock(forReport){
 function googleBlock(){
  const d=state.data||{},p=d.place;if(!p)return "";
  return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"—","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p.userRatingCount??"—","Avis",p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox((d.ownerPhotos??"—")+(d.photos!=null?'<small style="font-size:13px"> / '+d.photos+'</small>':""),"Photos du propriétaire",d.ownerPhotos==null?"":d.ownerPhotos>=6?"good":d.ownerPhotos>=3?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Âge de l’avis le plus récent parmi les 5 mis en avant","")+'</div>'
- +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
+ +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(state.biz.reg?'<li>Registre SIRENE : '+esc((nafInfo(state.biz.reg.naf)||[state.biz.reg.naf])[0])+(state.biz.reg.date?', ouvert en '+esc(fmtOpen(state.biz.reg.date)):'')+'</li>':'')+''+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
  +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
 }
 function partialNote(){const d=state.data||{};if(!d.fetchedAt||!d.partial)return "";return '<div class="partial"><b>Audit partiel</b><span>'+(d.unverified?"Le commerce n’a été trouvé ni sur Google ni sur OpenStreetMap : les résultats reposent sur Bing, les réseaux sociaux et le site s’il est connu. Vérifiez le nom ou ajoutez une clé Google.":"La fiche Google n’a pas été analysée"+(hasKey()?" (clé Google à corriger)":" (pas de clé Google)")+" : note, avis, photos et positions Google ne sont pas inclus dans le score.")+'</span></div>'}
+function bizLine(){const b=state.biz||{},r=b.reg,ni=r&&nafInfo(r.naf);const parts=[ni?ni[0]:b.type,b.city,r&&r.date?"ouvert en "+fmtOpen(r.date)+" ("+ageText(r.date).replace(/^ouvert /,"")+")":""].filter(Boolean);return parts.length?'<p class="bizline">'+esc(parts.join(" · "))+'</p>':''}
 function renderAutoSummary(){
  const d=state.data||{};
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
  if(!d.fetchedAt){$("autoSummaryCard").classList.add("hidden");$("autoSummary").innerHTML="";return}
  $("autoSummaryCard").classList.remove("hidden");const sc=calc().score;
- $("autoSummary").innerHTML='<h2 style="margin-bottom:14px">'+esc(state.biz.name||"Résultats")+'</h2>'+scoreTile(sc)+partialNote()+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
+ $("autoSummary").innerHTML='<h2 style="margin-bottom:4px">'+esc(state.biz.name||"Résultats")+'</h2>'+bizLine()+scoreTile(sc)+partialNote()+kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:22px">Opportunités repérées</h3>'+findingsHtml():'')+(socialBlock(false)?'<h3 style="margin-top:22px">Réseaux sociaux</h3>'+socialBlock(false):'')+(d.place?'<h3 style="margin-top:22px">Photos de la fiche</h3>'+photosBlock():'')+(gridBlock()?'<h3 style="margin-top:22px">Carte de visibilité</h3>'+gridBlock():'')+compBlock(false)+(bingBlock(false)?'<h3 style="margin-top:22px">Visibilité sur Bing</h3>'+bingBlock(false):'')+(aiAutoBlock(false)?'<h3 style="margin-top:22px">Ce que répond l’IA de Google</h3>'+aiAutoBlock(false):'')+((d.psi||d.html)?'<h3 style="margin-top:22px">Le site sur téléphone</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Ouvrir le rapport client</button><button class="btn" data-go2="pitch">Rédiger le message</button></div>';
  $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
 }
 
@@ -1005,7 +1053,7 @@ function renderReport(){
  const top3=(d.findings||[]).slice(0,3);
  const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div>'
   +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'
-  +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
+  +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+(b.reg&&b.reg.date?'<br>Établissement ouvert en '+esc(fmtOpen(b.reg.date))+' (registre SIRENE)':'')+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
   +scoreTile(totals.score)+partialNote()+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
   +'<div class="coverfoot"><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>';
