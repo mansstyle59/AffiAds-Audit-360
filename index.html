@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=2026-13">
+<link rel="stylesheet" href="assets/app.css?v=2026-14">
 <title>AffiAds Audit 360°</title>
 </head>
 <body class="locked">
@@ -40,14 +40,14 @@
 <header class="top"><div class="toptitle"><h1 id="pageTitle">Audit</h1><p class="muted" id="pageSub">Un nom, une ville : l'application collecte les données publiques pour vous.</p></div><div class="topacts"><button class="chip" id="clientChip" type="button" title="Changer de client"><span class="chipdot" aria-hidden="true"></span><span id="clientChipName">Nouveau client</span></button><span class="saved" id="savedState" aria-live="polite">Enregistré</span><button class="btn" id="pdf">PDF</button></div></header>
 
 <section id="view-auto"><div class="grid">
-<div class="ask"><h2>Quel commerce on audite ?</h2><p class="muted">Tapez son nom, choisissez-le dans la liste : l'analyse démarre toute seule. Gratuit, sans compte.</p>
+<div class="ask"><h2>Quel commerce auditer ?</h2><p class="muted">Tapez son nom, choisissez-le dans la liste, puis touchez « Lancer l’audit ». Tous les métiers sont pris en charge : restaurants, artisans, beauté, santé, boutiques, services…</p>
 <div class="askfields">
 <div class="field suggest-wrap bigfield"><label for="autoName">Nom du commerce</label><span class="dot" aria-hidden="true"></span><input id="autoName" placeholder="Nom du commerce" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest"><div id="suggest" class="suggest hidden" role="listbox"></div><small id="pickInfo" class="pickinfo"></small></div>
 <div class="field cityfield"><label for="autoCity">Ville</label><input id="autoCity" placeholder="Ville" autocomplete="off"></div>
 </div>
 <div class="askactions"><button class="btn primary bigcta" id="runAuto">Lancer l'audit</button><button class="btn bigcta" id="autoToReport">Voir le rapport</button></div>
 <details class="adv"><summary>Options</summary><div class="fields"><div class="field"><label for="autoType">Type de commerce</label><select id="autoType"></select></div>
-<div class="field"><label for="autoKeyword">Recherches clients à tester (3 au maximum, séparées par des virgules)</label><input id="autoKeyword" placeholder="restaurant, meilleur restaurant, pizzeria"></div>
+<div class="field"><label for="autoKeyword">Recherches clients à tester (3 au maximum, séparées par des virgules)</label><input id="autoKeyword" placeholder="Rempli automatiquement selon l’activité (ex. plombier, meilleur plombier)"></div>
 <div class="field full"><label for="autoSite">Site web (trouvé automatiquement si possible)</label><input id="autoSite" type="url" placeholder="https://"></div>
 <label class="optline full"><input type="checkbox" id="autoCompSpeed" checked> Comparer aussi la vitesse des sites des 3 premiers concurrents (avec une clé Google)</label></div></details>
 <div id="keyNotice" class="muted"></div>
@@ -65,8 +65,8 @@
 <section id="view-home" class="hidden"><div class="grid">
 <div class="card s3"><div class="metric" id="mDone">0%<small>Audit complété</small></div></div><div class="card s3"><div class="metric" id="mIssues">0<small>Points à améliorer</small></div></div><div class="card s3"><div class="metric" id="mScore">—<small>Score indicatif</small></div></div><div class="card s3"><div class="metric" id="mChecks">0<small>Contrôles effectués</small></div></div>
 <div class="card s7"><h2>Commerce audité</h2><p class="muted">Rempli automatiquement par l'audit ; modifiable à tout moment.</p><div class="fields">
-<div class="field"><label for="name">Nom du commerce *</label><input id="name" placeholder="Ex. Le Bistrot du Canal"></div><div class="field"><label for="type">Type de commerce</label><select id="type"></select></div>
-<div class="field"><label for="city">Ville</label><input id="city" placeholder="Narbonne"></div><div class="field"><label for="date">Date de l'audit</label><input id="date" type="date"></div><div class="field"><label for="site">Site web</label><input id="site" placeholder="https://..."></div><div class="field"><label for="maps">Lien Google Maps</label><input id="maps" placeholder="Lien public de la fiche"></div><div class="field"><label for="rating">Note Google / 5</label><input id="rating" type="number" min="0" max="5" step=".1" placeholder="4.3"></div><div class="field"><label for="reviews">Nombre d'avis</label><input id="reviews" type="number" min="0" placeholder="128"></div><div class="field"><label for="phone">Téléphone</label><input id="phone" placeholder="04 ..."></div><div class="field"><label for="address">Adresse</label><input id="address" placeholder="Adresse complète"></div><div class="field full"><label for="context">Première impression / contexte</label><textarea id="context" placeholder="Ex. photos anciennes, menu difficile à trouver, avis sans réponse..."></textarea></div></div><div class="actions" style="margin-top:13px"><button class="btn primary" data-go="audit">Compléter la checklist</button></div></div>
+<div class="field"><label for="name">Nom du commerce *</label><input id="name" placeholder="Ex. Boulangerie Martin"></div><div class="field"><label for="type">Type de commerce</label><select id="type"></select></div>
+<div class="field"><label for="city">Ville</label><input id="city" placeholder="Narbonne"></div><div class="field"><label for="date">Date de l'audit</label><input id="date" type="date"></div><div class="field"><label for="site">Site web</label><input id="site" placeholder="https://..."></div><div class="field"><label for="maps">Lien Google Maps</label><input id="maps" placeholder="Lien public de la fiche"></div><div class="field"><label for="rating">Note Google / 5</label><input id="rating" type="number" min="0" max="5" step=".1" placeholder="4.3"></div><div class="field"><label for="reviews">Nombre d'avis</label><input id="reviews" type="number" min="0" placeholder="128"></div><div class="field"><label for="phone">Téléphone</label><input id="phone" placeholder="04 ..."></div><div class="field"><label for="address">Adresse</label><input id="address" placeholder="Adresse complète"></div><div class="field full"><label for="context">Première impression / contexte</label><textarea id="context" placeholder="Ex. photos anciennes, tarifs difficiles à trouver, avis sans réponse..."></textarea></div></div><div class="actions" style="margin-top:13px"><button class="btn primary" data-go="audit">Compléter la checklist</button></div></div>
 <div class="card s5"><h2>Diagnostic</h2><p class="muted">Indicateur basé sur les contrôles automatiques et manuels renseignés.</p><div id="gaugeHome"></div><div class="metric hidden" id="bigScore"></div><div class="bar hidden"><div id="bar"></div></div><div class="muted" id="scoreText">Lance l'audit automatique ou coche les contrôles pour calculer un indicateur.</div><h3 style="margin-top:18px">Par catégorie</h3><div id="catBars" class="catbars"></div><h3 style="margin-top:18px">Actions prioritaires</h3><div id="priorityList" class="muted">Aucun problème signalé pour le moment.</div></div>
 </div></section>
 
@@ -91,7 +91,7 @@
 <div class="field"><label for="researchName">Commerce / marque</label><input id="researchName" placeholder="Nom du commerce"></div>
 <div class="field"><label for="researchCity">Ville ou zone</label><input id="researchCity" placeholder="Ville"></div>
 <div class="field"><label for="researchSite">Site web (facultatif)</label><input id="researchSite" placeholder="https://..."></div>
-<div class="field"><label for="researchKeyword">Mot-clé ou service à tester</label><input id="researchKeyword" placeholder="Ex. restaurant viande à volonté"></div>
+<div class="field"><label for="researchKeyword">Mot-clé ou service à tester</label><input id="researchKeyword" placeholder="Ex. plombier dépannage urgent"></div>
 </div>
 <div class="actions" style="margin-top:14px"><button class="btn primary" id="buildResearch">Préparer les recherches</button><button class="btn" id="fillResearch">Reprendre les infos du commerce</button><button class="btn" id="openAllResearch">Tout ouvrir</button></div>
 <div id="researchResults" class="links" style="margin-top:16px"></div>
@@ -110,7 +110,7 @@
 <div class="fields">
 <div class="field"><label for="aiPlatform">Assistant testé</label><select id="aiPlatform"><option>ChatGPT</option><option>Claude</option><option>Google Gemini</option><option>Perplexity</option><option>Microsoft Copilot</option><option>Mistral Le Chat</option><option>Autre IA</option></select></div>
 <div class="field"><label for="aiDate">Date du test</label><input id="aiDate" type="date"></div>
-<div class="field full"><label for="aiPrompt">Question exacte posée à l’IA</label><textarea id="aiPrompt" placeholder="Ex. Quel est le meilleur restaurant de [ville] pour manger une viande à volonté ?"></textarea></div>
+<div class="field full"><label for="aiPrompt">Question exacte posée à l’IA</label><textarea id="aiPrompt" placeholder="Ex. Quel est le meilleur plombier à [ville] pour une urgence le week-end ?"></textarea></div>
 <div class="field"><label for="aiPresence">Le commerce apparaît-il ?</label><select id="aiPresence"><option value="yes">Oui, cité/recommandé</option><option value="no">Non, absent</option><option value="partial">Mention indirecte / incertain</option></select></div>
 <div class="field"><label for="aiRank">Position dans la réponse (si listé)</label><input id="aiRank" type="number" min="1" max="100" placeholder="Ex. 2"></div>
 <div class="field"><label for="aiCompetitors">Concurrents cités</label><input id="aiCompetitors" placeholder="Noms séparés par des virgules"></div>
@@ -212,6 +212,6 @@
 </section>
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-13"></script>
+<script src="assets/app.js?v=2026-14"></script>
 </body>
 </html>
