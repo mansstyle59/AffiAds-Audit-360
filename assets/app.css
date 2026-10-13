@@ -561,3 +561,5 @@ body.locked .layout{visibility:hidden}
 .soc.off{border-left:4px solid var(--gold)}.soc.off .sstate{color:var(--ink-3)}
 @media(max-width:700px){.socials{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{.socials{grid-template-columns:repeat(5,1fr)}}
+.biobtn{margin-top:16px;min-height:48px;padding:12px 20px;border-radius:999px;border:0;background:#fff;color:#2a1fb8;font:700 15px var(--font);cursor:pointer;box-shadow:0 10px 24px -10px #0b062e99}
+.biobtn[hidden]{display:none}
