@@ -22,11 +22,11 @@ const BIZ_TYPES=[
 ];
 /* Les nouveaux points sont TOUJOURS ajoutés en fin de groupe pour garder la compatibilité des sauvegardes. */
 const groups=[
-{title:"A · Fiche Google et Maps",items:["Nom, adresse, téléphone et horaires exacts","Catégorie principale et catégories secondaires","Description, services et lien de réservation","Menu, produits ou prestations accessibles","Photos récentes et de bonne qualité","Note, nombre et récence des avis","Réponses du propriétaire aux avis","Questions-réponses et informations manquantes","Doublons ou incohérences visibles","Fiche ouverte et active (pas marquée fermée)"]},
+{title:"A · Fiche Google et Maps",items:["Nom, adresse, téléphone et horaires exacts","Catégorie principale et catégories secondaires","Description, services et lien de réservation","Menu, produits ou prestations accessibles","Photos récentes et de bonne qualité","Note, nombre et récence des avis","Réponses du propriétaire aux avis","Attributs, services et FAQ complets (les Q&R Google ont disparu)","Doublons ou incohérences visibles","Fiche ouverte et active (pas marquée fermée)"]},
 {title:"B · Site Internet et référencement",items:["Site web présent et adapté au mobile","Chargement et navigation corrects","Menu, tarifs, horaires et coordonnées cohérents","Boutons d'appel, réservation et itinéraire","Pages indexables et titres descriptifs","Données structurées pertinentes à contrôler","Connexion sécurisée HTTPS","Accessibilité du site","Outils de suivi publicitaire (Pixel Meta, Google Analytics / Tag Manager)"]},
-{title:"C · Réseaux sociaux et publicité",items:["Présence sur Facebook et Instagram","Présence TikTok si pertinente","Publications récentes et régulières","Photos et vidéos de bonne qualité","Coordonnées et identité cohérentes","Publicités actives vérifiées dans la bibliothèque Meta"]},
+{title:"C · Réseaux sociaux et publicité",items:["Présence sur Facebook et Instagram","Présence TikTok si pertinente","Publications récentes et régulières","Photos et vidéos de bonne qualité","Coordonnées et identité cohérentes","Publicités actives vérifiées dans la bibliothèque Meta","Vidéos courtes récentes (Reels, TikTok, Shorts)"]},
 {title:"D · Réputation et concurrence",items:["Points positifs récurrents dans les avis","Critiques récurrentes à traiter","Réactivité aux avis négatifs","Comparaison avec trois concurrents locaux","Différences d'offre ou de présentation identifiées","Position sur la recherche locale principale"]},
-{title:"E · Visibilité dans les assistants IA",items:["Test de recherche du commerce dans ChatGPT","Test de recherche du commerce dans Claude","Informations du site officiel exactes et faciles à trouver","Sources fiables et annuaires cohérents","Questions locales pertinentes testées manuellement","Tests dans Gemini, Perplexity et Copilot"]}
+{title:"E · Visibilité dans les assistants IA",items:["Test de recherche du commerce dans ChatGPT","Test de recherche du commerce dans Claude","Informations du site officiel exactes et faciles à trouver","Sources fiables et annuaires cohérents","Questions locales pertinentes testées manuellement","Tests dans Gemini, Perplexity et Copilot","Présence dans le Mode IA et les aperçus IA de Google"]}
 ];
 /* Recommandation par point : texte, impact (1-3), effort (1-3), offre AffiAds liée */
 const RECO={
@@ -37,7 +37,7 @@ const RECO={
 "0-4":["Publier régulièrement des photos récentes et professionnelles (façade, intérieur, produits, équipe) et une vidéo courte.",3,2,"Photos et vidéos sur mesure"],
 "0-5":["Mettre en place une collecte d'avis régulière (QR code en caisse, message après la visite) pour augmenter le volume et la fraîcheur des avis.",3,2,"Kit de collecte d'avis"],
 "0-6":["Répondre à tous les avis, surtout les négatifs, de façon personnalisée et rapide.",2,1,"Gestion de la réputation"],
-"0-7":["Compléter les informations pratiques (accessibilité, paiements, services) et anticiper les questions fréquentes.",1,1,"Optimisation de la fiche Google"],
+"0-7":["Google a supprimé les questions-réponses des fiches : compléter attributs, services et produits, et publier une FAQ sur le site, car l’IA de Google Maps s’en sert pour répondre aux clients.",2,1,"Optimisation de la fiche Google"],
 "0-8":["Signaler et fusionner les fiches en double depuis Google Business Profile.",2,2,"Optimisation de la fiche Google"],
 "0-9":["Corriger le statut de la fiche : elle apparaît fermée ou inactive, ce qui fait fuir les clients.",3,1,"Optimisation de la fiche Google"],
 "1-0":["Créer ou refondre un site mobile rapide avec les informations essentielles et un bouton d'appel.",3,3,"Site web mobile"],
@@ -54,6 +54,7 @@ const RECO={
 "2-2":["Planifier deux à trois publications par semaine (Reels, stories, coulisses).",3,2,"Pubs vidéo et Reels"],
 "2-3":["Renouveler les visuels avec des photos et vidéos professionnelles adaptées aux réseaux.",2,2,"Photos et vidéos sur mesure"],
 "2-4":["Harmoniser nom, logo, coordonnées et lien sur tous les comptes.",2,1,"Gestion des réseaux sociaux"],
+"2-6":["Publier chaque semaine une vidéo verticale courte (Reels, TikTok, YouTube Shorts) : c’est le format le plus vu et le plus recherché en 2026.",3,2,"Pubs vidéo et Reels"],
 "2-5":["Lancer une campagne locale test (rayon de quelques kilomètres, vidéo de 15 secondes) pour toucher de nouveaux clients.",2,2,"Pub vidéo 15 s"],
 "3-0":["Mettre en avant les points forts cités dans les avis dans la communication (visuels, site, publicités).",2,1,"Pubs vidéo et Reels"],
 "3-1":["Traiter les critiques récurrentes et montrer publiquement les améliorations apportées.",3,2,"Gestion de la réputation"],
@@ -66,12 +67,14 @@ const RECO={
 "4-2":["Publier une page « Infos pratiques » claire (adresse, horaires, services, prix) facile à citer.",2,1,"Site web mobile"],
 "4-3":["Vérifier et harmoniser les fiches PagesJaunes, TripAdvisor, Facebook, Apple Plans et Bing Places.",2,2,"Visibilité IA"],
 "4-4":["Constituer une liste de questions clients et tester régulièrement les réponses des assistants.",1,1,"Visibilité IA"],
+"4-6":["Vérifier ce que répond le Mode IA de Google sur le commerce et renforcer les sources qu’il cite (fiche Google, avis, site, annuaires).",2,2,"Visibilité IA"],
 "4-5":["Étendre les tests aux autres assistants et corriger les informations erronées repérées.",1,1,"Visibilité IA"]
 };
 const AI_TARGETS=[
  {name:"ChatGPT",url:"https://chatgpt.com/",q:"https://chatgpt.com/?q="},
  {name:"Claude",url:"https://claude.ai/new",q:"https://claude.ai/new?q="},
  {name:"Google Gemini",url:"https://gemini.google.com/app",q:"https://gemini.google.com/app?q="},
+ {name:"Google Mode IA",url:"https://www.google.com/search?udm=50",q:"https://www.google.com/search?udm=50&q="},
  {name:"Perplexity",url:"https://www.perplexity.ai/",q:"https://www.perplexity.ai/?q="},
  {name:"Microsoft Copilot",url:"https://copilot.microsoft.com/",q:"https://copilot.microsoft.com/?q="},
  {name:"Mistral Le Chat",url:"https://chat.mistral.ai/chat",q:"https://chat.mistral.ai/chat?q="}
@@ -124,7 +127,18 @@ function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.i
  try{Object.values(db.audits).forEach(a=>{if(a.data&&a.data.psi)delete a.data.psi.shot});localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e2){return false}}}
 function saveSettings(){try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
 function auditLabel(s){const d=s.biz&&s.biz.date||s.createdAt||"";return (s.biz&&s.biz.name?s.biz.name:"Nouveau client")+(s.biz&&s.biz.city?", "+s.biz.city:"")+(d?" ("+new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+")":"")}
-function renderClientSelect(){$("clientSelect").innerHTML=Object.values(db.audits).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))).map(s=>'<option value="'+esc(s.id)+'"'+(s.id===state.id?" selected":"")+'>'+esc(auditLabel(s))+'</option>').join("")}
+function renderClientSelect(){
+ const all=Object.values(db.audits).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));
+ const q=norm(($("clientSearch")&&$("clientSearch").value)||"");
+ const list=all.filter(a=>!q||norm((a.biz&&a.biz.name||"")+" "+(a.biz&&a.biz.city||"")).includes(q));
+ $("clientChipName").textContent=state.biz&&state.biz.name?state.biz.name:"Nouveau client";
+ $("clientCount").textContent=all.length+" audit"+(all.length>1?"s":"")+" enregistré"+(all.length>1?"s":"")+" sur cet appareil";
+ $("clientList").innerHTML=list.length?list.map(a=>{const sc=scoreOf(a),nm=a.biz&&a.biz.name||"Nouveau client",f=(a.data&&a.data.findings||[]).length;
+  return '<div class="clientrow'+(a.id===state.id?" cur":"")+'"><button class="open" data-open="'+esc(a.id)+'"><span class="tile xs"><span class="sig"></span><span class="n">'+(sc??"—")+'</span></span><span class="who"><b>'+esc(nm)+'</b><span>'+esc([a.biz&&a.biz.city,a.biz&&a.biz.date?frDate(a.biz.date):""].filter(Boolean).join(", "))+(f?". "+f+" opportunité"+(f>1?"s":""):"")+'</span></span></button><button class="btn iconbtn del" data-del="'+esc(a.id)+'" aria-label="Supprimer '+esc(nm)+'" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div>'}).join(""):'<p class="muted" style="padding:14px 0">'+(q?"Aucun client ne correspond à cette recherche.":"Aucun audit pour l’instant.")+'</p>';
+ $("clientList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{switchTo(b.dataset.open);nav("auto")});
+ $("clientList").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=db.audits[b.dataset.del];if(!a||!confirm("Supprimer définitivement l’audit « "+auditLabel(a)+" » de cet appareil ?"))return;delete db.audits[a.id];if(a.id===state.id){const ids=Object.keys(db.audits);state=ids.length?fixState(db.audits[ids[0]]):blankState();persistLocal();hydrate()}else{try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}renderClientSelect()}toast("Audit supprimé.")});
+}
+function scoreOf(a){const ks=keys;let n=ks.filter(k=>a.checks&&a.checks[k]).length,bad=ks.filter(k=>a.checks&&a.checks[k]&&a.issues&&a.issues[k]).length;return n?Math.round((n-bad)/n*100):null}
 function switchTo(id){read();persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
 function hydrate(){
  fields.forEach(id=>{$(id).value=state.biz[id]??(id==="date"?today():"")});
@@ -700,10 +714,18 @@ function buildPitch(){
 }
 
 /* ---------- Navigation ---------- */
-const VIEWS=["auto","home","audit","report","pitch","campaign","research","webcheck","tools","settings"];
-const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données publiques pour vous."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche internet","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Analyse réelle du site sur mobile."],home:["Tableau de bord","Synthèse du commerce et du diagnostic."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Clé Google, signature et sauvegardes."]};
+const VIEWS=["auto","clients","home","audit","report","pitch","campaign","research","webcheck","tools","settings"];
+const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données publiques pour vous."],clients:["Clients","Tous vos audits, enregistrés sur cet appareil."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche web","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests du site","Vitesse, SEO et qualité du site sur téléphone."],home:["Fiche commerce","Coordonnées du commerce et diagnostic par catégorie."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Thème, installation, clé Google, signature et sauvegardes."]};
 function closeMore(){const n=document.querySelector(".nav");n.classList.remove("open");$("navMore").setAttribute("aria-expanded","false")}
-function nav(v){closeMore();VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===v));$("navMore").classList.toggle("active",!["auto","report","pitch"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}window.scrollTo({top:0,behavior:"smooth"})}
+let curView="auto";
+function nav(v){
+ closeMore();if(!TITLES[v])v="auto";
+ const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report","pitch"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
+ const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+ if(document.startViewTransition&&!reduce&&v!==curView)document.startViewTransition(swap);else swap();
+ curView=v;if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);
+ window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});
+}
 
 /* ---------- Boîte à outils (liens préremplis) ---------- */
 function renderTools(){
@@ -753,6 +775,7 @@ function renderCampaignPrompts(){
 function aiAutoChecks(){
  const has=n=>state.aiTests.filter(t=>t.platform===n&&(t.presence==="yes"||t.presence==="no"));
  [["4-0","ChatGPT"],["4-1","Claude"]].forEach(([k,n])=>{const ts=has(n);if(ts.length){const yes=ts.filter(t=>t.presence==="yes").length;setAuto(k,yes?"ok":"issue",n+" : cité dans "+yes+" test(s) sur "+ts.length+".","Tests IA enregistrés")}});
+ {const ts=has("Google Mode IA");if(ts.length){const yes=ts.filter(t=>t.presence==="yes").length;setAuto("4-6",yes?"ok":"issue","Google Mode IA : cité dans "+yes+" test(s) sur "+ts.length+".","Tests IA enregistrés")}}
  const others=["Google Gemini","Perplexity","Microsoft Copilot"].map(n=>[n,has(n)]).filter(x=>x[1].length);
  if(others.length){const yes=others.reduce((s,x)=>s+x[1].filter(t=>t.presence==="yes").length,0),tot=others.reduce((s,x)=>s+x[1].length,0);setAuto("4-5",yes?"ok":"issue",others.map(x=>x[0]).join(", ")+" : cité dans "+yes+" test(s) sur "+tot+".","Tests IA enregistrés")}
 }
@@ -819,9 +842,13 @@ function bind(){
  $("notes").addEventListener("input",()=>{update();persistLocal()});
  $("pdf").onclick=$("printReport").onclick=()=>{nav("report");setTimeout(()=>window.print(),300)};
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
- $("clientSelect").onchange=e=>switchTo(e.target.value);
- $("newClient").onclick=()=>{read();persistLocal();state=blankState();persistLocal();hydrate();nav("auto");$("autoName").focus()};
- $("deleteClient").onclick=()=>{if(!confirm("Supprimer définitivement l'audit « "+auditLabel(state)+" » de ce navigateur ?"))return;delete db.audits[state.id];const ids=Object.keys(db.audits);if(ids.length)state=fixState(db.audits[ids[0]]);else state=blankState();persistLocal();hydrate()};
+ $("clientChip").onclick=()=>nav("clients");
+ document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{settings.theme=b.dataset.themeSet;saveSettings();applyTheme()});
+ $("installApp").onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$("installApp").classList.add("hidden")};
+ $("shareReport").onclick=()=>shareText("Audit AffiAds",summaryText());
+ $("pitchShare").onclick=()=>shareText("Message",$("pitchText").value);
+ $("clientSearch").addEventListener("input",renderClientSelect);
+ $("newClient").onclick=()=>{read();persistLocal();state=blankState();persistLocal();hydrate();nav("auto");setTimeout(()=>$("autoName").focus(),200)};
  /* IA */
  $("campaignFill").onclick=campaignInputFromBiz;$("generateCampaign").onclick=()=>getCampaignPrompts(false);
  $("clearCampaign").onclick=()=>{state.campaignPrompts=[];persistLocal();renderCampaignPrompts()};
@@ -859,5 +886,27 @@ function bind(){
 }
 function download(content,name,type){const blob=new Blob([content],{type});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 
+
+/* ---------- 2026 : thème, installation, hors ligne, partage ---------- */
+function applyTheme(){const t=settings.theme||"auto";if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.themeSet===t)))}
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const b=$("installApp");if(b)b.classList.remove("hidden")});
+window.addEventListener("appinstalled",()=>{installEvt=null;const b=$("installApp");if(b)b.classList.add("hidden");toast("Appli installée sur l’écran d’accueil.")});
+function initInstallHelp(){
+ const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ if(standalone)$("installHelp").textContent="L’appli est installée sur cet appareil. L’interface reste disponible même sans réseau.";
+ else if(ios)$("installHelp").textContent="Sur iPhone : touchez le bouton Partager de Safari, puis « Sur l’écran d’accueil ». L’appli s’ouvrira en plein écran.";
+}
+async function shareText(title,text){
+ if(navigator.share){try{await navigator.share({title,text});return}catch(e){if(e&&e.name==="AbortError")return}}
+ copyText(text,"Texte copié : collez-le où vous voulez.");
+}
+function summaryText(){read();const c=calc(),d=state.data||{};return "Audit de visibilité AffiAds : "+(state.biz.name||"commerce")+(state.biz.city?" ("+state.biz.city+")":"")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+((d.findings||[]).length?"\n\nOpportunités repérées :\n"+d.findings.slice(0,6).map(f=>"• "+f.text).join("\n"):"")+"\n\n"+(settings.senderName?settings.senderName+", ":"")+(settings.senderLine||"AffiAds")}
+if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
 /* ---------- Démarrage ---------- */
-bind();loadAll();hydrate();
+bind();loadAll();applyTheme();initInstallHelp();hydrate();
+{const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
