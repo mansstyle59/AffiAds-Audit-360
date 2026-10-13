@@ -165,7 +165,7 @@ function loadAll(){
  if(!db.audits[db.current])db.current=Object.keys(db.audits)[0];
  state=fixState(db.audits[db.current]);
 }
-function fixState(s){s=s||blankState();["checks","issues","auto","biz","campaign","data"].forEach(k=>{if(!s[k]||typeof s[k]!=="object")s[k]={}});["aiTests","campaignPrompts"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});if(!s.id)s.id=uid();return s}
+function fixState(s){s=s||blankState();["checks","issues","auto","biz","campaign","data","socialAudits","socialManual"].forEach(k=>{if(!s[k]||typeof s[k]!=="object")s[k]={}});["aiTests","campaignPrompts"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});if(!s.id)s.id=uid();return s}
 function markSaved(ok){const el=$("savedState");if(!el)return;el.textContent=ok?"✓ Enregistré":"⚠ Non enregistré";el.classList.toggle("bad",!ok)}
 function persistLocal(){const ok=persistRaw();markSaved(ok);if(typeof syncSoon==="function")syncSoon();return ok}
 function persistRaw(){state.updatedAt=new Date().toISOString();db.audits[state.id]=state;db.current=state.id;try{localStorage.setItem(STORE,JSON.stringify(db));return true}catch(e){
@@ -196,6 +196,7 @@ function hydrate(){
  $("autoName").value=state.biz.name||"";$("autoCity").value=state.biz.city||"";$("autoType").value=state.biz.type||BIZ_TYPES[0].label;$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||"";
  ["autoType","autoKeyword"].forEach(id=>delete $(id).dataset.touched);if(state.biz.keyword)$("autoKeyword").dataset.touched="1";setPickInfo();renderPlaceChoice();closeSuggest();
  renderClientSelect();renderChecklist();update();drawAiTests();renderCampaignPrompts();renderAutoSteps(state.data.steps||[]);renderAutoSummary();$("pitchText").value=state.pitch||"";renderTools();renderKeyNotice();
+ $("socUrl").value="";$("socNiche").value="";renderSocial();
 }
 
 /* ---------- Checklist & score ---------- */
@@ -584,9 +585,9 @@ function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(
 /* Erreurs Google et réseau traduites en consignes claires */
 function frErr(e){
  const m=String(e&&e.message||e||"");const url=(m.match(/https:\/\/console\.(?:developers|cloud)\.google\.com\/[^\s"']+/)||[])[0]||"";
- if(/has not been used|is disabled|SERVICE_DISABLED|API_NOT_ACTIVATED|not been enabled/i.test(m)){const api=/generativelanguage|generative language/i.test(m+url)?"Generative Language API (Gemini)":/pagespeed/i.test(m+url)?"PageSpeed Insights API":"Places API (New)";return {code:"disabled",text:"« "+api+" » n’est pas encore activée dans votre projet Google. Touchez « Activer l’API », puis « Activer », attendez 2 minutes et relancez l’audit.",link:{href:url||(api.startsWith("Places")?"https://console.cloud.google.com/apis/library/places.googleapis.com":api.startsWith("Generative")?"https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com":"https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com"),label:"Activer l’API"}}}
+ if(/has not been used|is disabled|SERVICE_DISABLED|API_NOT_ACTIVATED|not been enabled/i.test(m)){const api=/youtube/i.test(m+url)?"YouTube Data API v3":/generativelanguage|generative language/i.test(m+url)?"Generative Language API (Gemini)":/pagespeed/i.test(m+url)?"PageSpeed Insights API":"Places API (New)";return {code:"disabled",text:"« "+api+" » n’est pas encore activée dans votre projet Google. Touchez « Activer l’API », puis « Activer », attendez 2 minutes et relancez l’audit.",link:{href:url||(api.startsWith("Places")?"https://console.cloud.google.com/apis/library/places.googleapis.com":api.startsWith("YouTube")?"https://console.cloud.google.com/apis/library/youtube.googleapis.com":api.startsWith("Generative")?"https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com":"https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com"),label:"Activer l’API"}}}
  if(/API keys are not supported|Expected OAuth2|CREDENTIALS_MISSING|ACCESS_TOKEN_TYPE_UNSUPPORTED/i.test(m))return {code:"badkey",text:WRONG_KEY_MSG,link:{href:"#settings",label:"Ouvrir les réglages"}};
- if(/are blocked|API_KEY_SERVICE_BLOCKED/i.test(m)){const api=/generativelanguage|generative language/i.test(m)?"Generative Language API (Gemini)":/pagespeed/i.test(m)?"PageSpeed Insights API":"Places API (New)";return {code:"blocked",text:"Votre clé n’a pas le droit d’utiliser « "+api+" ». Dans Google Cloud → Identifiants, ouvrez la clé, cochez « "+api+" » dans « Restrictions relatives aux API », puis Enregistrer (prise en compte en 2 à 5 minutes).",link:{href:"https://console.cloud.google.com/apis/credentials",label:"Modifier la clé"}}}
+ if(/are blocked|API_KEY_SERVICE_BLOCKED/i.test(m)){const api=/youtube/i.test(m)?"YouTube Data API v3":/generativelanguage|generative language/i.test(m)?"Generative Language API (Gemini)":/pagespeed/i.test(m)?"PageSpeed Insights API":"Places API (New)";return {code:"blocked",text:"Votre clé n’a pas le droit d’utiliser « "+api+" ». Dans Google Cloud → Identifiants, ouvrez la clé, cochez « "+api+" » dans « Restrictions relatives aux API », puis Enregistrer (prise en compte en 2 à 5 minutes).",link:{href:"https://console.cloud.google.com/apis/credentials",label:"Modifier la clé"}}}
  if(/API key not valid|API_KEY_INVALID/i.test(m))return {code:"badkey",text:"La clé Google n’est pas valide : copiez-la à nouveau dans Réglages.",link:{href:"#settings",label:"Ouvrir les réglages"}};
  if(/referer|referrer|API_KEY_HTTP_REFERRER_BLOCKED/i.test(m))return {code:"referer",text:"La clé n’autorise pas ce site : dans Google Cloud, ajoutez https://mansstyle59.github.io/* aux sites web autorisés.",link:{href:"https://console.cloud.google.com/apis/credentials",label:"Modifier la clé"}};
  if(/billing|BILLING/i.test(m))return {code:"billing",text:"Google demande d’associer un compte de facturation au projet (le volume gratuit reste gratuit).",link:{href:"https://console.cloud.google.com/billing",label:"Ouvrir la facturation"}};
@@ -1007,7 +1008,6 @@ function renderReport(){
   +scoreTile(totals.score)+partialNote()+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
   +'<div class="coverfoot"><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>';
- const toc='<div class="toc"><h3>Sommaire</h3><ol><li>Synthèse</li><li>Fiche Google, photos et réseaux sociaux</li><li>Visibilité locale et concurrence</li><li>Visibilité sur Bing</li><li>Visibilité dans les assistants IA</li><li>Site web sur mobile</li><li>Plan d’action</li><li>Ce qu’AffiAds peut apporter</li><li>Méthode et détail des contrôles</li></ol></div>';
  const syn='<p class="lead">'+esc(b.name||"Le commerce")+' obtient un score indicatif de <b>'+(totals.score??"—")+'/100</b> : '+esc(vt.toLowerCase())+'. '+esc(vsub)+' L’analyse porte sur '+totals.n+' contrôles ; '+issues.length+' point'+(issues.length>1?"s":"")+' à améliorer '+(issues.length>1?"ont":"a")+' été identifié'+(issues.length>1?"s":"")+'.</p>'
   +'<div class="twocol"><div class="box good"><h3>Points forts</h3>'+(good.length?'<ul>'+good.slice(0,6).map(g=>'<li><b>'+esc(g.it)+'</b>'+(g.ev?'<br><span class="muted">'+esc(g.ev)+'</span>':'')+'</li>').join("")+'</ul>':'<p class="muted">À confirmer après vérification.</p>')+'</div><div class="box bad"><h3>Opportunités prioritaires</h3>'+(issues.length?'<ul>'+issues.slice(0,6).map(p=>'<li><b>'+esc(p.it)+'</b><br><span class="muted">'+esc(p.reco)+'</span></li>').join("")+'</ul>':'<p class="muted">Aucune priorité relevée.</p>')+'</div></div>'
   +'<h3 style="margin-top:20px">Score par catégorie</h3><div class="catbars">'+gs.map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("")+'</div>'
@@ -1029,19 +1029,195 @@ function renderReport(){
  const sources=[d.place&&"Google Places API (fiche, avis, photos, concurrents, carte de visibilité)",d.psi&&(d.psi.via||"Lighthouse")+" (site mobile)",d.html&&"lecture du site (Jina Reader)",d.bing&&"Bing France",d.aiAuto&&d.aiAuto.length&&"Gemini avec Recherche Google",d.osm&&"OpenStreetMap"].filter(Boolean);
  const method='<p>L’audit combine des données publiques collectées automatiquement et des vérifications manuelles. Le score indicatif correspond à la part des contrôles réussis parmi ceux effectués, pondérée par l’importance de chaque point (un point à fort impact, comme les avis ou la position locale, compte trois fois plus qu’un point secondaire). Les points non vérifiés n’entrent pas dans le score. Il ne s’agit pas d’un classement officiel.</p>'+(sources.length?'<p><b>Sources :</b> '+esc(sources.join(" ; "))+'.</p>':'')+'<p class="muted">Les positions Google et Bing sont mesurées depuis des recherches neutres : les résultats réels varient selon la position, l’appareil et l’historique de chaque personne. Les statistiques privées (vues de la fiche, Search Console) nécessitent l’accès du propriétaire. Aucun résultat n’est garanti.</p>'+detail+(state.notes?'<h3>Observations complémentaires</h3><p>'+esc(state.notes)+'</p>':'');
  const closing='<div class="closing"><b style="font-size:17px">Prochaine étape</b><p class="muted" style="margin:6px 0 12px">Un échange de 10 minutes pour parcourir ce rapport et choisir ensemble les actions prioritaires. Démo et devis gratuits, sans engagement.</p><div class="brandline"><img src="assets/logo-64.png" alt="" width="36" height="36"><div><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<br><span class="muted">'+esc(contact)+'</span>':'')+'</div></div></div>';
- const body=cover+toc
-  +sec(1,"Synthèse",syn)
-  +sec(2,"Fiche Google, photos et réseaux sociaux",gHtml)
-  +sec(3,"Visibilité locale et concurrence",vis,"newpage")
-  +sec(4,"Visibilité sur Bing",bing+'<p class="muted"><small>Bing alimente aussi DuckDuckGo, Ecosia et Microsoft Copilot.</small></p>')
-  +sec(5,"Visibilité dans les assistants IA",aiHtml)
-  +sec(6,"Site web sur mobile",siteHtml)
-  +sec(7,"Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre. Chaque action s’appuie sur un constat daté de l’audit.</p>'+plan+checkHtml,"newpage")
-  +sec(8,"Ce qu’AffiAds peut apporter",scopeBlock(issues)+'<h3 style="margin-top:20px">Proposition adaptée à cet audit</h3><p>Les actions du plan regroupées par prestation, de la plus utile à la moins urgente :</p>'+offersBlock(issues)+closing,"newpage")
-  +sec(9,"Méthode et détail des contrôles",method);
+ const S=[];
+ S.push(["Synthèse",syn]);
+ S.push(["Fiche Google, photos et réseaux sociaux",gHtml]);
+ S.push(["Visibilité locale et concurrence",vis,"newpage"]);
+ S.push(["Visibilité sur Bing",bing+'<p class="muted"><small>Bing alimente aussi DuckDuckGo, Ecosia et Microsoft Copilot.</small></p>']);
+ S.push(["Visibilité dans les assistants IA",aiHtml]);
+ S.push(["Site web sur mobile",siteHtml]);
+ const SA=state.socialAudits||{};if(SA.instagram||SA.youtube)S.push(["Audit Instagram et YouTube",(SA.instagram?socBlock(SA.instagram,true):"")+(SA.youtube?socBlock(SA.youtube,true):""),"newpage"]);
+ S.push(["Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre. Chaque action s’appuie sur un constat daté de l’audit.</p>'+plan+checkHtml,"newpage"]);
+ S.push(["Ce qu’AffiAds peut apporter",scopeBlock(issues)+'<h3 style="margin-top:20px">Proposition adaptée à cet audit</h3><p>Les actions du plan regroupées par prestation, de la plus utile à la moins urgente :</p>'+offersBlock(issues)+closing,"newpage"]);
+ S.push(["Méthode et détail des contrôles",method]);
+ const toc='<div class="toc"><h3>Sommaire</h3><ol>'+S.map(x=>'<li>'+esc(x[0])+'</li>').join("")+'</ol></div>';
+ const body=cover+toc+S.map((x,i)=>sec(i+1,x[0],x[1],x[2])).join("");
  const head='<div class="phead"><span><img src="assets/logo-64.png" alt="" width="18" height="18"> AffiAds Audit 360°</span><span>'+esc(b.name||"")+(b.city?" · "+esc(b.city):"")+'</span></div>';
  const foot='<div class="pfoot"><span>'+esc(line)+(contact?" · "+esc(contact):"")+'</span><span>Audit du '+esc(frDate(b.date||today()))+'</span></div>';
  $("report").innerHTML='<table class="printwrap"><thead><tr><td>'+head+'</td></tr></thead><tbody><tr><td>'+body+'</td></tr></tbody><tfoot><tr><td>'+foot+'</td></tr></tfoot></table>';
+}
+
+/* ---------- Audit d'un compte Instagram ou d'une chaîne YouTube ----------
+   YouTube : YouTube Data API v3 (clé Google), sinon page publique + flux RSS.
+   Instagram : informations publiques du profil (abonnés, publications, bio) quand Instagram les affiche. */
+const SOC_STOP=new Set("le la les un une des de du d l et ou en au aux a à pour par sur avec sans dans ce cette ces mon ma mes ton ta tes son sa ses notre nos votre vos leur leurs qui que quoi est sont pas plus tout tous très comment pourquoi quand the and of to in on for with my your is are this that how what new vs ep episode vidéo video officiel officielle partie part shorts short".split(" "));
+function socParse(raw,force){
+ let t=String(raw||"").trim();if(!t)return null;
+ let u=null;try{u=new URL(/^https?:\/\//i.test(t)?t:(/\.(com|be)\//i.test(t)?"https://"+t:"x:"))}catch(e){}
+ if(u&&/youtube\.com|youtu\.be/i.test(u.hostname)){const p=u.pathname.split("/").filter(Boolean);
+  if(p[0]&&p[0].startsWith("@"))return {net:"youtube",handle:p[0]};
+  if(p[0]==="channel"&&p[1])return {net:"youtube",channelId:p[1]};
+  if((p[0]==="c"||p[0]==="user")&&p[1])return {net:"youtube",user:p[1]};
+  return null}
+ if(u&&/instagram\.com/i.test(u.hostname)){const h=u.pathname.split("/").filter(Boolean)[0];return h&&!/^(p|reel|reels|explore|stories)$/.test(h)?{net:"instagram",handle:h.replace(/^@/,"")}:null}
+ const h=t.replace(/^@/,"").replace(/\s+/g,"");if(!/^[\w.\-]{2,60}$/.test(h))return null;
+ return force==="youtube"?{net:"youtube",handle:"@"+h}:{net:"instagram",handle:h};
+}
+function parseCount(s){
+ s=String(s||"").trim().toLowerCase().replace(/ | /g," ");const m=s.match(/([\d][\d\s.,]*)\s*(k|m|md|b|mille|million|millions)?/);if(!m)return null;
+ let n=m[1].trim(),mult=1;const suf=m[2]||"";if(/^(k|mille)$/.test(suf))mult=1e3;else if(/^(m|million|millions)$/.test(suf))mult=1e6;else if(/^(md|b)$/.test(suf))mult=1e9;
+ if(mult>1)n=n.replace(/\s/g,"").replace(",",".");else n=n.replace(/[\s.,](?=\d{3}\b)/g,"").replace(",",".");
+ const v=parseFloat(n);return isNaN(v)?null:Math.round(v*mult);
+}
+function isoDur(d){const m=String(d||"").match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);if(!m)return null;return (+m[1]||0)*86400+(+m[2]||0)*3600+(+m[3]||0)*60+(+m[4]||0)}
+function fmtN(n){return n==null?"—":n>=1e6?fr1(n/1e6)+" M":n>=1e4?Math.round(n/1e3)+" k":n>=1e3?fr1(n/1e3)+" k":String(n)}
+function topWords(texts,n){const c={};texts.forEach(t=>toks(String(t||"").replace(/https?:\/\/\S+/g," ").replace(/#/g," ")).forEach(w=>{if(w.length>2&&!SOC_STOP.has(w)&&!/^\d+$/.test(w))c[w]=(c[w]||0)+1}));return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,n||8).map(x=>x[0])}
+function nicheWords(niche){return toks(niche||"").filter(w=>w.length>2&&!SOC_STOP.has(w))}
+async function proxyHtml(url){
+ const tries=[()=>fetchText("https://api.allorigins.win/raw?url="+encodeURIComponent(url),{},30000),()=>fetchText("https://r.jina.ai/"+url,{headers:{"X-Return-Format":"html"}},45000)];
+ let last;for(const f of tries){try{const t=await f();if(t&&t.length>300)return t;last=new Error("page vide")}catch(e){last=e}}throw last||new Error("page illisible");
+}
+/* ----- YouTube ----- */
+async function ytApi(path,params){const q=new URLSearchParams({...params,key:settings.googleKey.trim()});return fetchJson("https://www.googleapis.com/youtube/v3/"+path+"?"+q,{},25000)}
+async function ytViaApi(ref){
+ const part="snippet,statistics,brandingSettings,contentDetails";
+ const r=await ytApi("channels",ref.channelId?{part,id:ref.channelId}:ref.user?{part,forUsername:ref.user}:{part,forHandle:ref.handle});
+ const ch=(r.items||[])[0];if(!ch){const e=new Error("Chaîne YouTube introuvable");e.notfound=true;throw e}
+ const up=ch.contentDetails&&ch.contentDetails.relatedPlaylists&&ch.contentDetails.relatedPlaylists.uploads;
+ let vids=[];
+ if(up){const pl=await ytApi("playlistItems",{part:"contentDetails",playlistId:up,maxResults:30});const ids=(pl.items||[]).map(i=>i.contentDetails.videoId).filter(Boolean);
+  if(ids.length){const v=await ytApi("videos",{part:"snippet,statistics,contentDetails",id:ids.join(",")});vids=(v.items||[]).map(x=>({id:x.id,title:x.snippet.title,desc:x.snippet.description||"",tags:x.snippet.tags||[],date:x.snippet.publishedAt,views:+x.statistics.viewCount||0,likes:x.statistics.likeCount!=null?+x.statistics.likeCount:null,comments:x.statistics.commentCount!=null?+x.statistics.commentCount:null,dur:isoDur(x.contentDetails.duration)}))}}
+ let playlists=null;try{const p=await ytApi("playlists",{part:"id",channelId:ch.id,maxResults:1});playlists=p.pageInfo?p.pageInfo.totalResults:null}catch(e){}
+ const b=(ch.brandingSettings&&ch.brandingSettings.channel)||{};
+ return {via:"YouTube Data API",id:ch.id,title:ch.snippet.title,handle:ch.snippet.customUrl||ref.handle||"",desc:ch.snippet.description||"",created:ch.snippet.publishedAt,country:ch.snippet.country||b.country||"",
+  subs:ch.statistics.hiddenSubscriberCount?null:+ch.statistics.subscriberCount,views:+ch.statistics.viewCount,videoCount:+ch.statistics.videoCount,keywords:b.keywords||"",trailer:!!b.unsubscribedTrailer,playlists,thumb:ch.snippet.thumbnails&&(ch.snippet.thumbnails.medium||ch.snippet.thumbnails.default||{}).url||"",videos:vids.sort((a,b)=>String(b.date).localeCompare(String(a.date)))};
+}
+async function ytViaPublic(ref){
+ const page=ref.channelId?"https://www.youtube.com/channel/"+ref.channelId:ref.user?"https://www.youtube.com/user/"+ref.user:"https://www.youtube.com/"+ref.handle;
+ const h=await proxyHtml(page);
+ const id=ref.channelId||(h.match(/"(?:channelId|externalId)":"(UC[\w-]{22})"/)||h.match(/channel\/(UC[\w-]{22})/)||[])[1];
+ if(!id){const e=new Error("Chaîne YouTube introuvable");e.notfound=true;throw e}
+ const meta=(n)=>{const m=h.match(new RegExp('<meta[^>]+(?:property|name)="'+n+'"[^>]+content="([^"]*)"'))||h.match(new RegExp('<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="'+n+'"'));return m?m[1].replace(/&amp;/g,"&").replace(/&#39;/g,"’").replace(/&quot;/g,'"'):""};
+ const subTxt=(h.match(/"subscriberCountText":\{(?:"accessibility":\{"accessibilityData":\{"label":"[^"]*"\}\},)?"simpleText":"([^"]+)"/)||h.match(/([\d][\d\s.,]*\s*(?:k|M|Md)?)\s*(?:abonnés|subscribers)/i)||[])[1];
+ const x=await proxyHtml("https://www.youtube.com/feeds/videos.xml?channel_id="+id);
+ const doc=new DOMParser().parseFromString(x,"text/xml");
+ const vids=[...doc.getElementsByTagName("entry")].map(e=>{const g=(t)=>{const el=e.getElementsByTagName(t)[0];return el?el.textContent:""};const st=e.getElementsByTagName("media:statistics")[0],sr=e.getElementsByTagName("media:starRating")[0];
+  return {id:g("yt:videoId"),title:g("title"),desc:g("media:description"),tags:[],date:g("published"),views:st?+st.getAttribute("views"):0,likes:sr?+sr.getAttribute("count"):null,comments:null,dur:null,isShortUrl:/\/shorts\//.test((e.getElementsByTagName("link")[0]||{getAttribute:()=>""}).getAttribute("href")||"")}});
+ return {via:"Page publique YouTube et flux RSS",id,title:meta("og:title")||(doc.getElementsByTagName("title")[0]||{}).textContent||ref.handle,handle:ref.handle||"",desc:meta("og:description")||meta("description"),created:"",country:"",subs:subTxt?parseCount(subTxt):null,views:null,videoCount:null,keywords:meta("keywords"),trailer:null,playlists:null,thumb:meta("og:image"),videos:vids};
+}
+function ytAnalyze(c,niche){
+ const V=c.videos||[],now=Date.now(),days=t=>Math.round((now-Date.parse(t))/864e5);
+ const last10=V.slice(0,10),dates=last10.map(v=>Date.parse(v.date)).filter(Boolean);
+ const gaps=[];for(let i=0;i+1<dates.length;i++)gaps.push((dates[i]-dates[i+1])/864e5);
+ const cadence=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:null,since=V[0]?days(V[0].date):null;
+ const med=a=>{a=a.filter(x=>x!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};
+ const medViews=med(last10.map(v=>v.views));
+ const eng=last10.filter(v=>v.views>0&&v.likes!=null);const engRate=eng.length?eng.reduce((s,v)=>s+(v.likes+(v.comments||0)),0)/eng.reduce((s,v)=>s+v.views,0)*100:null;
+ const shorts=last10.filter(v=>v.isShortUrl||(v.dur!=null&&v.dur<=60)).length,longs=last10.filter(v=>v.dur!=null&&v.dur>300);
+ const kw=nicheWords(niche);const top=topWords(V.map(v=>v.title+" "+(v.tags||[]).join(" ")),10);const target=kw.length?kw:top.slice(0,2);
+ const hasKw=t=>target.length&&target.some(w=>norm(t).includes(w));
+ const titleLen=last10.length?Math.round(last10.reduce((s,v)=>s+v.title.length,0)/last10.length):null;
+ const titleKw=last10.length?Math.round(last10.filter(v=>hasKw(v.title)).length/last10.length*100):null;
+ const descLen=last10.length?Math.round(last10.reduce((s,v)=>s+v.desc.length,0)/last10.length):null;
+ const descLink=last10.length?Math.round(last10.filter(v=>/https?:\/\//.test(v.desc)).length/last10.length*100):null;
+ const tagged=c.via.startsWith("YouTube Data")&&last10.length?Math.round(last10.filter(v=>v.tags.length).length/last10.length*100):null;
+ const chap=longs.length?Math.round(longs.filter(v=>/(^|\n)\s*0?0:00/.test(v.desc)).length/longs.length*100):null;
+ const best=[...V].sort((a,b)=>b.views-a.views)[0]||null;
+ const M={cadence,since,medViews,engRate,shorts,n10:last10.length,titleLen,titleKw,descLen,descLink,tagged,chap,top,target,best};
+ const C=[];const add=(id,label,ok,ev,reco,goal,w)=>C.push({id,label,ok,ev,reco,goal,w:w||2});
+ if(since!=null)add("y1","Régularité de publication",since<=14&&(cadence==null||cadence<=10),"Dernière vidéo il y a "+since+" j"+(cadence!=null?" · une vidéo tous les "+Math.round(cadence)+" j en moyenne sur les "+last10.length+" dernières":"")+".","Publier à un rythme fixe (même jour, même heure) : l’algorithme et les abonnés récompensent la régularité.","Au moins une vidéo par semaine, dont des Shorts.",3);
+ if(last10.length)add("y2","Format court (Shorts)",shorts>0,shorts+" Short"+(shorts>1?"s":"")+" probable"+(shorts>1?"s":"")+" parmi les "+last10.length+" dernières vidéos.","Découper les meilleures vidéos en Shorts verticaux de 15 à 60 s avec une accroche dans les 2 premières secondes : c’est le format qui attire le plus de nouveaux abonnés.","2 à 3 Shorts par semaine.",3);
+ if(titleLen!=null)add("y3","Titres optimisés (SEO)",titleLen>=30&&titleLen<=75&&titleKw>=50,"Titres de "+titleLen+" caractères en moyenne · "+titleKw+" % contiennent "+(kw.length?"la niche":"les mots principaux")+" (« "+target.join(", ")+" »).","Placer le mot-clé recherché en début de titre, 40 à 70 caractères, promesse claire (bénéfice ou question).","Mot-clé de la niche dans au moins 8 titres sur 10.",3);
+ if(descLen!=null)add("y4","Descriptions complètes",descLen>=200&&descLink>=50,"Descriptions de "+descLen+" caractères en moyenne · "+descLink+" % contiennent un lien.","Rédiger 2 à 3 phrases avec les mots-clés en début de description, puis les liens (site, réservation, réseaux) et 3 hashtags.","Description de plus de 200 caractères avec lien sur chaque vidéo.",2);
+ if(tagged!=null)add("y5","Tags et mots-clés",tagged>=50||!!c.keywords,tagged+" % des vidéos ont des tags"+(c.keywords?" · mots-clés de chaîne renseignés":" · aucun mot-clé de chaîne")+".","Renseigner les mots-clés de la chaîne et quelques tags précis par vidéo (niche, ville, variantes).",null,1);
+ if(chap!=null)add("y6","Chapitres sur les vidéos longues",chap>=30,chap+" % des vidéos de plus de 5 min ont des chapitres.","Ajouter des chapitres (00:00 Introduction…) : Google les affiche directement dans ses résultats.",null,1);
+ add("y7","Présentation de la chaîne",(c.desc||"").length>=150&&(!target.length||target.some(w=>norm(c.desc).includes(w))),(c.desc?"Description de "+c.desc.length+" caractères"+(target.length?(target.some(w=>norm(c.desc).includes(w))?", contient la niche":", sans les mots de la niche"):""):"Aucune description de chaîne")+".","Écrire une présentation de chaîne claire : qui, pour qui, quoi, à quel rythme, avec les mots-clés de la niche et un lien.",null,2);
+ if(c.trailer!=null)add("y8","Bande-annonce de chaîne",c.trailer,c.trailer?"Bande-annonce définie pour les visiteurs non abonnés.":"Aucune bande-annonce pour les visiteurs non abonnés.","Ajouter une vidéo de présentation de 30 à 60 s pour les visiteurs non abonnés.",null,1);
+ if(engRate!=null)add("y9","Engagement",engRate>=2,"Mentions « j’aime » et commentaires = "+fr1(engRate)+" % des vues sur les "+last10.length+" dernières vidéos (repère courant : 2 % ou plus).","Poser une question en fin de vidéo, épingler un commentaire, répondre aux premiers commentaires dans l’heure.",null,2);
+ if(medViews!=null&&c.subs)add("y10","Portée des nouvelles vidéos",medViews>=c.subs*0.1,"Vues médianes des "+last10.length+" dernières vidéos : "+fmtN(medViews)+" pour "+fmtN(c.subs)+" abonnés ("+Math.round(medViews/c.subs*100)+" %).","Travailler les miniatures (visage, 3 mots maximum, contraste) et les 30 premières secondes pour relancer la portée.",null,2);
+ return {M,C};
+}
+/* ----- Instagram ----- */
+async function igFetch(ref){
+ const h=await proxyHtml("https://www.instagram.com/"+ref.handle+"/");
+ const meta=(n)=>{const m=h.match(new RegExp('<meta[^>]+(?:property|name)="'+n+'"[^>]+content="([^"]*)"'))||h.match(new RegExp('<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="'+n+'"'));return m?m[1].replace(/&amp;/g,"&").replace(/&#039;|&#39;/g,"’").replace(/&quot;/g,'"').replace(/&#x([0-9a-f]+);/gi,(_,x)=>String.fromCodePoint(parseInt(x,16))):""};
+ const d=meta("description")||meta("og:description");
+ const num=rx=>{const m=d.match(rx);return m?parseCount(m[1]):null};
+ const followers=num(/([\d][\d\s.,]*\s*[KkMm]?)\s*(?:Followers|abonnés|followers)/),following=num(/([\d][\d\s.,]*\s*[KkMm]?)\s*(?:Following|abonnements)/),posts=num(/([\d][\d\s.,]*\s*[KkMm]?)\s*(?:Posts|publications)/);
+ const t=meta("og:title");const name=(t.match(/^(.*?)\s*\(@/)||[])[1]||"";
+ const bio=((d.match(/on Instagram:\s*"([\s\S]*)"\s*$/)||d.match(/sur Instagram\s*:\s*«?\s*"?([\s\S]*?)"?\s*»?\s*$/)||[])[1]||"").trim();
+ if(followers==null&&posts==null){const e=new Error("Profil Instagram non lisible (compte privé, inexistant, ou lecture bloquée par Instagram)");e.blocked=true;throw e}
+ return {via:"Profil public Instagram",handle:ref.handle,name,bio,followers,following,posts,pic:meta("og:image")};
+}
+const IG_MANUAL=[["m1","Reels publiés au moins 2 fois par semaine","Publier 2 à 3 Reels par semaine : c’est le format qui touche le plus de non-abonnés.",3],["m2","Lien dans la bio (site, réservation, devis)","Ajouter un lien unique dans la bio vers l’action principale (réservation, devis, site).",3],["m3","Compte professionnel avec boutons de contact","Passer en compte professionnel et activer les boutons Appeler, E-mail, Itinéraire ou Réserver.",2],["m4","Stories à la une organisées","Créer 4 à 6 stories à la une : offre, avis, coulisses, infos pratiques.",1],["m5","Légendes avec mots-clés (et ville)","Écrire des légendes qui reprennent les mots que les clients tapent (activité, ville, spécialité) : Instagram et Google les lisent.",2],["m6","Lieu ajouté aux publications","Ajouter le lieu sur chaque publication pour apparaître dans les recherches locales.",1],["m7","3 à 5 hashtags ciblés","Utiliser 3 à 5 hashtags précis (niche, ville) plutôt que 30 hashtags génériques.",1],["m8","Publications épinglées","Épingler 3 publications : présentation, meilleure offre, avis clients.",1]];
+function igAnalyze(c,niche){
+ const kw=nicheWords(niche),C=[];const add=(id,label,ok,ev,reco,goal,w)=>C.push({id,label,ok,ev,reco,goal,w:w||2});
+ const ratio=c.followers!=null&&c.following?c.followers/c.following:null;
+ if(c.name||c.handle)add("i1","Nom du profil avec l’activité (SEO)",kw.length?kw.some(w=>norm(c.name+" "+c.handle).includes(w)):null,"Nom affiché : « "+(c.name||"—")+" » · identifiant @"+c.handle+".","Le champ « Nom » est pris en compte par la recherche Instagram : y ajouter l’activité, par exemple « "+(c.name||"Nom")+" | "+(niche||"activité")+" ».",null,3);
+ if(c.bio)add("i2","Bio claire avec mots-clés et appel à l’action",c.bio.length>=60&&(!kw.length||kw.some(w=>norm(c.bio).includes(w)))&&/r[ée]serv|devis|appel|contact|command|lien|dm|message|rdv|rendez|👇|⬇/i.test(c.bio),"Bio : « "+c.bio.slice(0,160)+(c.bio.length>160?"…":"")+" ».","Bio en 3 lignes : ce que vous faites et pour qui, où (ville), puis l’action à faire (réserver, demander un devis) avec le lien.",null,3);
+ else add("i2","Bio claire avec mots-clés et appel à l’action",null,"Bio non lisible automatiquement : à vérifier sur le profil.","Bio en 3 lignes : ce que vous faites et pour qui, où (ville), puis l’action à faire (réserver, demander un devis) avec le lien.",null,3);
+ if(c.posts!=null)add("i3","Volume de publications",c.posts>=30,c.posts+" publications.","Constituer un fond d’au moins 30 publications utiles (offre, coulisses, avis, avant/après).",null,1);
+ if(ratio!=null)add("i4","Équilibre abonnés / abonnements",ratio>=1,fmtN(c.followers)+" abonnés pour "+fmtN(c.following)+" abonnements.","Réduire les abonnements sans lien avec l’activité et miser sur le contenu pour attirer des abonnés.",null,1);
+ const man=(state.socialManual||{});IG_MANUAL.forEach(([id,label,reco,w])=>{if(man[id]!=null)C.push({id,label,ok:man[id],ev:man[id]?"Vérifié sur le profil.":"Absent après vérification.",reco,w,manual:true})});
+ return {M:{ratio},C:C.filter(x=>x.ok!==null)};
+}
+/* ----- IA : niche, mots-clés et idées (Gemini) ----- */
+async function socAi(net,c,niche,M){
+ const base=net==="youtube"?"Chaîne YouTube « "+c.title+" » ("+(c.handle||"")+"). Abonnés : "+fmtN(c.subs)+". Titres récents : "+(c.videos||[]).slice(0,12).map(v=>v.title).join(" | ")+".":"Compte Instagram @"+c.handle+" « "+(c.name||"")+" ». Bio : "+(c.bio||"inconnue")+". Abonnés : "+fmtN(c.followers)+".";
+ const q="Tu es consultant en marketing des réseaux sociaux pour une agence française. "+base+(niche?" Niche indiquée : "+niche+".":"")+" En t’appuyant uniquement sur ces informations et sur une recherche web si utile, réponds en JSON strict sans texte autour : {\"niche\":\"la niche en une phrase\",\"public\":\"le public visé en une phrase\",\"motscles\":[8 mots-clés ou expressions que le public tape dans la recherche "+(net==="youtube"?"YouTube":"Instagram")+"],\"hashtags\":[5 hashtags précis],\"idees\":[5 idées de "+(net==="youtube"?"vidéos ou Shorts":"Reels")+" concrètes avec un titre accrocheur]}. Si une information manque, écris \"à confirmer\".";
+ const r=await geminiAsk(q);const m=r.text.match(/\{[\s\S]*\}/);if(!m)throw new Error("réponse IA illisible");
+ const j=JSON.parse(m[0]);return {niche:String(j.niche||""),public:String(j.public||""),motscles:(j.motscles||[]).map(String).slice(0,10),hashtags:(j.hashtags||[]).map(String).slice(0,6),idees:(j.idees||[]).map(String).slice(0,6),sources:r.sources.slice(0,4)};
+}
+function socScore(C){let t=0,o=0;C.forEach(x=>{t+=x.w;if(x.ok)o+=x.w});return t?Math.round(o/t*100):null}
+let socRunning=false;
+async function runSocial(){
+ if(socRunning)return;const force=$("socNet").value;const ref=socParse($("socUrl").value,force==="auto"?null:force);
+ if(!ref){toast("Collez le lien d’un compte Instagram ou d’une chaîne YouTube, ou son @nom.");$("socUrl").focus();return}
+ const niche=$("socNiche").value.trim();socRunning=true;$("runSocial").disabled=true;$("runSocial").textContent="Analyse en cours…";
+ const box=$("socResult");box.innerHTML='<p class="muted"><span class="spin">◌</span> Lecture du compte '+(ref.net==="youtube"?"YouTube":"Instagram")+'…</p>';
+ const res={net:ref.net,input:$("socUrl").value.trim(),niche,at:nowLabel(),date:today()};
+ try{
+  if(ref.net==="youtube"){
+   let c=null,apiErr=null;if(hasKey()){try{c=await ytViaApi(ref)}catch(e){if(e.notfound)throw e;apiErr=e}}
+   if(!c){try{c=await ytViaPublic(ref)}catch(e){if(apiErr){const f=frErr(apiErr);const er=new Error(f.text);er.link=f.link;throw er}throw e}}
+   if(apiErr)res.warn=frErr(apiErr);
+   c.videos=(c.videos||[]).slice(0,30);res.data=c;Object.assign(res,ytAnalyze(c,niche));
+  }else{res.data=await igFetch(ref);Object.assign(res,igAnalyze(res.data,niche))}
+  if(hasKey()){box.innerHTML+='<p class="muted"><span class="spin">◌</span> Analyse de la niche avec l’IA de Google…</p>';try{res.ai=await socAi(ref.net,res.data,niche,res.M)}catch(e){res.aiErr=frErr(e).text}}
+  res.score=socScore(res.C);
+  state.socialAudits=state.socialAudits||{};state.socialAudits[ref.net]=res;
+  if(!state.biz.name){state.biz.name=ref.net==="youtube"?res.data.title:(res.data.name||"@"+res.data.handle)}
+  persistLocal();renderClientSelect();renderSocial();update();toast("Audit du compte terminé.");
+ }catch(e){
+  const blocked=e.blocked||/allorigins|jina|HTTP 4|HTTP 5|Failed to fetch|page vide|illisible/i.test(String(e.message));
+  const errHtml='<div class="partial"><b>'+(e.notfound?"Compte introuvable":ref.net==="instagram"&&blocked?"Instagram n’a pas laissé lire ce profil":"Analyse impossible pour le moment")+'</b><span>'+esc(e.notfound?"Vérifiez le lien ou le @nom du compte.":ref.net==="instagram"&&blocked?"Instagram bloque souvent la lecture automatique. Vérifiez que le compte est public et réessayez dans quelques minutes, ou indiquez ci-dessous ce que vous voyez sur le profil : l’appli calcule quand même le score et le plan d’action.":frErr(e).text)+'</span>'+(e.link?'<a class="steplink" href="'+esc(e.link.href)+'" target="_blank" rel="noopener">'+esc(e.link.label)+'</a>':'')+'</div>';
+  if(ref.net==="instagram"&&!e.notfound){const prev=(state.socialAudits||{}).instagram;if(!prev||prev.data.handle!==ref.handle){const r2={net:"instagram",input:res.input,niche,at:res.at,date:res.date,data:{handle:ref.handle,name:"",bio:"",followers:null,following:null,posts:null,via:"vérification manuelle"},manualOnly:true};Object.assign(r2,igAnalyze(r2.data,niche));r2.score=socScore(r2.C);state.socialAudits=state.socialAudits||{};state.socialAudits.instagram=r2;persistLocal()}}
+  renderSocial();box.insertAdjacentHTML("afterbegin",errHtml);
+ }finally{socRunning=false;$("runSocial").disabled=false;$("runSocial").textContent="Lancer l’audit du compte"}
+}
+function socManualHtml(){const man=state.socialManual||{};return '<div class="box" style="margin-top:14px"><h3>Vérifications sur le profil Instagram</h3><p class="muted">Ouvrez le profil sur votre téléphone et indiquez ce que vous voyez : le score et le plan d’action se mettent à jour.</p>'+IG_MANUAL.map(([id,label])=>'<div class="qrow"><span>'+esc(label)+'</span><span class="seg sm"><button type="button" data-man="'+id+'" data-v="1" class="'+(man[id]===true?"on":"")+'">Oui</button><button type="button" data-man="'+id+'" data-v="0" class="'+(man[id]===false?"on":"")+'">Non</button></span></div>').join("")+'</div>'}
+function socBlock(r,forReport){
+ if(!r)return "";const d=r.data||{},yt=r.net==="youtube",M=r.M||{};
+ const head='<div class="sochead">'+(d.thumb||d.pic?'<img src="'+esc(d.thumb||d.pic)+'" alt="" width="56" height="56" referrerpolicy="no-referrer">':'')+'<div><b>'+esc(yt?d.title:(d.name||"@"+d.handle))+'</b><span>'+(yt?"YouTube"+(d.handle?" · "+esc(d.handle):""):"Instagram · @"+esc(d.handle))+' · analysé le '+esc(r.at||"")+'</span></div>'+(r.score!=null?'<span class="socscore '+scoreColor(r.score)+'">'+r.score+'<small>/100 · '+r.C.length+' point'+(r.C.length>1?"s":"")+'</small></span>':'')+'</div>';
+ const k=yt?[[fmtN(d.subs),"Abonnés"],[M.medViews!=null?fmtN(M.medViews):"—","Vues médianes (vidéos récentes)"],[M.cadence!=null?Math.round(M.cadence)+" j":"—","Entre deux vidéos"],[M.engRate!=null?fr1(M.engRate)+" %":"—","Engagement"]]:[[fmtN(d.followers),"Abonnés"],[d.posts!=null?fmtN(d.posts):"—","Publications"],[fmtN(d.following),"Abonnements"],[M.ratio!=null?fr1(M.ratio):"—","Ratio abonnés / abonnements"]];
+ const kpis=r.manualOnly?'':'<div class="kpis">'+k.map(x=>kpiBox(x[0],x[1],"")).join("")+'</div>';
+ const ai=r.ai?'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Niche et public</h3><p><b>'+esc(r.ai.niche)+'</b></p><p class="muted">'+esc(r.ai.public)+'</p>'+(r.ai.motscles.length?'<p><small><b>Mots-clés à viser :</b> '+esc(r.ai.motscles.join(", "))+'</small></p>':'')+(r.ai.hashtags.length?'<p><small><b>Hashtags :</b> '+esc(r.ai.hashtags.join(" "))+'</small></p>':'')+'</div><div class="box"><h3>Idées de '+(yt?"vidéos et Shorts":"Reels")+'</h3><ol class="blist">'+r.ai.idees.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol><p class="muted"><small>Suggestions de l’IA de Google à valider.</small></p></div></div>':(M.top&&M.top.length?'<p style="margin-top:10px"><b>Thèmes les plus présents :</b> '+esc(M.top.slice(0,8).join(", "))+'</p>':'');
+ const checks=(r.C||[]).length?'<ul class="ticks socticks" style="margin-top:12px">'+r.C.map(x=>'<li class="'+(x.ok?"ok":"ko")+'"><span aria-hidden="true">'+(x.ok?"✓":"✕")+'</span><div><b>'+esc(x.label)+'</b><small>'+esc(x.ev)+'</small></div></li>').join("")+'</ul>':'';
+ const todo=(r.C||[]).filter(x=>!x.ok).sort((a,b)=>b.w-a.w);
+ const pend=r.net==='instagram'?IG_MANUAL.filter(([id])=>(state.socialManual||{})[id]==null):[];
+ const plan=todo.length||pend.length?'<h3 style="margin-top:14px">Plan d’action '+(yt?"YouTube":"Instagram")+'</h3>'+todo.map(x=>'<div class="reco"><b>'+esc(x.label)+'</b>'+esc(x.reco)+(x.goal?'<br><small><b>Objectif :</b> '+esc(x.goal)+'</small>':'')+'</div>').join("")+(pend.length?'<p class="muted" style="margin-top:8px"><b>À vérifier sur le profil :</b> '+esc(pend.map(x=>x[1].toLowerCase()).join(" ; "))+'.</p>':''):'';
+ const vids=yt&&(d.videos||[]).length?'<h3 style="margin-top:14px">Dernières vidéos</h3><div class="tablewrap"><table class="t"><thead><tr><th>Vidéo</th><th>Date</th><th>Vues</th><th>J’aime</th></tr></thead><tbody>'+d.videos.slice(0,forReport?6:10).map(v=>'<tr><td>'+(forReport?esc(v.title):'<a href="https://www.youtube.com/watch?v='+esc(v.id)+'" target="_blank" rel="noopener">'+esc(v.title)+'</a>')+'</td><td>'+esc(frDate(String(v.date).slice(0,10)))+'</td><td>'+fmtN(v.views)+'</td><td>'+(v.likes!=null?fmtN(v.likes):"—")+'</td></tr>').join("")+'</tbody></table></div>':'';
+ const src='<p class="muted"><small>Source : '+esc(d.via||"lecture manuelle")+(r.warn?" (API YouTube : "+esc(r.warn.text)+")":"")+'. Les repères (2 % d’engagement, une vidéo par semaine…) sont des ordres de grandeur courants, pas des règles officielles des plateformes.</small></p>';
+ return '<div class="socaudit">'+head+kpis+ai+checks+plan+vids+src+'</div>';
+}
+function renderSocial(){
+ const A=state.socialAudits||{},box=$("socResult");if(!box)return;
+ const found=((state.data&&state.data.social&&state.data.social.found)||{});const chips=["Instagram","YouTube"].filter(n=>found[n]).map(n=>'<button type="button" class="chipq" data-soc="'+esc(found[n].url)+'">'+n+' trouvé : analyser</button>').join("");
+ $("socFound").innerHTML=chips;$("socFound").querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>{$("socUrl").value=b.dataset.soc;$("socNet").value="auto";runSocial()});
+ if(!$("socNiche").value&&state.biz&&state.biz.name)$("socNiche").value=[kwOf(state.biz.type),state.biz.city].filter(Boolean).join(" à ");
+ const parts=["instagram","youtube"].filter(n=>A[n]).map(n=>socBlock(A[n],false)+(n==="instagram"?socManualHtml():""));
+ box.innerHTML=parts.join("")||'<p class="muted" style="margin-top:12px">Aucun compte analysé pour ce client.</p>';
+ box.querySelectorAll("[data-man]").forEach(b=>b.onclick=()=>{state.socialManual=state.socialManual||{};state.socialManual[b.dataset.man]=b.dataset.v==="1";const r=(state.socialAudits||{}).instagram;if(r){const a=igAnalyze(r.data,r.niche);r.C=a.C;r.M=a.M;r.score=socScore(r.C)}persistLocal();renderSocial();update()});
 }
 
 /* ---------- Message prospect ---------- */
@@ -1059,8 +1235,8 @@ function buildPitch(){
 }
 
 /* ---------- Navigation ---------- */
-const VIEWS=["auto","clients","home","audit","report","pitch","campaign","research","webcheck","tools","settings"];
-const TITLES={auto:["Audit","Un nom, une ville : l'application collecte les données publiques pour vous."],clients:["Clients","Tous vos audits, enregistrés sur cet appareil."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche web","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests du site","Vitesse, SEO et qualité du site sur téléphone."],home:["Fiche commerce","Coordonnées du commerce et diagnostic par catégorie."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Thème, installation, clé Google, signature et sauvegardes."]};
+const VIEWS=["auto","clients","home","audit","report","pitch","social","campaign","research","webcheck","tools","settings"];
+const TITLES={social:["Instagram et YouTube","Audit d’un compte : niche, SEO, régularité, engagement et plan d’action."],auto:["Audit","Un nom, une ville : l'application collecte les données publiques pour vous."],clients:["Clients","Tous vos audits, enregistrés sur cet appareil."],campaign:["Visibilité IA","Lancez des tests comparables dans les assistants IA, question déjà remplie."],research:["Recherche web","Recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests du site","Vitesse, SEO et qualité du site sur téléphone."],home:["Fiche commerce","Coordonnées du commerce et diagnostic par catégorie."],audit:["Checklist","Points automatiques avec preuve, et points à vérifier à la main."],report:["Rapport client","Prêt à imprimer ou enregistrer en PDF."],pitch:["Message prospect","Un message basé sur les constats réels de l'audit."],tools:["Boîte à outils","Liens directs vers les outils de vérification."],settings:["Réglages","Thème, installation, clé Google, signature et sauvegardes."]};
 function closeMore(){const n=document.querySelector(".nav");n.classList.remove("open");$("navMore").setAttribute("aria-expanded","false")}
 let curView="auto";
 function nav(v){
@@ -1068,6 +1244,7 @@ function nav(v){
  const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report","pitch"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  if(document.startViewTransition&&!reduce&&v!==curView)document.startViewTransition(swap);else swap();
+ if(v==="social")renderSocial();
  curView=v;if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);
  window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});
 }
@@ -1167,6 +1344,7 @@ function buildResearch(){
 
 /* ---------- Événements ---------- */
 function bind(){
+ $("runSocial").onclick=runSocial;$("socUrl").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();runSocial()}});
  const opts=[...new Set(BIZ_TYPES.map(t=>t.grp))].map(g=>'<optgroup label="'+esc(g)+'">'+BIZ_TYPES.filter(t=>t.grp===g).map(t=>'<option>'+esc(t.label)+'</option>').join("")+'</optgroup>').join("");$("type").innerHTML=opts;$("autoType").innerHTML=opts;
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));
  $("navMore").addEventListener("click",e=>{e.stopPropagation();const n=document.querySelector(".nav"),o=!n.classList.contains("open");n.classList.toggle("open",o);$("navMore").setAttribute("aria-expanded",String(o))});
@@ -1536,6 +1714,7 @@ function botFind(q){
  botShowAudits(res,res.length?"J’ai trouvé "+res.length+" audit"+(res.length>1?"s":"")+" pour « "+botEsc(term)+" »":"");
 }
 const INTENTS=[
+ {re:/(instagram|youtube|insta\b|chaine youtube|reels|shorts)/,run:()=>botSay("L’écran « Instagram et YouTube » analyse un compte : niche, SEO, régularité, engagement et plan d’action. Le résultat s’ajoute au rapport du client.",[["Ouvrir l’audit Instagram / YouTube",()=>{botToggle(false);nav("social");setTimeout(()=>$("socUrl").focus(),300)}]])},
  {re:/(resum|synthese|bilan|recap).*(audit|client|en cours)?|^resume/,run:botSummary},
  {re:/(propos|vendre|offre|prestation|quoi faire pour|que faire pour)/,run:botOffer},
  {re:/(reste a verifier|a verifier|manque|manquant|verifier avec)/,run:botToCheck},
