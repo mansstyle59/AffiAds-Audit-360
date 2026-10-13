@@ -4,100 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#4f46ff">
-<meta name="description" content="AFFIADS Audit 360° : outil professionnel pour auditer la visibilité locale, le référencement, les réseaux sociaux et la communication des commerces.">
-<meta property="og:title" content="AFFIADS — Audit 360°">
-<meta property="og:description" content="Analysez. Priorisez. Convainquez. Transformez l'audit en opportunités commerciales.">
+<meta name="description" content="AffiAds Audit 360° : audit automatique de la visibilité locale d'un commerce — fiche Google, avis, concurrents, vitesse du site, SEO et présence dans les assistants IA.">
+<meta property="og:title" content="AffiAds Audit 360°">
+<meta property="og:description" content="Analysez. Priorisez. Convainquez. Un audit de visibilité réel et automatique, prêt à présenter.">
 <meta property="og:type" content="website">
-<link rel="icon" type="image/svg+xml" href="assets/affiads-icon.svg">
-<title>AFFIADS — Audit 360°</title>
-<style>
-:root{--bg:#f5f6ff;--card:#fff;--ink:#17171c;--muted:#697386;--line:#e4e8f0;--accent:#5145ff;--teal:#ffbf2f;--bad:#c23b50;--good:#16765d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,"Segoe UI",sans-serif}.layout{display:grid;grid-template-columns:235px 1fr;min-height:100vh}.side{background:#101014;color:white;padding:24px 16px;border-right:3px solid #5145ff}.brand{font-size:20px;font-weight:900;margin-bottom:24px;display:flex;align-items:center;gap:10px;letter-spacing:.3px}.brand img{width:42px;height:42px;border-radius:12px;box-shadow:0 4px 16px #5145ff38}.brand span{display:block;color:#aab4c7;font-size:10px;letter-spacing:2px}.nav{display:grid;gap:7px}.nav button{border:0;background:transparent;color:#c3ccda;text-align:left;padding:12px;border-radius:10px;font:inherit;cursor:pointer}.nav button.active,.nav button:hover{background:#263248;color:white}.side p{font-size:12px;line-height:1.5;color:#aab4c7;margin-top:35px}.main{padding:28px;max-width:1200px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}.eyebrow{color:var(--accent);font-size:11px;font-weight:850;letter-spacing:1.5px;text-transform:uppercase}h1{font-size:clamp(26px,4vw,35px);margin:6px 0}h2{font-size:19px;margin:0 0 6px}h3{font-size:14px;margin:0}.muted{color:var(--muted);font-size:13px;line-height:1.5}.btn{padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);font-weight:750;cursor:pointer}.primary{background:linear-gradient(115deg,#3f53ff,#7438f5);border-color:#5145ff;color:white}.btn:focus-visible,.nav button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #ffbf2f;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;grid-column:span 12;box-shadow:0 4px 18px #17203306}.s3{grid-column:span 3}.s5{grid-column:span 5}.s7{grid-column:span 7}.metric{font-size:27px;font-weight:850}.metric small{display:block;font-size:12px;color:var(--muted);font-weight:500}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:5px}.field label{font-size:12px;font-weight:750;color:#4c566b}.field input,.field select,.field textarea{width:100%;border:1px solid #dbe1ec;border-radius:9px;padding:11px;font:inherit;background:white}.field textarea{min-height:75px}.full{grid-column:1/-1}.group{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}.group:first-child{border:0;margin-top:0;padding-top:0}.group-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px}.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.check{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);padding:10px;border-radius:10px;font-size:13px;line-height:1.4}.check input{margin-top:3px;accent-color:var(--accent)}.check em{display:block;font-style:normal;color:var(--muted);font-size:11px;margin-top:3px}.bar{height:8px;background:#eceff5;border-radius:20px;overflow:hidden;margin:12px 0}.bar div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--teal))}.pill{background:#eef0f5;border-radius:30px;padding:5px 8px;font-size:11px;font-weight:800}.priority{padding:10px;border:1px solid var(--line);border-radius:10px;margin:7px 0;font-size:13px}.priority b{display:block}.priority small{color:var(--muted)}.hidden{display:none!important}.links{display:flex;gap:8px;flex-wrap:wrap}.links a{border:1px solid var(--line);border-radius:9px;padding:10px;text-decoration:none;color:var(--ink);font-size:12px;font-weight:700}.notice{background:#f2f0ff;border:1px solid #dcd7ff;padding:12px;border-radius:10px;font-size:12px;line-height:1.5}.report h2{margin-top:18px}.report li{margin:6px 0}.foot{text-align:center;color:#9098a8;font-size:11px;margin:24px}@media(max-width:850px){.layout{grid-template-columns:1fr}.side{padding:12px}.brand{margin:0 0 8px;font-size:17px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;padding:9px}.side p{display:none}.main{padding:17px 12px}.s3,.s5,.s7{grid-column:span 12}.checks{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.main{padding:12px 10px}.card{padding:14px;border-radius:13px}.fields{grid-template-columns:1fr}.top{gap:8px}.top .actions{width:100%}.top .actions .btn{flex:1}.nav{gap:4px}.nav button{font-size:12px;padding:9px 10px}.brand img{width:36px;height:36px}.metric{font-size:24px}.group-head{align-items:flex-start}.links a{flex:1 1 140px;min-width:0;overflow-wrap:anywhere}}@media(max-width:380px){.nav button{font-size:11px;padding:8px}.eyebrow{letter-spacing:1px}.actions .btn{font-size:12px;padding:9px}}
-
-/* Boutons adaptatifs : mobile, tablette et ordinateur */
-button,.btn,.nav button,.links a{box-sizing:border-box;max-width:100%;min-height:42px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
-button:focus-visible,.btn:focus-visible,.nav button:focus-visible,.links a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.actions{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;min-width:0}
-.actions>.btn,.actions>button{flex:0 1 auto;min-width:0}
-.nav{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
-.nav button{flex:0 1 auto;min-width:0}
-.links{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
-.links a{display:inline-flex;align-items:center;justify-content:center;min-width:0;max-width:100%;overflow-wrap:anywhere}
-@media(min-width:851px){
- .nav{display:flex;flex-direction:column;align-items:stretch;overflow:visible}
- .nav button{width:100%;text-align:left;justify-content:flex-start}
- .top .actions{width:auto}
-}
-@media(max-width:850px){
- .nav{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding:2px 0 8px;overscroll-behavior-x:contain}
- .nav button{flex:0 0 auto;white-space:nowrap}
- .actions>.btn,.actions>button{flex:1 1 180px}
-}
-@media(max-width:600px){
- button,.btn,.nav button,.links a{font-size:14px;min-height:44px;padding:11px 12px}
- .actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
- .actions>.btn,.actions>button{width:100%;min-width:0}
- .top .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
- .top .actions>.btn,.top .actions>button{width:100%;font-size:13px;padding:10px 8px}
- .nav{gap:6px}
- .nav button{width:auto;flex:0 0 auto}
- .links a{flex:1 1 100%;width:100%}
- .priority .actions{grid-template-columns:minmax(0,1fr)}
- .card,.grid,.fields,.field{min-width:0}
- input,select,textarea{max-width:100%;min-width:0}
-}
-@media(max-width:380px){
- button,.btn,.nav button,.links a{font-size:13px;padding:10px 9px}
- .top .actions{grid-template-columns:minmax(0,1fr)}
- .nav button{font-size:12px}
-}
-/* Correctifs anti-débordement iPhone/Safari et cartes de diagnostic */
-html{width:100%;max-width:100%;overflow-x:clip}
-body{width:100%;max-width:100%;overflow-x:hidden}
-.layout{width:100%;max-width:100%;grid-template-columns:235px minmax(0,1fr)}
-.main,main,section,.grid,.card,.fields,.field,.report{min-width:0;max-width:100%}
-.main{width:100%;overflow-wrap:anywhere}
-.grid{grid-template-columns:repeat(12,minmax(0,1fr))}
-.card p,.card h1,.card h2,.card h3,.muted,.priority,.notice,.field label{overflow-wrap:anywhere;word-break:normal}
-.field input,.field select,.field textarea{min-width:0;width:100%;max-width:100%;font-size:16px}
-.metric{overflow-wrap:anywhere}
-@media(max-width:850px){
- .layout{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
- .side,.main{width:100%;min-width:0;max-width:100%}
- .side{overflow:hidden}
- .main{padding-left:12px;padding-right:12px}
- .top,.top>div{min-width:0;max-width:100%;width:100%}
- .top .actions{min-width:0}
- .grid{grid-template-columns:minmax(0,1fr)}
- .s3,.s5,.s7{grid-column:1/-1}
-}
-@media(max-width:600px){
- .main{padding-left:10px;padding-right:10px}
- .card{width:100%;min-width:0}
- .fields,.checks{grid-template-columns:minmax(0,1fr)}
- .field.full{grid-column:1/-1}
- .top .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
- .top .actions .btn{min-width:0;overflow-wrap:anywhere}
- .metric{font-size:24px}
- .report{overflow-wrap:anywhere}
-}
-@page{size:A4;margin:16mm 14mm}
-@media print{body{background:white!important;color:#111;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}.side,.top .actions,.no-print,.foot{display:none!important}.layout{display:block;min-height:0}.main{padding:0;max-width:none;width:100%}.top{margin:0 0 8mm}.card{box-shadow:none;border:1px solid #ddd;border-radius:6px;padding:12px;break-inside:avoid}.report{font-size:10pt}.report h1{font-size:23pt;margin:4mm 0}.report h2{font-size:14pt;margin:7mm 0 2mm;break-after:avoid}.report h3{font-size:11pt;margin:4mm 0 2mm;break-after:avoid}.report li{margin:2mm 0;orphans:3;widows:3}.report .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4mm}.report .s3{grid-column:span 1}.report .card{padding:8px}.report .notice{margin-top:6mm}.report a{color:#111;text-decoration:none;overflow-wrap:anywhere}.hidden{display:none!important}.report hr{border:0;border-top:1px solid #ccc;margin:5mm 0}}
-</style>
+<meta property="og:image" content="assets/og-image.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/logo-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="assets/app.css">
+<title>AffiAds Audit 360°</title>
 </head>
 <body>
 <div class="layout">
-<aside class="side"><div class="brand"><img src="assets/affiads-icon.svg" alt="" width="42" height="42"><div>AFFIADS <span>AUDIT 360°</span></div></div><nav class="nav"><button class="active" data-view="home">▦ Tableau de bord</button><button data-view="audit">☑ Audit du commerce</button><button data-view="report">▤ Rapport client</button><button data-view="tools">↗ Boîte à outils</button><button data-view="webcheck">⌁ Tests web</button><button data-view="research">⌕ Recherche internet</button><button data-view="campaign">◎ Campagne IA</button></nav><p>Analysez. Priorisez. Convainquez.<br>Transformez les constats en opportunités commerciales.</p></aside>
+<aside class="side"><div class="brand"><img src="assets/logo-192.png" alt="Logo AffiAds Audit" width="42" height="42"><div>AFFIADS <span>AUDIT 360°</span></div></div><nav class="nav"><button class="active" data-view="auto">⚡ Audit automatique</button><button data-view="home">▦ Tableau de bord</button><button data-view="audit">☑ Checklist</button><button data-view="report">▤ Rapport client</button><button data-view="pitch">✉ Message prospect</button><button data-view="campaign">◎ Visibilité IA</button><button data-view="research">⌕ Recherche internet</button><button data-view="webcheck">⌁ Tests web</button><button data-view="tools">↗ Boîte à outils</button><button data-view="settings">⚙ Réglages</button></nav><p>Analysez. Priorisez. Convainquez.<br>Transformez les constats en opportunités commerciales.</p></aside>
 <main class="main">
-<header class="top"><div><div class="eyebrow">Espace de travail AffiAds</div><h1 id="pageTitle">Vue d'ensemble</h1><div class="muted" id="pageSub">Préparez un audit concret et présentable à vos prospects.</div></div><div class="actions"><button class="btn" id="save">Enregistrer</button><button class="btn primary" id="pdf">Exporter en PDF</button></div></header>
-<section id="view-home"><div class="grid">
-<div class="card s3"><div class="metric" id="mDone">0%<small>Audit complété</small></div></div><div class="card s3"><div class="metric" id="mIssues">0<small>Points à améliorer</small></div></div><div class="card s3"><div class="metric" id="mScore">—<small>Score indicatif</small></div></div><div class="card s3"><div class="metric" id="mChecks">0<small>Contrôles effectués</small></div></div>
-<div class="card s7"><h2>Commerce audité</h2><p class="muted">Renseigne les informations publiques disponibles.</p><div class="fields">
-<div class="field"><label for="name">Nom du commerce *</label><input id="name" placeholder="Ex. Le Bistrot du Canal"></div><div class="field"><label for="type">Type de commerce</label><select id="type"><option>Restaurant</option><option>Café / bar</option><option>Boulangerie</option><option>Commerce de proximité</option><option>Salon / beauté</option><option>Hôtel / hébergement</option><option>Autre commerce</option></select></div>
-<div class="field"><label for="city">Ville</label><input id="city" placeholder="Narbonne"></div><div class="field"><label for="date">Date de l'audit</label><input id="date" type="date"></div><div class="field"><label for="site">Site web</label><input id="site" placeholder="https://..."></div><div class="field"><label for="maps">Lien Google Maps</label><input id="maps" placeholder="Lien public de la fiche"></div><div class="field"><label for="rating">Note Google / 5</label><input id="rating" type="number" min="0" max="5" step=".1" placeholder="4.3"></div><div class="field"><label for="reviews">Nombre d'avis</label><input id="reviews" type="number" min="0" placeholder="128"></div><div class="field full"><label for="context">Première impression / contexte</label><textarea id="context" placeholder="Ex. photos anciennes, menu difficile à trouver, avis sans réponse..."></textarea></div></div><div class="actions" style="margin-top:13px"><button class="btn primary" data-go="audit">Commencer l'audit →</button></div></div>
-<div class="card s5"><h2>Diagnostic</h2><p class="muted">Indicateur basé uniquement sur les éléments vérifiés et les problèmes signalés.</p><div class="metric" style="font-size:42px" id="bigScore">—<small>/ 100</small></div><div class="bar"><div id="bar"></div></div><div class="muted" id="scoreText">Coche les contrôles dans l'audit pour calculer un indicateur.</div><h3 style="margin-top:18px">Actions prioritaires</h3><div id="priorityList" class="muted">Aucun problème signalé pour le moment.</div></div>
+<header class="top"><div><div class="eyebrow">Espace de travail AffiAds</div><h1 id="pageTitle">Audit automatique</h1><div class="muted" id="pageSub">Un nom, une ville : l'application collecte les données réelles pour vous.</div></div><div class="actions"><button class="btn" id="save">Enregistrer</button><button class="btn primary" id="pdf">Exporter en PDF</button></div></header>
+<div class="clientbar"><label for="clientSelect">Client</label><select id="clientSelect"></select><button class="btn" id="newClient">+ Nouveau client</button><button class="btn" id="deleteClient">Supprimer</button></div>
+
+<section id="view-auto"><div class="grid">
+<div class="card hero"><h2>Audit automatique en un clic</h2><p class="muted">Renseignez le commerce : l'application recherche sa fiche Google, ses avis, ses concurrents, sa position locale et analyse son site sur mobile. Chaque résultat est daté et sourcé.</p>
+<div class="fields">
+<div class="field suggest-wrap"><label for="autoName">Nom du commerce *</label><input id="autoName" placeholder="Tapez le nom : suggestions automatiques" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest"><div id="suggest" class="suggest hidden" role="listbox"></div><small id="pickInfo" class="pickinfo"></small></div>
+<div class="field"><label for="autoCity">Ville *</label><input id="autoCity" placeholder="Ex. Narbonne" autocomplete="off"></div>
+<div class="field"><label for="autoType">Type de commerce</label><select id="autoType"></select></div>
+<div class="field"><label for="autoKeyword">Recherches clients à tester (3 max, séparées par des virgules)</label><input id="autoKeyword" placeholder="Ex. restaurant, meilleur restaurant, pizzeria"></div>
+<div class="field full"><label for="autoSite">Site web (facultatif, trouvé automatiquement si possible)</label><input id="autoSite" type="url" placeholder="https://..."></div>
+</div>
+<label class="optline"><input type="checkbox" id="autoCompSpeed" checked> Comparer aussi la vitesse des sites des 3 premiers concurrents (clé Google)</label>
+<div class="actions" style="margin-top:14px"><button class="btn primary" id="runAuto">⚡ Lancer l'audit automatique</button><button class="btn" id="autoToReport">Voir le rapport →</button></div>
+<div id="keyNotice" class="muted" style="margin-top:10px"></div>
+</div>
+<div class="card hidden" id="placeChoice"></div>
+<div class="card"><h2>Progression</h2><div id="autoSteps" class="steps"><p class="muted">Aucune analyse lancée pour ce client.</p></div></div>
+<div class="card" id="autoSummaryCard"><h2>Résultats clés</h2><div id="autoSummary"><p class="muted">Les résultats apparaîtront ici après l'analyse.</p></div></div>
 </div></section>
-<section id="view-audit" class="hidden"><div class="card"><div class="group-head"><div><h2>Checklist d'audit 360°</h2><p class="muted">Coche « Vérifié » quand tu as contrôlé le point. Coche « À améliorer » uniquement si tu as constaté un problème.</p></div><span class="pill" id="count">0 contrôles</span></div><div id="checklist"></div><div class="field" style="margin-top:18px"><label for="notes">Notes et recommandations commerciales</label><textarea id="notes" placeholder="Ex. proposer de nouvelles photos, une vidéo verticale, une optimisation de la fiche..."></textarea></div><div class="actions" style="margin-top:14px"><button class="btn" data-go="home">← Commerce</button><button class="btn primary" data-go="report">Préparer le rapport →</button></div></div></section>
-<section id="view-report" class="hidden"><div class="card report" id="report"></div><div class="actions no-print" style="margin-top:12px"><button class="btn" data-go="audit">← Modifier l'audit</button><button class="btn primary" id="printReport">Imprimer / enregistrer PDF</button><button class="btn" id="copy">Copier le résumé</button></div></section>
+
+<section id="view-home" class="hidden"><div class="grid">
+<div class="card s3"><div class="metric" id="mDone">0%<small>Audit complété</small></div></div><div class="card s3"><div class="metric" id="mIssues">0<small>Points à améliorer</small></div></div><div class="card s3"><div class="metric" id="mScore">—<small>Score indicatif</small></div></div><div class="card s3"><div class="metric" id="mChecks">0<small>Contrôles effectués</small></div></div>
+<div class="card s7"><h2>Commerce audité</h2><p class="muted">Rempli automatiquement par l'audit ; modifiable à tout moment.</p><div class="fields">
+<div class="field"><label for="name">Nom du commerce *</label><input id="name" placeholder="Ex. Le Bistrot du Canal"></div><div class="field"><label for="type">Type de commerce</label><select id="type"></select></div>
+<div class="field"><label for="city">Ville</label><input id="city" placeholder="Narbonne"></div><div class="field"><label for="date">Date de l'audit</label><input id="date" type="date"></div><div class="field"><label for="site">Site web</label><input id="site" placeholder="https://..."></div><div class="field"><label for="maps">Lien Google Maps</label><input id="maps" placeholder="Lien public de la fiche"></div><div class="field"><label for="rating">Note Google / 5</label><input id="rating" type="number" min="0" max="5" step=".1" placeholder="4.3"></div><div class="field"><label for="reviews">Nombre d'avis</label><input id="reviews" type="number" min="0" placeholder="128"></div><div class="field"><label for="phone">Téléphone</label><input id="phone" placeholder="04 ..."></div><div class="field"><label for="address">Adresse</label><input id="address" placeholder="Adresse complète"></div><div class="field full"><label for="context">Première impression / contexte</label><textarea id="context" placeholder="Ex. photos anciennes, menu difficile à trouver, avis sans réponse..."></textarea></div></div><div class="actions" style="margin-top:13px"><button class="btn primary" data-go="audit">Compléter la checklist →</button></div></div>
+<div class="card s5"><h2>Diagnostic</h2><p class="muted">Indicateur basé sur les contrôles automatiques et manuels renseignés.</p><div id="gaugeHome"></div><div class="metric hidden" id="bigScore"></div><div class="bar hidden"><div id="bar"></div></div><div class="muted" id="scoreText">Lance l'audit automatique ou coche les contrôles pour calculer un indicateur.</div><h3 style="margin-top:18px">Par catégorie</h3><div id="catBars" class="catbars"></div><h3 style="margin-top:18px">Actions prioritaires</h3><div id="priorityList" class="muted">Aucun problème signalé pour le moment.</div></div>
+</div></section>
+
+<section id="view-audit" class="hidden"><div class="card"><div class="group-head"><div><h2>Checklist d'audit 360°</h2><p class="muted">Les points marqués <span class="badge b-auto">AUTO</span> ont été remplis à partir de données réelles (preuve affichée). Les autres se vérifient à la main : « Vérifié » quand le point est contrôlé, « À améliorer » si un problème est constaté.</p></div><span class="pill" id="count">0 contrôles</span></div><div id="checklist"></div><div class="field" style="margin-top:18px"><label for="notes">Notes et recommandations commerciales</label><textarea id="notes" placeholder="Ex. proposer de nouvelles photos, une vidéo verticale, une optimisation de la fiche..."></textarea></div><div class="actions" style="margin-top:14px"><button class="btn" data-go="home">← Commerce</button><button class="btn primary" data-go="report">Préparer le rapport →</button></div></div></section>
+
+<section id="view-report" class="hidden"><div class="card report" id="report"></div><div class="actions no-print" style="margin-top:12px"><button class="btn" data-go="audit">← Modifier l'audit</button><button class="btn primary" id="printReport">Imprimer / enregistrer PDF</button><button class="btn" id="copy">Copier le résumé</button><button class="btn" data-go="pitch">Rédiger le message prospect →</button></div></section>
+
+<section id="view-pitch" class="hidden"><div class="grid">
+<div class="card"><h2>Message de prospection</h2><p class="muted">Rédigé à partir des constats réels de l'audit. Relisez-le et personnalisez-le avant envoi.</p>
+<div class="fields"><div class="field"><label for="pitchTone">Format</label><select id="pitchTone"><option value="dm">Message Instagram / Facebook (court)</option><option value="email">E-mail (complet)</option><option value="sms">SMS / WhatsApp (très court)</option></select></div><div class="field"><label for="pitchContact">Prénom du contact (facultatif)</label><input id="pitchContact" placeholder="Ex. Fulvio"></div></div>
+<div class="field" style="margin-top:12px"><label for="pitchText">Message</label><textarea id="pitchText" class="pitch"></textarea></div>
+<div class="actions" style="margin-top:12px"><button class="btn primary" id="pitchRegen">Régénérer depuis l'audit</button><button class="btn" id="pitchCopy">Copier</button><button class="btn" id="pitchWhatsapp">Ouvrir dans WhatsApp</button><button class="btn" id="pitchMail">Ouvrir dans l'e-mail</button></div>
+<div class="notice" style="margin-top:12px">Le message ne promet aucun résultat chiffré : il présente des constats vérifiables et propose un échange.</div></div>
+</div></section>
+
 <section id="view-research" class="hidden">
 <div class="grid">
 <div class="card">
@@ -109,7 +72,7 @@ body{width:100%;max-width:100%;overflow-x:hidden}
 <div class="field"><label for="researchSite">Site web (facultatif)</label><input id="researchSite" placeholder="https://..."></div>
 <div class="field"><label for="researchKeyword">Mot-clé ou service à tester</label><input id="researchKeyword" placeholder="Ex. restaurant viande à volonté"></div>
 </div>
-<div class="actions" style="margin-top:14px"><button class="btn primary" id="buildResearch">Préparer les recherches</button><button class="btn" id="fillResearch">Reprendre les infos du commerce</button></div>
+<div class="actions" style="margin-top:14px"><button class="btn primary" id="buildResearch">Préparer les recherches</button><button class="btn" id="fillResearch">Reprendre les infos du commerce</button><button class="btn" id="openAllResearch">Tout ouvrir</button></div>
 <div id="researchResults" class="links" style="margin-top:16px"></div>
 <div class="notice" style="margin-top:14px"><b>Important :</b> les positions Google varient selon la ville, l’appareil et la personne. Ces recherches publiques ne donnent pas à elles seules un classement fiable. Pour mesurer les performances réelles, il faut accéder à Google Search Console, à la fiche Google Business Profile ou à une API de données autorisée.</div>
 </div>
@@ -171,9 +134,9 @@ body{width:100%;max-width:100%;overflow-x:hidden}
 <div class="grid">
 <div class="card s7">
 <h2>Contrôles techniques rapides</h2>
-<p class="muted">Contrôles côté navigateur sur le site indiqué. Les résultats ne remplacent pas Lighthouse ou les outils propriétaires des moteurs.</p>
+<p class="muted">Analyse réelle du site sur mobile via Google PageSpeed Insights (moteur Lighthouse) : performance, SEO, accessibilité, bonnes pratiques, Core Web Vitals et outils de suivi détectés.</p>
 <div class="field"><label for="webUrl">Adresse du site à contrôler</label><input id="webUrl" type="url" placeholder="https://exemple.fr"></div>
-<div class="actions" style="margin-top:12px"><button class="btn primary" id="runWebChecks">Lancer les contrôles</button><button class="btn" id="openPageSpeed">Ouvrir PageSpeed</button></div>
+<div class="actions" style="margin-top:12px"><button class="btn primary" id="runWebChecks">Lancer l’analyse réelle</button><button class="btn" id="openPageSpeed">Ouvrir PageSpeed</button></div>
 <div id="webResults" style="margin-top:16px"><p class="muted">Renseigne une URL puis lance les contrôles.</p></div>
 </div>
 <div class="card s5"><h2>Standards open source</h2>
@@ -183,216 +146,31 @@ body{width:100%;max-width:100%;overflow-x:hidden}
 <div class="priority"><b>web-vitals — Google Chrome</b><small>Mesures des métriques Web Vitals en conditions réelles, lorsqu’un site l’intègre.</small><br><a href="https://github.com/GoogleChrome/web-vitals" target="_blank" rel="noopener">Dépôt GitHub ↗</a> · Licence Apache-2.0</div>
 <div class="notice" style="margin-top:12px">La page actuelle ne charge pas ces bibliothèques : elle ajoute des contrôles simples et des liens vers les outils, sans dépendance externe supplémentaire.</div>
 </div>
-<div class="card"><h2>À connaître</h2><p class="muted">Le navigateur bloque généralement la lecture du HTML d’un autre site sans autorisation CORS. Les tests ci-dessous signalent donc les contrôles locaux faisables et proposent l’ouverture d’outils tiers pour les tests qui exigent un serveur d’analyse.</p></div>
+<div class="card"><h2>À connaître</h2><p class="muted">L’analyse est réalisée par les serveurs de Google sur la version mobile du site. Les données « terrain » (Core Web Vitals) n’existent que pour les sites ayant assez de visiteurs Chrome ; sinon seules les mesures de laboratoire sont affichées. Une clé Google dans les Réglages évite les erreurs de quota.</p></div>
 </div>
 </section>
-<section id="view-tools" class="hidden"><div class="card"><h2>Boîte à outils</h2><p class="muted">Liens directs vers les outils publics. Certaines données nécessitent l'accès du propriétaire.</p><div class="links" id="links"></div><div class="notice" style="margin-top:15px">Cette version réalise un audit manuel : elle ne récupère pas automatiquement les données Google, Meta ou des assistants IA. Ne présente jamais une estimation comme une donnée vérifiée.</div></div></section>
-<div class="foot">AFFIADS · Audit 360° · Outil d’aide à l’audit, pas un classement officiel Google.</div>
+
+<section id="view-tools" class="hidden"><div class="card"><h2>Boîte à outils</h2><p class="muted">Liens directs vers les outils publics, préremplis avec le commerce actif quand c'est possible.</p><div class="links" id="links"></div><div class="notice" style="margin-top:15px">Certaines données (statistiques de la fiche, Search Console, résultats publicitaires) nécessitent l'accès du propriétaire. Ne présentez jamais une estimation comme une donnée vérifiée.</div></div></section>
+
+<section id="view-settings" class="hidden"><div class="grid">
+<div class="card s7"><h2>Clé Google (recommandée)</h2><p class="muted">Une seule clé gratuite débloque la fiche Google, les avis, les concurrents, la position locale et l'analyse PageSpeed fiable. Elle reste uniquement dans ce navigateur ; elle n'est jamais publiée sur GitHub.</p>
+<div class="field"><label for="googleKey">Clé API Google</label><input id="googleKey" type="password" placeholder="AIza..." autocomplete="off"></div>
+<div class="actions" style="margin-top:12px"><button class="btn primary" id="saveKey">Enregistrer la clé</button><button class="btn" id="testKey">Tester la clé</button><button class="btn" id="removeKey">Retirer la clé</button></div>
+<div id="keyStatus" class="muted" style="margin-top:10px"></div>
+<details class="help"><summary>Comment obtenir la clé (5 minutes)</summary><ol>
+<li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> et créez un projet « AffiAds Audit ».</li>
+<li>Activez <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a> et <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">PageSpeed Insights API</a>.</li>
+<li>Dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Identifiants</a>, créez une « Clé API ».</li>
+<li><b>Important :</b> restreignez-la : « Sites web » → ajoutez l'adresse de votre application (ex. <code>https://mansstyle59.github.io/*</code>), et limitez-la à ces deux API.</li>
+<li>Collez la clé ici puis cliquez sur « Tester la clé ».</li></ol>
+<p>Places API demande d'associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre largement un usage d'audit courant. Vérifiez les tarifs en vigueur et fixez une alerte de budget dans Google Cloud.</p></details>
+</div>
+<div class="card s5"><h2>Signature des messages</h2><div class="field"><label for="senderName">Votre prénom</label><input id="senderName" placeholder="Denis"></div><div class="field" style="margin-top:10px"><label for="senderLine">Signature</label><input id="senderLine" placeholder="AffiAds — Votre image, notre expertise"></div><div class="field" style="margin-top:10px"><label for="senderContact">Contact (facultatif)</label><input id="senderContact" placeholder="e-mail ou téléphone"></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="saveSender">Enregistrer</button></div></div>
+<div class="card"><h2>Sauvegarde des audits</h2><p class="muted">Les audits sont enregistrés dans ce navigateur. Exportez-les pour les garder en sécurité ou les ouvrir sur un autre appareil.</p><div class="actions"><button class="btn" id="exportJson">Exporter tous les audits</button><label class="btn" for="importJson" style="display:inline-flex;align-items:center">Importer un fichier<input id="importJson" type="file" accept="application/json,.json" hidden></label></div></div>
+</div></section>
+
+<div class="foot">AffiAds · Audit 360° · Données publiques datées — outil d'aide à l'audit, pas un classement officiel Google.</div>
 </main></div>
-<script>
-const groups=[
-{title:"A · Fiche Google et Maps",items:["Nom, adresse, téléphone et horaires exacts","Catégorie principale et catégories secondaires","Description, services et lien de réservation","Menu, produits ou prestations accessibles","Photos récentes et de bonne qualité","Note, nombre et récence des avis","Réponses du propriétaire aux avis","Questions-réponses et informations manquantes","Doublons ou incohérences visibles"]},
-{title:"B · Site Internet et référencement",items:["Site web présent et adapté au mobile","Chargement et navigation corrects","Menu, tarifs, horaires et coordonnées cohérents","Boutons d'appel, réservation et itinéraire","Pages indexables et titres descriptifs","Données structurées pertinentes à contrôler"]},
-{title:"C · Réseaux sociaux et publicité",items:["Présence sur Facebook et Instagram","Présence TikTok si pertinente","Publications récentes et régulières","Photos et vidéos de bonne qualité","Coordonnées et identité cohérentes","Publicités actives vérifiées dans la bibliothèque Meta"]},
-{title:"D · Réputation et concurrence",items:["Points positifs récurrents dans les avis","Critiques récurrentes à traiter","Réactivité aux avis négatifs","Comparaison avec trois concurrents locaux","Différences d'offre ou de présentation identifiées"]},
-{title:"E · Visibilité dans les assistants IA",items:["Test de recherche du commerce dans ChatGPT","Test de recherche du commerce dans Claude","Informations du site officiel exactes et faciles à trouver","Sources fiables et annuaires cohérents","Questions locales pertinentes testées manuellement"]}
-];
-const tools=[["Google Business Profile","https://www.google.com/business/","Fiche Google"],["Google Maps","https://maps.google.com/","Avis et concurrents"],["PageSpeed Insights","https://pagespeed.web.dev/","Vitesse du site"],["Google Search Console","https://search.google.com/search-console/about?hl=fr","SEO du site"],["Test résultats enrichis","https://search.google.com/test/rich-results?hl=fr","Données structurées"],["Bibliothèque publicitaire Meta","https://www.facebook.com/ads/library/","Publicités visibles"],["BrightLocal","https://www.brightlocal.com/","SEO local"],["Semrush","https://www.semrush.com/","SEO et mots-clés"]];
-const $=id=>document.getElementById(id), keys=groups.flatMap((g,gi)=>g.items.map((x,ii)=>gi+"-"+ii));
-let state={checks:{},issues:{},notes:"",biz:{},aiTests:[],campaign:{},campaignPrompts:[]};
-const fields=["name","type","city","date","site","maps","rating","reviews","context"];
-$("date").value=new Date().toISOString().slice(0,10);
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function read(){fields.forEach(id=>state.biz[id]=$(id).value);state.notes=$("notes").value}
-function renderChecklist(){$("checklist").innerHTML=groups.map((g,gi)=>'<div class="group"><div class="group-head"><h3>'+esc(g.title)+'</h3><span class="pill" id="g'+gi+'">0/'+g.items.length+'</span></div><div class="checks">'+g.items.map((item,ii)=>{let k=gi+"-"+ii;return '<div class="check"><input type="checkbox" data-check="'+k+'" '+(state.checks[k]?"checked":"")+' aria-label="Vérifié"><label>'+esc(item)+'<em><input type="checkbox" data-issue="'+k+'" '+(state.issues[k]?"checked":"")+'> À améliorer</em></label></div>'}).join("")+'</div></div>').join("");$("checklist").querySelectorAll("[data-check]").forEach(el=>el.addEventListener("change",()=>{state.checks[el.dataset.check]=el.checked;update()}));$("checklist").querySelectorAll("[data-issue]").forEach(el=>el.addEventListener("change",()=>{state.issues[el.dataset.issue]=el.checked;update()}))}
-function calc(){let n=keys.filter(k=>state.checks[k]).length,issues=keys.filter(k=>state.issues[k]).length,bad=keys.filter(k=>state.checks[k]&&state.issues[k]).length;return {n,issues,score:n?Math.round((n-bad)/n*100):null,pct:Math.round(n/keys.length*100)}}
-function update(){read();let c=calc();$("mDone").innerHTML=c.pct+"%<small>Audit complété</small>";$("mIssues").innerHTML=c.issues+"<small>Points à améliorer</small>";$("mScore").innerHTML=(c.score===null?"—":c.score)+ "<small>Score indicatif</small>";$("mChecks").innerHTML=c.n+"<small>Contrôles effectués</small>";$("bigScore").innerHTML=(c.score===null?"—":c.score)+"<small>/ 100</small>";$("bar").style.width=(c.score||0)+"%";$("count").textContent=c.n+" / "+keys.length+" vérifiés";$("scoreText").textContent=c.score===null?"Coche les contrôles dans l'audit pour calculer un indicateur.":c.score>=85?"Bon résultat sur les éléments évalués ; traite les points signalés.":c.score>=60?"Des améliorations sont à prioriser.":"Plusieurs points évalués restent à améliorer.";groups.forEach((g,gi)=>{let n=g.items.filter((_,ii)=>state.checks[gi+"-"+ii]).length;let el=$("g"+gi);if(el)el.textContent=n+"/"+g.items.length});let probs=[];groups.forEach((g,gi)=>g.items.forEach((it,ii)=>{let k=gi+"-"+ii;if(state.issues[k])probs.push({it,group:g.title,checked:state.checks[k]})}));$("priorityList").innerHTML=probs.length?probs.map(p=>'<div class="priority"><b>'+esc(p.it)+'</b><small>'+esc(p.group)+(p.checked?" · vérifié":" · à vérifier")+'</small></div>').join(""):"Aucun problème signalé pour le moment.";renderReport()}
-function renderReport(){
- read();
- const totals=calc(), b=state.biz, ai=Array.isArray(state.aiTests)?state.aiTests:[];
- const issues=groups.flatMap((g,gi)=>g.items.map((it,ii)=>({it,g:g.title,k:gi+"-"+ii}))).filter(x=>state.issues[x.k]);
- const groupsHtml=groups.map((g,gi)=>{
-   const rows=g.items.map((it,ii)=>({it,k:gi+"-"+ii})).filter(x=>state.checks[x.k]||state.issues[x.k]);
-   return rows.length?'<h3>'+esc(g.title)+'</h3><ul>'+rows.map(x=>'<li>'+esc(x.it)+' — '+(state.issues[x.k]?'<b>À améliorer</b>':'Vérifié')+'</li>').join("")+'</ul>':"";
- }).join("");
- const completed=ai.filter(t=>t.presence==="yes"||t.presence==="no");
- const rate=completed.length?Math.round(completed.filter(t=>t.presence==="yes").length/completed.length*100):null;
- const platforms=AI_TARGETS.map(a=>{
-   const ts=completed.filter(t=>t.platform===a.name);
-   const yes=ts.filter(t=>t.presence==="yes").length;
-   return '<li>'+esc(a.name)+': '+(ts.length?Math.round(yes/ts.length*100)+'% de présence ('+yes+'/'+ts.length+')':'Non mesuré')+'</li>';
- }).join("");
- const aiTable=ai.length?'<h2>Historique détaillé des tests IA</h2><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">IA / Date</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Question</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Résultat</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Concurrents / source</th></tr></thead><tbody>'+ai.map(t=>'<tr><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.prompt)+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+(t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · position notée "+esc(t.rank):"")+(t.notes?"<br>"+esc(t.notes):"")+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.competitors||"—")+(t.source?"<br>"+esc(t.source):"")+'</td></tr>').join("")+'</tbody></table>':'<p>Aucun résultat de test IA enregistré pour le moment.</p>';
- const aiHtml='<h2>Visibilité observée sur les assistants IA</h2><p>Taux de présence sur les tests terminés oui/non : '+(rate===null?"non calculé":rate+"%")+' ('+completed.length+' réponses oui/non sur '+ai.length+' tests enregistrés). Les résultats varient selon la question, la date et le contexte.</p><h3>Résultats par assistant</h3><ul>'+platforms+'</ul>'+aiTable;
- $("report").innerHTML='<div class="eyebrow">AFFIADS · Audit de visibilité et communication</div><h1>Rapport d’audit 360°</h1><h2>'+esc(b.name||"Commerce à renseigner")+'</h2><p class="muted">'+esc(b.type||"Type non renseigné")+' · '+esc(b.city||"Ville non renseignée")+' · '+esc(b.date||"Date non renseignée")+'</p><hr><div class="grid"><div class="card s3"><div class="metric">'+(totals.score===null?"—":totals.score)+'<small>Score manuel indicatif / 100</small></div></div><div class="card s3"><div class="metric">'+totals.n+'<small>Contrôles sur '+keys.length+'</small></div></div><div class="card s3"><div class="metric">'+totals.issues+'<small>Points signalés</small></div></div></div><h2>Informations du commerce</h2><ul><li>Site : '+(b.site?'<a href="'+esc(b.site)+'">'+esc(b.site)+'</a>':"Non renseigné")+'</li><li>Fiche Google : '+(b.maps?'<a href="'+esc(b.maps)+'">Ouvrir la fiche</a>':"Non renseignée")+'</li><li>Note Google : '+esc(b.rating||"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul><h2>Synthèse</h2><p>Audit manuel : '+totals.n+' contrôles vérifiés sur '+keys.length+'. '+totals.issues+' point(s) signalé(s). Le score manuel porte uniquement sur les contrôles renseignés et ne représente pas un classement Google.</p>'+aiHtml+(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"")+'<h2>Priorités recommandées</h2>'+(issues.length?'<ul>'+issues.map(x=>'<li><b>'+esc(x.it)+'</b> — '+esc(x.g)+'</li>').join("")+'</ul>':"<p>Aucun point signalé dans la checklist.</p>")+groupsHtml+'<h2>Observations complémentaires</h2><p>'+esc(state.notes||"Aucune note complémentaire.")+'</p><div class="notice">Limites : les scores et résultats ci-dessus proviennent des contrôles et tests enregistrés dans AFFIADS. Les tests IA sont des observations datées, pas un classement universel. Les statistiques privées nécessitent l’autorisation du propriétaire.</div>';
-}
-function nav(v){["home","audit","report","tools","webcheck","research","campaign"].forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));let titles={campaign:["Campagne de visibilité IA","Lance une série de tests comparables sur les assistants IA."],research:["Recherche internet","Prépare des recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Vérifications rapides et liens vers les audits techniques."],home:["Vue d'ensemble","Préparez un audit concret et présentable à vos prospects."],audit:["Audit du commerce","Séparez les faits vérifiés des problèmes constatés."],report:["Rapport client","Résumé prêt à imprimer ou enregistrer en PDF."],tools:["Boîte à outils","Liens directs vers les outils de vérification."]};$("pageTitle").textContent=titles[v][0];$("pageSub").textContent=titles[v][1];if(v==="report")renderReport();window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));fields.forEach(id=>$(id).addEventListener("input",()=>{read();renderReport()}));$("notes").addEventListener("input",update);$("save").onclick=()=>{read();try{localStorage.setItem("affiads-audit-360",JSON.stringify(state));alert("Audit enregistré dans ce navigateur.")}catch(e){alert("Sauvegarde indisponible. Copiez le rapport.")}};$("pdf").onclick=$("printReport").onclick=()=>{nav("report");window.print()};$("copy").onclick=()=>{read();let c=calc(),txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+"\nPoints à améliorer : "+c.issues+"\n\n"+groups.map((g,gi)=>g.title+"\n"+g.items.map((it,ii)=>{let k=gi+"-"+ii;return(state.checks[k]?"[x] ":"[ ] ")+it+(state.issues[k]?" — À AMÉLIORER":"")}).join("\n")).join("\n\n")+"\n\nNotes : "+(state.notes||"Aucune");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>alert("Résumé copié.")).catch(()=>prompt("Copiez le résumé :",txt));else prompt("Copiez le résumé :",txt)};
-$("links").innerHTML=tools.map(t=>'<a href="'+t[1]+'" target="_blank" rel="noopener"><b>'+esc(t[0])+'</b><br><span class="muted">'+esc(t[2])+' ↗</span></a>').join("");
-
-
-
-const AI_TARGETS=[
- {name:"ChatGPT",url:"https://chatgpt.com/"},
- {name:"Claude",url:"https://claude.ai/new"},
- {name:"Google Gemini",url:"https://gemini.google.com/"},
- {name:"Perplexity",url:"https://www.perplexity.ai/"},
- {name:"Microsoft Copilot",url:"https://copilot.microsoft.com/"},
- {name:"Mistral Le Chat",url:"https://chat.mistral.ai/"}
-];
-function campaignInputFromBiz(){
- $("campaignBusiness").value=$("name").value||"";
- $("campaignCity").value=$("city").value||"";
- $("campaignType").value=$("type").value||"";
- $("campaignService").value="";
- $("campaignExtra").value="";
-}
-function getCampaignPrompts(){
- const name=$("campaignBusiness").value.trim();
- const city=$("campaignCity").value.trim();
- const type=$("campaignType").value.trim();
- const service=$("campaignService").value.trim();
- const extra=$("campaignExtra").value.trim();
- if(!city||(!name&&!type&&!service)){alert("Renseigne au minimum la ville et le nom ou l’activité du commerce.");return []}
- const subject=name||("un "+type);
- const campaignId=String(Date.now());
- const prompts=[
-  {id:campaignId+"-1",kind:"Découverte locale",text:"Je cherche "+(type||"un commerce")+" à "+city+". Quels établissements me recommandes-tu ?"},
-  {id:campaignId+"-2",kind:"Besoin principal",text:"Quel est le meilleur choix à "+city+" pour "+(service||type||"ce type de service")+" ? "+(extra?"Critère important : "+extra+".":"")},
-  {id:campaignId+"-3",kind:"Recommandation précise",text:"Peux-tu comparer "+subject+" à "+city+" avec d’autres établissements locaux pour "+(service||type||"ce besoin")+" ? Cite tes sources si possible."},
-  {id:campaignId+"-4",kind:"Marque exacte",text:"Que peux-tu me dire sur "+subject+" à "+city+" ? Donne son site officiel, ses services et les sources qui confirment ces informations."},
-  {id:campaignId+"-5",kind:"Recherche sans marque",text:"Je suis à "+city+" et je cherche "+(service||type||"un établissement adapté")+(extra?" avec ces critères : "+extra:"")+". Quels sont les meilleurs choix et pourquoi ?"},
-  {id:campaignId+"-6",kind:"Sources et fiabilité",text:"Quelles sources fiables permettent de vérifier les horaires, les tarifs et les avis de "+subject+" à "+city+" ? Signale les incertitudes."}
- ];
- state.campaign={id:campaignId,name,city,type,service,extra,createdAt:new Date().toISOString().slice(0,10)};
- state.campaignPrompts=prompts;
- persistLocal();
- renderCampaignPrompts();
- return prompts;
-}
-function renderCampaignPrompts(){
- const p=Array.isArray(state.campaignPrompts)?state.campaignPrompts:[];
- const all=Array.isArray(state.aiTests)?state.aiTests:[];
- const cid=state.campaign&&state.campaign.id?state.campaign.id:"";
- const tests=all.filter(t=>t.campaignId===cid);
- const completed=tests.filter(t=>t.presence==="yes"||t.presence==="no");
- const mentions=completed.filter(t=>t.presence==="yes").length;
- const rate=completed.length?Math.round(mentions/completed.length*100):null;
- $("campaignProgress").innerHTML='<div class="card s3"><div class="metric">'+p.length+'<small>Questions prévues</small></div></div><div class="card s3"><div class="metric">'+tests.length+'<small>Tests enregistrés pour cette campagne</small></div></div><div class="card s3"><div class="metric">'+(rate===null?"—":rate+"%")+'<small>Taux de présence (oui/non)</small></div></div><div class="card s3"><div class="metric">'+tests.filter(t=>t.presence==="partial").length+'<small>Résultats incertains</small></div></div>';
- const perPlatform=AI_TARGETS.map(a=>{const ts=tests.filter(t=>t.platform===a.name&&(t.presence==="yes"||t.presence==="no"));const yes=ts.filter(t=>t.presence==="yes").length;return '<div class="priority"><b>'+esc(a.name)+'</b><small>'+ts.length+' test(s) terminé(s) · '+(ts.length?Math.round(yes/ts.length*100)+"% de présence":"Pas encore testé")+'</small></div>'}).join("");
- const rows=p.map((q,i)=>{
-   const qTests=tests.filter(t=>t.campaignPromptId===q.id);
-   const promptState=qTests.length?qTests.length+" résultat(s) enregistré(s)":"Pas encore testé";
-   const buttonHtml=AI_TARGETS.map(a=>'<button class="btn" data-open-ai="'+esc(a.name)+'" data-ai-prompt="'+i+'">Ouvrir '+esc(a.name)+'</button>').join("");
-   return '<div class="priority"><b>'+(i+1)+'. '+esc(q.kind)+'</b><p>'+esc(q.text)+'</p><small>'+esc(promptState)+'</small><div class="actions">'+buttonHtml+'<button class="btn primary" data-record-campaign="'+i+'">Saisir un résultat</button><button class="btn" data-copy-prompt="'+i+'">Copier la question</button></div></div>';
- }).join("");
- $("campaignQuestions").innerHTML=p.length?'<h3>Questions comparables</h3>'+rows+'<h3 style="margin-top:18px">Résultats par assistant</h3>'+perPlatform:'<p class="muted">Renseigne le commerce et génère une campagne pour commencer.</p>';
- $("campaignQuestions").querySelectorAll("[data-open-ai]").forEach(b=>b.onclick=()=>{
-   const ai=AI_TARGETS.find(a=>a.name===b.dataset.openAi);
-   const q=p[Number(b.dataset.aiPrompt)];
-   $("aiPlatform").value=ai.name;
-   $("aiPrompt").value=q.text;
-   $("aiDate").value=new Date().toISOString().slice(0,10);
-   $("aiPresence").value="partial";$("aiRank").value="";$("aiCompetitors").value="";$("aiSource").value="";$("aiNotes").value="";
-   state.activeCampaignId=cid;state.activeCampaignPromptId=q.id;persistLocal();
-   window.open(ai.url,"_blank","noopener");
-   nav("research");
-   setTimeout(()=>document.getElementById("saveAiTest").scrollIntoView({behavior:"smooth",block:"center"}),50);
- });
- $("campaignQuestions").querySelectorAll("[data-record-campaign]").forEach(b=>b.onclick=()=>{
-   const q=p[Number(b.dataset.recordCampaign)];
-   $("aiPrompt").value=q.text;
-   $("aiDate").value=new Date().toISOString().slice(0,10);
-   $("aiPresence").value="partial";$("aiRank").value="";$("aiCompetitors").value="";$("aiSource").value="";
-   $("aiNotes").value="Campagne : "+q.kind;
-   state.activeCampaignId=cid;state.activeCampaignPromptId=q.id;persistLocal();
-   nav("research");
-   setTimeout(()=>document.getElementById("saveAiTest").scrollIntoView({behavior:"smooth",block:"center"}),50);
- });
- $("campaignQuestions").querySelectorAll("[data-copy-prompt]").forEach(b=>b.onclick=()=>{
-   const q=p[Number(b.dataset.copyPrompt)].text;
-   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q).then(()=>alert("Question copiée.")).catch(()=>prompt("Copie la question :",q));
-   else prompt("Copie la question :",q);
- });
-}
-$("campaignFill").onclick=campaignInputFromBiz;
-$("generateCampaign").onclick=getCampaignPrompts;
-$("clearCampaign").onclick=()=>{state.campaignPrompts=[];persistLocal();renderCampaignPrompts()};
-$("exportAiCsv").onclick=()=>{
- const tests=Array.isArray(state.aiTests)?state.aiTests:[];
- if(!tests.length){alert("Aucun résultat enregistré à exporter.");return}
- const cols=["date","platform","prompt","presence","rank","competitors","source","notes","campaignId","campaignPromptId"];
- const csv=[cols.join(","),...tests.map(t=>cols.map(k=>'"'+String(t[k]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");
- const blob=new Blob(["\\ufeff",csv],{type:"text/csv;charset=utf-8"});
- const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="affiads-visibilite-ia.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
-};
-function drawAiTests(){
- state.aiTests=Array.isArray(state.aiTests)?state.aiTests:[];
- const tests=state.aiTests;
- const completed=tests.filter(t=>t.presence==="yes"||t.presence==="no");
- const yes=completed.filter(t=>t.presence==="yes").length;
- const rate=completed.length?Math.round(yes/completed.length*100):null;
- $("aiSummary").innerHTML='<div class="card s3"><div class="metric">'+tests.length+'<small>Tests enregistrés</small></div></div><div class="card s3"><div class="metric">'+(rate===null?"—":rate+"%")+'<small>Taux de présence sur réponses oui/non</small></div></div><div class="card s3"><div class="metric">'+tests.filter(t=>t.presence==="no").length+'<small>Tests sans présence</small></div></div>';
- $("aiTestsList").innerHTML=tests.length?'<h3 style="margin:16px 0 8px">Historique des tests</h3>'+tests.slice().reverse().map((t,idx)=>'<div class="priority"><b>'+esc(t.platform)+' · '+esc(t.date)+'</b><small>'+esc(t.prompt)+'</small><p>'+ (t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · Position notée : "+esc(t.rank):"")+(t.competitors?" · Concurrents : "+esc(t.competitors):"")+'</p>'+(t.source?'<a target="_blank" rel="noopener" href="'+esc(t.source)+'">Source citée ↗</a>':"")+(t.notes?'<p>'+esc(t.notes)+'</p>':"")+'<div class="actions"><button class="btn" data-delete-ai="'+(tests.length-1-idx)+'">Supprimer ce test</button></div></div>').join(""):'<p class="muted">Aucun test enregistré. Fais une première recherche dans ChatGPT ou Claude, puis consigne le résultat ici.</p>';
- $("aiTestsList").querySelectorAll("[data-delete-ai]").forEach(b=>b.onclick=()=>{state.aiTests.splice(Number(b.dataset.deleteAi),1);persistLocal();drawAiTests();renderReport()});
-}
-function persistLocal(){try{localStorage.setItem("affiads-audit-360",JSON.stringify(state))}catch(e){}}
-$("aiDate").value=new Date().toISOString().slice(0,10);
-$("saveAiTest").onclick=()=>{
- const prompt=$("aiPrompt").value.trim();
- if(!prompt){alert("Indique la question exacte posée à l’IA.");return}
- const source=$("aiSource").value.trim();
- if(source&&!/^https?:\/\//i.test(source)){alert("La source doit être une URL commençant par https:// ou http://.");return}
- state.aiTests=Array.isArray(state.aiTests)?state.aiTests:[];
- state.aiTests.push({platform:$("aiPlatform").value,date:$("aiDate").value||new Date().toISOString().slice(0,10),prompt,presence:$("aiPresence").value,rank:$("aiRank").value.trim(),competitors:$("aiCompetitors").value.trim(),source,notes:$("aiNotes").value.trim(),campaignDate:state.campaign?.createdAt||"",campaignId:state.activeCampaignId||"",campaignPromptId:state.activeCampaignPromptId||""});
- persistLocal();drawAiTests();renderCampaignPrompts();renderReport();alert("Test IA enregistré sur cet appareil.");
-};
-$("clearAiForm").onclick=()=>["aiPrompt","aiRank","aiCompetitors","aiSource","aiNotes"].forEach(id=>$(id).value="");
-
-function normalizeUrl(raw){try{let u=new URL(raw);if(!["http:","https:"].includes(u.protocol))return null;return u}catch(e){return null}}
-function renderWebResults(rows){$("webResults").innerHTML=rows.map(r=>'<div class="priority"><b>'+esc(r.title)+'</b><small>'+esc(r.detail)+'</small></div>').join("")}
-$("runWebChecks").onclick=()=>{
- const u=normalizeUrl($("webUrl").value||$("site").value);
- const rows=[];
- if(!u){renderWebResults([{title:"URL invalide",detail:"Entre une adresse complète commençant par https:// ou http://."}]);return}
- $("webUrl").value=u.href;
- rows.push({title:"Format de l’adresse : valide",detail:u.href});
- rows.push({title:"Connexion sécurisée",detail:u.protocol==="https:"?"L’adresse utilise HTTPS. Cela ne certifie pas à lui seul la sécurité du site.":"Le site utilise HTTP : vérifie et privilégie HTTPS."});
- rows.push({title:"Adresse canonique et redirections",detail:"À vérifier avec l’inspecteur du navigateur ou un outil serveur ; ces informations ne sont pas lisibles de façon fiable depuis cette page."});
- rows.push({title:"Performance, SEO et accessibilité",detail:"Lance PageSpeed Insights pour obtenir un rapport réel basé sur l’URL publique."});
- rows.push({title:"Données structurées",detail:"Ouvre le test des résultats enrichis et valide les données avec le contenu réellement visible sur la page."});
- rows.push({title:"Mobile et navigation",detail:"Vérifie sur téléphone : texte lisible, boutons faciles à toucher, navigation cohérente et appels à l’action fonctionnels."});
- rows.push({title:"Vérifications automatiques",detail:"Le site statique ne peut pas inspecter librement le HTML d’un autre domaine à cause des restrictions de sécurité du navigateur."});
- renderWebResults(rows);
-};
-$("openPageSpeed").onclick=()=>{
- const u=normalizeUrl($("webUrl").value||$("site").value);
- if(!u){alert("Renseigne d’abord une URL valide.");return}
- window.open("https://pagespeed.web.dev/analysis?url="+encodeURIComponent(u.href),"_blank","noopener");
-};
-
-
-function fillResearchFromBusiness(){ $("researchName").value=$("name").value||""; $("researchCity").value=$("city").value||""; $("researchSite").value=$("site").value||""; }
-$("fillResearch").onclick=fillResearchFromBusiness;
-$("buildResearch").onclick=()=>{
- const name=$("researchName").value.trim(), city=$("researchCity").value.trim(), site=$("researchSite").value.trim(), kw=$("researchKeyword").value.trim();
- if(!name&&!kw&&!site){alert("Renseigne au moins le nom du commerce, un site ou un mot-clé.");return}
- const q=(s)=>encodeURIComponent(s.trim());
- const searches=[];
- if(name&&city)searches.push(["Nom + ville", "https://www.google.com/search?q="+q('"'+name+'" '+city)]);
- if(name&&city)searches.push(["Google Maps", "https://www.google.com/maps/search/"+q(name+" "+city)]);
- if(kw&&city)searches.push(["Mot-clé local Google", "https://www.google.com/search?q="+q(kw+" "+city)]);
- if(kw&&city)searches.push(["Mot-clé local Bing", "https://www.bing.com/search?q="+q(kw+" "+city)]);
- if(name)searches.push(["Avis et réputation", "https://www.google.com/search?q="+q('"'+name+'" avis '+city)]);
- if(name)searches.push(["Réseaux sociaux", "https://www.google.com/search?q="+q(name+" "+city+" site:instagram.com OR site:facebook.com")]);
- if(site){let u;try{u=new URL(site.startsWith("http")?site:"https://"+site)}catch(e){}if(u)searches.push(["Pages indexées du site", "https://www.google.com/search?q="+q("site:"+u.hostname)]);}
- if(kw)searches.push(["Questions / FAQ", "https://www.google.com/search?q="+q(kw+" questions avis prix")]);
- if(name)searches.push(["Visibilité assistants IA (test manuel)", "https://www.google.com/search?q="+q(name+" "+city+" recommandé")]);
- $("researchResults").innerHTML=searches.map(s=>'<a target="_blank" rel="noopener" href="'+s[1]+'"><b>'+esc(s[0])+'</b><br><span class="muted">Ouvrir les résultats ↗</span></a>').join("");
-};
-
-try{let saved=JSON.parse(localStorage.getItem("affiads-audit-360")||"null");if(saved){state=saved;if(!Array.isArray(state.aiTests))state.aiTests=[];fields.forEach(id=>{if(state.biz&&state.biz[id]!==undefined)$(id).value=state.biz[id]});$("notes").value=state.notes||""}}catch(e){}
-renderChecklist();update();drawAiTests();renderCampaignPrompts();
-</script>
+<script src="assets/app.js"></script>
 </body>
 </html>
