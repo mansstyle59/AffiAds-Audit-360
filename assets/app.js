@@ -448,6 +448,9 @@ async function geminiAsk(question){
   }catch(e){last=e;if(e.status!==404)throw e}
  }throw last;
 }
+async function geminiChat(prompt){
+ let last;for(const m of GEMINI_MODELS){try{const r=await fetchJson("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:700}})},45000);return (((r.candidates||[])[0]||{}).content||{parts:[]}).parts.map(p=>p.text||"").join("").trim()}catch(e){last=e;if(e.status!==404)throw e}}throw last;
+}
 function aiMentions(text,name){const t=norm(text),tk=toks(name);return tk.length?tk.every(w=>t.includes(w)):false}
 function aiRank(text,name){const lines=String(text).split(/\n+/).filter(l=>/^\s*(\d+[.)]|[-*•])\s+/.test(l));const i=lines.findIndex(l=>aiMentions(l,name));return i>=0?i+1:null}
 
@@ -1137,7 +1140,7 @@ function stillTrusted(){const d=lockDelay();if(d<0)return true;if(d===0)return f
 function unlockedThisSession(){try{if(sessionStorage.getItem(LOCK_SESSION)==="1")return true}catch(e){}return stillTrusted()}
 function setSession(v){try{if(v){sessionStorage.setItem(LOCK_SESSION,"1");markSeen()}else{sessionStorage.removeItem(LOCK_SESSION);localStorage.removeItem(LOCK_SEEN)}}catch(e){}}
 function gateText(title,hint){$("gateTitle").textContent=title;$("gateHint").textContent=hint}
-function renderDots(){const n=Lock.mode==="unlock"?(Lock.cfg&&Lock.cfg.len||4):Math.max(4,Lock.entry.length);$("pinDots").innerHTML=Array.from({length:n},(_,i)=>'<i class="'+(i<Lock.entry.length?"on":"")+'"></i>').join("")}
+function renderDots(){const n=(Lock.mode==="unlock"||Lock.mode==="verify")?(Lock.cfg&&Lock.cfg.len||4):Math.max(4,Lock.entry.length);$("pinDots").innerHTML=Array.from({length:n},(_,i)=>'<i class="'+(i<Lock.entry.length?"on":"")+'"></i>').join("")}
 function gateMsg(t,bad){const m=$("gateMsg");m.textContent=t||"";m.classList.toggle("bad",!!bad);if(bad){const d=$("pinDots");d.classList.remove("shake");void d.offsetWidth;d.classList.add("shake")}}
 function buildPad(){
  const keys=["1","2","3","4","5","6","7","8","9","ok","0","del"];
@@ -1146,23 +1149,25 @@ function buildPad(){
 }
 function showGate(mode){
  Lock.mode=mode;Lock.entry="";Lock.first="";document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
- $("gateForgot").hidden=mode!=="unlock";$("gateBio").hidden=!(mode==="unlock"&&Lock.cfg&&Lock.cfg.bio);$("gateBio").textContent="Déverrouiller avec "+bioLabel();
+ $("gateForgot").hidden=mode!=="unlock";$("gateBio").hidden=!((mode==="unlock"||mode==="verify")&&Lock.cfg&&Lock.cfg.bio);$("gateBio").textContent="Déverrouiller avec "+bioLabel();
+ $("gateCancel").hidden=!(mode==="verify"||mode==="change");
  if(mode==="unlock")gateText("Entrez votre code","Votre code protège vos audits et votre clé sur cet appareil.");
+ else if(mode==="verify")gateText("Confirmez que c’est vous",Lock.verifyWhy||"Saisissez votre code pour continuer.");
  else if(mode==="create")gateText("Créez votre code","Choisissez un code de 4 à 6 chiffres pour protéger l’appli sur cet appareil.");
  else if(mode==="change")gateText("Nouveau code","Choisissez un nouveau code de 4 à 6 chiffres.");
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
-function hideGate(){setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function hideGate(){const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
  if(!/^\d$/.test(k)||Lock.entry.length>=6)return;
  Lock.entry+=k;renderDots();gateMsg("");
- if(Lock.mode==="unlock"&&Lock.cfg&&Lock.entry.length===Lock.cfg.len)pinSubmit();
+ if((Lock.mode==="unlock"||Lock.mode==="verify")&&Lock.cfg&&Lock.entry.length===Lock.cfg.len)pinSubmit();
 }
 async function pinSubmit(){
  const v=Lock.entry;
- if(Lock.mode==="unlock"){
+ if(Lock.mode==="unlock"||Lock.mode==="verify"){
   const now=Date.now();if(Lock.cfg.until>now){gateMsg("Trop d’essais : réessayez dans "+Math.ceil((Lock.cfg.until-now)/1000)+" s.",true);Lock.entry="";renderDots();return}
   if(await pinHash(v,Lock.cfg.salt)===Lock.cfg.hash){Lock.cfg.fails=0;Lock.cfg.until=0;lockSave();hideGate();return}
   Lock.cfg.fails=(Lock.cfg.fails||0)+1;if(Lock.cfg.fails>=5)Lock.cfg.until=now+Math.min(300,30*2**(Lock.cfg.fails-5))*1000;lockSave();
@@ -1195,6 +1200,8 @@ async function bioUnlock(){
  }catch(e){gateMsg(e&&e.name==="NotAllowedError"?"Reconnaissance annulée : utilisez le code ou réessayez.":"Reconnaissance indisponible : utilisez le code.",false)}
  return false;
 }
+function requireOwner(why,then){if(!Lock.cfg||!Lock.cfg.hash){then();return}Lock.onVerify=then;Lock.verifyWhy=why;showGate("verify");if(Lock.cfg.bio)bioUnlock()}
+function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;Lock.onVerify=null;Lock.verifyWhy="";const g=$("gate");document.body.classList.remove("locked");g.classList.add("hidden");Lock.mode="unlock"}
 function lockNow(){if(Lock.cfg&&Lock.cfg.hash){setSession(false);showGate("unlock")}}
 function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow()}
 function initLock(){
@@ -1207,7 +1214,8 @@ function initLock(){
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
  document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!document.body.classList.contains("locked"))markSeen()}else if(Lock.hiddenAt){const d=lockDelay();if(Lock.cfg&&Lock.cfg.hash&&d>0&&Date.now()-Lock.hiddenAt>d*60000)lockNow();Lock.hiddenAt=0}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
- $("pinChange").onclick=()=>showGate(Lock.cfg&&Lock.cfg.hash?"change":"create");
+ $("pinChange").onclick=()=>{if(Lock.cfg&&Lock.cfg.hash)requireOwner("Saisissez votre code actuel pour en choisir un nouveau.",()=>showGate("change"));else showGate("create")};
+ $("gateCancel").onclick=cancelGate;
  $("pinLockNow").onclick=lockNow;
  $("gateBio").onclick=()=>bioUnlock();
  $("pinBio").onclick=async()=>{if(!Lock.cfg||!Lock.cfg.hash){toast("Créez d’abord un code.");return}if(Lock.cfg.bio){Lock.cfg.bio=null;lockSave();renderPinSettings();toast(bioLabel()+" désactivé.");return}try{await bioEnable();renderPinSettings();toast(bioLabel()+" activé : plus besoin de taper le code.")}catch(e){toast(e&&e.name==="NotAllowedError"?"Activation annulée.":"Cet appareil ne permet pas la reconnaissance ici.")}};
@@ -1304,8 +1312,94 @@ async function syncHandlePending(){
  await syncEnable(s,true);nav("clients");
 }
 
+/* ---------- Assistant AffiAds (bulle en bas à droite) ----------
+   Comprend les demandes courantes et agit directement ; les actions sensibles
+   redemandent le code ou Face ID. Questions libres : Gemini si la clé le permet. */
+const Bot={open:false,history:[],started:false};
+const BOT_CHIPS=["Trouver un audit","Nouvel audit","Changer mon code","Ajouter un appareil","Activer Face ID","Mes derniers audits","Exporter mes audits","Obtenir la clé Google"];
+function botEsc(t){return esc(t).replace(/\n/g,"<br>")}
+function botSay(html,actions){
+ const el=document.createElement("div");el.className="bmsg bot";el.innerHTML='<div class="bbub">'+html+(actions&&actions.length?'<div class="bacts">'+actions.map((a,i)=>'<button type="button" class="btn'+(i===0?" primary":"")+'" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>':'')+'</div>';
+ (actions||[]).forEach((a,i)=>{const b=el.querySelector('[data-i="'+i+'"]');if(b)b.onclick=()=>{a[1]();}});
+ $("botLog").appendChild(el);el.scrollIntoView({block:"end",behavior:"smooth"});Bot.history.push({who:"bot",text:el.textContent.slice(0,400)});
+}
+function botUser(t){const el=document.createElement("div");el.className="bmsg me";el.innerHTML='<div class="bbub">'+botEsc(t)+'</div>';$("botLog").appendChild(el);el.scrollIntoView({block:"end"});Bot.history.push({who:"me",text:t})}
+function botTyping(on){let t=$("botTyping");if(on&&!t){t=document.createElement("div");t.id="botTyping";t.className="bmsg bot";t.innerHTML='<div class="bbub typing"><i></i><i></i><i></i></div>';$("botLog").appendChild(t);t.scrollIntoView({block:"end"})}if(!on&&t)t.remove()}
+function botToggle(open){
+ Bot.open=open??!Bot.open;$("botPanel").hidden=!Bot.open;$("botFab").setAttribute("aria-expanded",String(Bot.open));document.body.classList.toggle("botopen",Bot.open);
+ if(Bot.open){if(!Bot.started){Bot.started=true;botSay("Bonjour"+(settings.senderName?" "+botEsc(settings.senderName):"")+" ! Je peux retrouver vos audits, en lancer un, changer votre code, relier un appareil, activer Face ID ou répondre à vos questions sur l’appli.")}renderBotChips();setTimeout(()=>$("botInput").focus(),60)}
+}
+function renderBotChips(){$("botChips").innerHTML=BOT_CHIPS.map(c=>'<button type="button" class="chipq">'+esc(c)+'</button>').join("");$("botChips").querySelectorAll(".chipq").forEach(b=>b.onclick=()=>botAsk(b.textContent))}
+function auditsSorted(){return Object.values(db.audits).filter(a=>a.biz&&a.biz.name).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)))}
+function auditLine(a){const sc=scoreOf(a);return "<b>"+botEsc(a.biz.name)+"</b>"+(a.biz.city?" · "+botEsc(a.biz.city):"")+(sc!=null?" · score "+sc+"/100":"")+(a.biz.date?" · "+botEsc(frDate(a.biz.date)):"")}
+function botShowAudits(list,title){
+ if(!list.length){botSay(title?"Aucun audit ne correspond.":"Aucun audit enregistré pour l’instant.",[["Lancer un audit",()=>{botToggle(false);nav("auto");setTimeout(()=>$("autoName").focus(),300)}]]);return}
+ const top=list.slice(0,5);
+ botSay((title||"Vos audits")+" :<ul class=\"blist\">"+top.map(a=>"<li>"+auditLine(a)+"</li>").join("")+"</ul>"+(list.length>5?"<small>+ "+(list.length-5)+" autre(s) dans l’écran Clients.</small>":""),
+  top.slice(0,3).flatMap(a=>[["Ouvrir "+a.biz.name,()=>{switchTo(a.id);botToggle(false);nav("auto")}],["Rapport "+a.biz.name,()=>{switchTo(a.id);botToggle(false);nav("report")}]]).slice(0,4).concat(list.length>3?[["Voir tous les clients",()=>{botToggle(false);nav("clients")}]]:[]));
+}
+function botFind(q){
+ const stop=/\b(trouve[rz]?|cherche[rz]?|retrouve[rz]?|ouvre[rz]?|ouvrir|affiche[rz]?|montre[rz]?|audit|audits|rapport|le|la|les|l|de|du|des|d|mon|mes|pour|sur|a|à|svp|stp|moi|client|commerce|resto|restaurant|ville)\b/gi;
+ const term=norm(q.replace(stop," "));const words=term.split(" ").filter(w=>w.length>1);
+ if(!words.length){botShowAudits(auditsSorted());return}
+ const res=auditsSorted().filter(a=>{const t=norm(a.biz.name+" "+(a.biz.city||"")+" "+(a.biz.type||""));return words.every(w=>t.includes(w))||words.some(w=>w.length>3&&t.includes(w))});
+ botShowAudits(res,res.length?"J’ai trouvé "+res.length+" audit"+(res.length>1?"s":"")+" pour « "+botEsc(term)+" »":"");
+}
+const INTENTS=[
+ {re:/(chang|modifi|nouveau|oubli).*(code|mot de passe|mdp|pin)|(code|mot de passe|mdp).*(chang|modifi)/,run:q=>{
+   if(/oubli/.test(norm(q)))return botSay("Sans le code, seule l’option « Code oublié ? » de l’écran de verrouillage permet de repartir de zéro : elle efface les données de cet appareil. Si la synchronisation est active, vous les récupérez ensuite en reliant l’appareil avec le QR code.");
+   if(!Lock.cfg||!Lock.cfg.hash)return botSay("Aucun code n’est encore défini sur cet appareil.",[["Créer un code",()=>{botToggle(false);showGate("create")}]]);
+   botSay("Pour changer votre code, je dois d’abord vérifier que c’est bien vous (code actuel ou Face ID).",[["Changer mon code",()=>{botToggle(false);requireOwner("Saisissez votre code actuel pour en choisir un nouveau.",()=>showGate("change"))}]])}},
+ {re:/(ajout|donn|partag|reli|connect|synchro|autre).*(acc[eè]s|appareil|telephone|téléphone|ordi|ordinateur|mac|tablette|iphone)|synchronis/,run:()=>{
+   if(!Sync.secret)return botSay("Pour donner accès à un autre appareil, activez d’abord la synchronisation : un QR code s’affichera, à scanner avec l’autre appareil.",[["Activer la synchronisation",()=>requireOwner("Confirmez avant d’activer la synchronisation.",async()=>{await syncEnable(b64u(crypto.getRandomValues(new Uint8Array(16))),false);botQr()})]]);
+   botSay("Le lien de liaison donne accès à tous vos audits : je vérifie d’abord que c’est vous.",[["Afficher le QR code",()=>requireOwner("Confirmez pour afficher le QR code de liaison.",botQr)]])}},
+ {re:/face ?id|touch ?id|empreinte|biometr|visage/,run:()=>{
+   if(!Lock.cfg||!Lock.cfg.hash)return botSay("Créez d’abord un code d’accès, puis activez Face ID / Touch ID.",[["Créer un code",()=>{botToggle(false);showGate("create")}]]);
+   if(Lock.cfg.bio)return botSay(bioLabel()+" est déjà activé sur cet appareil.",[["Désactiver",()=>requireOwner("Confirmez pour désactiver "+bioLabel()+".",()=>{Lock.cfg.bio=null;lockSave();renderPinSettings();botSay(bioLabel()+" désactivé.")})]]);
+   if(!Lock.bioOk)return botSay("Cet appareil ou ce navigateur ne propose pas la reconnaissance biométrique ici. Sur iPhone, ouvrez l’appli dans Safari ou depuis l’écran d’accueil.");
+   botSay("Je peux activer "+bioLabel()+" : vous n’aurez plus à taper le code.",[["Activer "+bioLabel(),async()=>{try{await bioEnable();renderPinSettings();botSay(bioLabel()+" activé.")}catch(e){botSay("Activation annulée ou impossible sur cet appareil.")}}]])}},
+ {re:/(redemand|demand|tape|saisi|chaque fois|tout le temps|delai|délai|verrouill)/,run:()=>botSay("Le code est redemandé après la durée d’absence choisie (actuellement : "+({"-1":"jamais","0":"à chaque ouverture","5":"5 minutes","60":"1 heure","1440":"1 jour","10080":"1 semaine"}[String(lockDelay())]||lockDelay()+" min")+"). Vous pouvez la changer, ou verrouiller tout de suite.",[["Régler le délai",()=>{botToggle(false);nav("settings");setTimeout(()=>$("pinDelay").focus(),300)}],["Verrouiller maintenant",()=>{botToggle(false);lockNow()}]])},
+ {re:/(nouvel|nouveau|lanc|fai[st]|commenc|demarr|démarr).*(audit)|^audit(e|er)? /,run:q=>{
+   const m=q.match(/audit(?:e|er)?\s+(?:de\s+|du\s+|pour\s+)?(.+?)(?:\s+(?:à|a|sur)\s+(.+))?$/i);
+   botToggle(false);state=fixState(state);read();persistLocal();state=blankState();persistLocal();hydrate();nav("auto");
+   if(m&&m[1]&&!/^(un|une|le|nouvel?)$/i.test(m[1].trim())){$("autoName").value=m[1].trim();if(m[2])$("autoCity").value=m[2].trim();queueSuggest();toast("Choisissez le commerce dans la liste pour lancer l’audit.")}
+   setTimeout(()=>$("autoName").focus(),300)}},
+ {re:/(export|sauvegard|backup|import)/,run:()=>botSay("Vous pouvez exporter tous vos audits dans un fichier, ou importer un fichier exporté.",[["Exporter maintenant",()=>$("exportJson").click()],["Ouvrir les réglages",()=>{botToggle(false);nav("settings")}]])},
+ {re:/(dernier|recent|récent|liste|tous|combien).*(audit|client)|mes (audits|clients)/,run:q=>{const L=auditsSorted();if(/combien/.test(norm(q)))return botSay("Vous avez "+L.length+" audit"+(L.length>1?"s":"")+" enregistré"+(L.length>1?"s":"")+".");botShowAudits(L,"Vos audits les plus récents")}},
+ {re:/(meilleur|pire|plus (bas|faible|haut)|mauvais).*(score|audit|client)|(prospect|priorit|opportunit)/,run:q=>{const L=auditsSorted().filter(a=>scoreOf(a)!=null);if(!L.length)return botSay("Aucun audit avec un score pour l’instant.");const best=/meilleur|plus haut/.test(norm(q));L.sort((a,b)=>best?scoreOf(b)-scoreOf(a):scoreOf(a)-scoreOf(b));botShowAudits(L,best?"Les mieux notés":"Les commerces avec le plus d’opportunités (scores les plus bas)")}},
+ {re:/(trouv|cherch|retrouv|ouvr|affich|montr|ou est|où est)/,run:botFind},
+ {re:/(supprim|efface).*(audit|client)/,run:()=>botSay("Pour supprimer un audit, ouvrez l’écran Clients et touchez la corbeille à côté du commerce. La suppression est aussi appliquée à vos autres appareils.",[["Ouvrir Clients",()=>{botToggle(false);nav("clients")}]])},
+ {re:/(cle|clé|api|google cloud|places|pagespeed|gemini|generative)/,run:()=>botSay("La clé Google (qui commence par « AIza ») se crée dans Google Cloud → Identifiants → Créer des identifiants → Clé API. Activez Places API (New), PageSpeed Insights API et Generative Language API (pour Gemini), puis cochez-les dans les restrictions de la clé.",[["Ouvrir les réglages",()=>{botToggle(false);nav("settings");setTimeout(()=>{$("help-key").open=true},300)}],["Google Cloud",()=>window.open("https://console.cloud.google.com/apis/credentials?project=affiads-audit","_blank","noopener")]])},
+ {re:/(pdf|imprim|rapport)/,run:()=>botSay("Le rapport client se prépare automatiquement après chaque audit. Touchez « PDF » en haut pour l’enregistrer ou l’imprimer.",[["Ouvrir le rapport",()=>{botToggle(false);nav("report")}],["Enregistrer en PDF",()=>{botToggle(false);nav("report");setTimeout(()=>window.print(),400)}]])},
+ {re:/(message|prospect|whatsapp|mail|e-mail|email)/,run:()=>botSay("Le message de prospection est rédigé à partir des constats de l’audit, au format Instagram, e-mail ou WhatsApp.",[["Rédiger le message",()=>{botToggle(false);nav("pitch")}]])},
+ {re:/(sombre|clair|theme|thème|dark)/,run:q=>{const t=/sombre|dark/.test(norm(q))?"dark":/clair/.test(norm(q))?"light":"auto";settings.theme=t;saveSettings();applyTheme();botSay("Thème "+({dark:"sombre",light:"clair",auto:"automatique"})[t]+" appliqué.")}},
+ {re:/(score|calcul|note sur 100)/,run:()=>botSay("Le score indicatif est la part des contrôles réussis parmi ceux effectués (fiche Google, site, réseaux, réputation, IA). Ce n’est pas un classement officiel : il sert à prioriser les actions.")},
+ {re:/(install|ecran d.accueil|écran d.accueil|appli sur)/,run:()=>botSay("Sur iPhone : ouvrez l’appli dans Safari, touchez Partager puis « Sur l’écran d’accueil ». Sur ordinateur : bouton d’installation dans la barre d’adresse, ou Réglages → Installer l’appli.")},
+ {re:/^(bonjour|salut|hello|coucou|merci)/,run:q=>botSay(/merci/.test(norm(q))?"Avec plaisir !":"Bonjour ! Que puis-je faire pour vous ?")}
+];
+function botQr(){
+ botToggle(true);
+ const box=document.createElement("div");box.className="bqr";box.innerHTML='<div class="bqrimg">…</div>';
+ botSay("Scannez ce QR code avec l’appareil photo de l’autre appareil, puis touchez le lien. Il faudra y créer ou saisir le code d’accès.",[["Copier le lien",()=>copyText(syncLink(),"Lien de liaison copié.")]]);
+ const last=$("botLog").lastElementChild.querySelector(".bbub");last.insertBefore(box,last.querySelector(".bacts"));
+ loadQr().then(()=>{const q=qrcode(0,"M");q.addData(syncLink());q.make();box.querySelector(".bqrimg").innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}).catch(()=>{box.innerHTML='<small>QR code indisponible : utilisez « Copier le lien ».</small>'});
+}
+const BOT_GUIDE="Tu es l’assistant intégré de l’appli AffiAds Audit 360° de "+"Denis (AffiAds : visibilité en ligne des commerces locaux). Réponds en français, en 3 phrases maximum, simplement, au vouvoiement. Écrans : Audit (taper le nom du commerce et le choisir), Clients (liste des audits), Rapport (PDF), Message (prospection), Plus → Fiche commerce, Checklist, Visibilité IA, Recherche web, Tests du site, Boîte à outils, Réglages (thème, Face ID, code, synchronisation, clé Google, signature, export). Ne promets jamais de résultat chiffré. Si la question ne concerne pas l’appli ou le marketing local, dis-le poliment.";
+async function botAsk(text){
+ text=String(text||"").trim();if(!text)return;botUser(text);$("botInput").value="";
+ const n=norm(text);const it=INTENTS.find(i=>i.re.test(n));
+ if(it){try{await it.run(text)}catch(e){botSay("Une erreur est survenue : "+botEsc(frErr(e).text))}return}
+ if(hasKey()){botTyping(true);try{const ctx="Audits enregistrés : "+auditsSorted().slice(0,15).map(a=>a.biz.name+(a.biz.city?" ("+a.biz.city+")":"")+(scoreOf(a)!=null?" score "+scoreOf(a):"")).join(" ; ")+".";const t=await geminiChat(BOT_GUIDE+"\n"+ctx+"\nQuestion : "+text);botTyping(false);botSay(botEsc(t.replace(/[*#]/g,"")||"Je n’ai pas de réponse pour le moment."))}catch(e){botTyping(false);const f=frErr(e);botSay("Je n’ai pas pu interroger Gemini : "+botEsc(f.text),f.link?[[f.link.label,()=>window.open(f.link.href,"_blank","noopener")]]:[])}return}
+ botSay("Je n’ai pas bien compris. Voici ce que je sais faire :",[["Trouver un audit",()=>botAsk("Trouver un audit")],["Changer mon code",()=>botAsk("Changer mon code")],["Ajouter un appareil",()=>botAsk("Ajouter un appareil")]]);
+}
+function initBot(){
+ $("botFab").onclick=()=>botToggle();$("botClose").onclick=()=>botToggle(false);
+ $("botForm").onsubmit=e=>{e.preventDefault();botAsk($("botInput").value)};
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Bot.open)botToggle(false)});
+}
+
 /* ---------- Démarrage ---------- */
-bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();syncInit();
+bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();syncInit();initBot();
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
