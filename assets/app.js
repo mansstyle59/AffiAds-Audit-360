@@ -1349,21 +1349,80 @@ async function syncHandlePending(){
 /* ---------- Assistant AffiAds (bulle en bas à droite) ----------
    Comprend les demandes courantes et agit directement ; les actions sensibles
    redemandent le code ou Face ID. Questions libres : Gemini si la clé le permet. */
-const Bot={open:false,history:[],started:false};
-const BOT_CHIPS=["Trouver un audit","Nouvel audit","Changer mon code","Ajouter un appareil","Activer Face ID","Mes derniers audits","Exporter mes audits","Obtenir la clé Google"];
+const Bot={open:false,history:[],started:false,rec:null};
+const BOT_START=[
+ ["sum","Résumer l’audit en cours","Score, constats et priorités"],
+ ["offer","Que proposer au client ?","Prestations adaptées à l’audit"],
+ ["find","Trouver un audit","Par nom ou par ville"],
+ ["new","Nouvel audit","Analyser un autre commerce"],
+ ["lock","Code et Face ID","Changer le code, déverrouillage"],
+ ["sync","Ajouter un appareil","Téléphone, ordinateur, tablette"]];
+const BOT_ICO={sum:'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',offer:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',find:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',new:'<path d="M12 5v14M5 12h14"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',sync:'<rect x="3" y="5" width="12" height="9" rx="1.5"/><rect x="16" y="9" width="5" height="10" rx="1.2"/><path d="M6 18h7"/>'};
+const BOT_ASK={sum:"Résume l’audit en cours",offer:"Que proposer à ce client ?",find:"Trouver un audit",new:"Nouvel audit",lock:"Changer mon code",sync:"Ajouter un appareil"};
 function botEsc(t){return esc(t).replace(/\n/g,"<br>")}
-function botSay(html,actions){
- const el=document.createElement("div");el.className="bmsg bot";el.innerHTML='<div class="bbub">'+html+(actions&&actions.length?'<div class="bacts">'+actions.map((a,i)=>'<button type="button" class="btn'+(i===0?" primary":"")+'" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>':'')+'</div>';
- (actions||[]).forEach((a,i)=>{const b=el.querySelector('[data-i="'+i+'"]');if(b)b.onclick=()=>{a[1]();}});
- $("botLog").appendChild(el);el.scrollIntoView({block:"end",behavior:"smooth"});Bot.history.push({who:"bot",text:el.textContent.slice(0,400)});
+/* Mise en forme légère des réponses de l'IA : gras, listes, paragraphes */
+function botMd(t){
+ const lines=esc(String(t||"").replace(/^#+\s*/gm,"")).split(/\n/);let out="",list=null;
+ const inl=x=>x.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"$1");
+ lines.forEach(l=>{const m=l.match(/^\s*(?:[-*•]|(\d+)[.)])\s+(.*)$/);if(m){const tag=m[1]?"ol":"ul";if(list!==tag){if(list)out+="</"+list+">";out+="<"+tag+' class="blist">';list=tag}out+="<li>"+inl(m[2])+"</li>"}else{if(list){out+="</"+list+">";list=null}if(l.trim())out+="<p>"+inl(l)+"</p>"}});
+ if(list)out+="</"+list+">";return out;
 }
-function botUser(t){const el=document.createElement("div");el.className="bmsg me";el.innerHTML='<div class="bbub">'+botEsc(t)+'</div>';$("botLog").appendChild(el);el.scrollIntoView({block:"end"});Bot.history.push({who:"me",text:t})}
-function botTyping(on){let t=$("botTyping");if(on&&!t){t=document.createElement("div");t.id="botTyping";t.className="bmsg bot";t.innerHTML='<div class="bbub typing"><i></i><i></i><i></i></div>';$("botLog").appendChild(t);t.scrollIntoView({block:"end"})}if(!on&&t)t.remove()}
+function botTime(){return new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+function botScroll(el){try{el.scrollIntoView({block:"end",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}catch(e){}}
+function botSay(html,actions,suggest){
+ const el=document.createElement("div");el.className="bmsg bot";
+ el.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/logo-64.png" alt="" width="18" height="18"></span><div class="bcol"><div class="bbub">'+html+(actions&&actions.length?'<div class="bacts">'+actions.map((a,i)=>'<button type="button" class="'+(i===0?"bact main":"bact")+'" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>':'')+'</div><span class="btime">'+botTime()+'</span></div>';
+ (actions||[]).forEach((a,i)=>{const b=el.querySelector('[data-i="'+i+'"]');if(b)b.onclick=()=>a[1]()});
+ $("botLog").appendChild(el);botScroll(el);Bot.history.push({who:"bot",text:el.querySelector(".bbub").textContent.slice(0,500)});
+ renderBotChips(suggest);
+}
+function botUser(t){const el=document.createElement("div");el.className="bmsg me";el.innerHTML='<div class="bcol"><div class="bbub">'+botEsc(t)+'</div><span class="btime">'+botTime()+'</span></div>';$("botLog").appendChild(el);botScroll(el);Bot.history.push({who:"me",text:t});const w=$("botLog").querySelector(".bwelcome");if(w)w.classList.add("small")}
+function botTyping(on){let t=$("botTyping");if(on&&!t){t=document.createElement("div");t.id="botTyping";t.className="bmsg bot";t.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/logo-64.png" alt="" width="18" height="18"></span><div class="bbub typing" aria-label="L’assistant écrit"><i></i><i></i><i></i></div>';$("botLog").appendChild(t);botScroll(t)}if(!on&&t)t.remove()}
+function botWelcome(){
+ const name=settings.senderName?" "+botEsc(settings.senderName.split(" ")[0]):"";const h=new Date().getHours();
+ const cur=state.biz&&state.biz.name&&state.data&&state.data.fetchedAt?state.biz.name:"";
+ const w=document.createElement("div");w.className="bwelcome";
+ w.innerHTML='<div class="bhero"><span class="botav big"><img src="assets/logo-64.png" alt="" width="34" height="34"></span><h3>'+(h<18&&h>=5?"Bonjour":"Bonsoir")+name+' 👋</h3><p>Que voulez-vous faire ?'+(cur?' L’audit ouvert est <b>'+botEsc(cur)+'</b>.':'')+'</p></div><div class="bgrid">'+BOT_START.map(([k,t,sx])=>'<button type="button" class="bcard" data-k="'+k+'"><span class="bico"><svg viewBox="0 0 24 24" aria-hidden="true">'+BOT_ICO[k]+'</svg></span><b>'+esc(t)+'</b><small>'+esc(sx)+'</small></button>').join("")+'</div>';
+ w.querySelectorAll(".bcard").forEach(b=>b.onclick=()=>botAsk(BOT_ASK[b.dataset.k]));
+ $("botLog").appendChild(w);
+}
+function botReset(){Bot.history=[];$("botLog").innerHTML="";botWelcome();renderBotChips()}
 function botToggle(open){
  Bot.open=open??!Bot.open;$("botPanel").hidden=!Bot.open;$("botFab").setAttribute("aria-expanded",String(Bot.open));document.body.classList.toggle("botopen",Bot.open);
- if(Bot.open){if(!Bot.started){Bot.started=true;botSay("Bonjour"+(settings.senderName?" "+botEsc(settings.senderName):"")+" ! Je peux retrouver vos audits, en lancer un, changer votre code, relier un appareil, activer Face ID ou répondre à vos questions sur l’appli.")}renderBotChips();setTimeout(()=>$("botInput").focus(),60)}
+ if(Bot.open){if(!Bot.started){Bot.started=true;botReset()}setTimeout(()=>{if(matchMedia("(min-width:901px)").matches)$("botInput").focus()},80)}
+ else if(Bot.rec){try{Bot.rec.stop()}catch(e){}}
 }
-function renderBotChips(){$("botChips").innerHTML=BOT_CHIPS.map(c=>'<button type="button" class="chipq">'+esc(c)+'</button>').join("");$("botChips").querySelectorAll(".chipq").forEach(b=>b.onclick=()=>botAsk(b.textContent))}
+const BOT_CHIPS=["Résumer l’audit","Que proposer ?","Mes derniers audits","Les meilleures opportunités","Changer mon code","Exporter mes audits"];
+function renderBotChips(list){const L=list&&list.length?list:BOT_CHIPS;$("botChips").innerHTML=L.map(c=>'<button type="button" class="chipq">'+esc(c)+'</button>').join("");$("botChips").querySelectorAll(".chipq").forEach(b=>b.onclick=()=>botAsk(b.textContent))}
+/* Synthèse de l'audit ouvert, à partir des données réelles */
+function botHasAudit(){return !!(state.biz&&state.biz.name&&(state.data&&state.data.fetchedAt||calc().n))}
+function botNoAudit(){botSay("Aucun audit n’est ouvert pour l’instant.",[["Lancer un audit",()=>{botToggle(false);nav("auto");setTimeout(()=>$("autoName").focus(),300)}],["Ouvrir un audit",()=>botAsk("Mes derniers audits")]])}
+function botSummary(){
+ if(!botHasAudit())return botNoAudit();
+ const b=state.biz,c=calc(),[vt]=verdict(c.score),F=(state.data.findings||[]).slice(0,3),I=issuesList().slice(0,3);
+ botSay("<b>"+botEsc(b.name)+"</b>"+(b.city?" · "+botEsc(b.city):"")+"<br>Score indicatif <b>"+(c.score??"—")+"/100</b> : "+botEsc(vt.toLowerCase())+" ("+c.n+" contrôles, "+c.issues+" point"+(c.issues>1?"s":"")+" à améliorer)."
+  +(F.length?'<p class="bsub">Constats clés</p><ol class="blist">'+F.map(f=>"<li>"+botEsc(f.text)+"</li>").join("")+"</ol>":"")
+  +(I.length?'<p class="bsub">Priorités</p><ol class="blist">'+I.map(p=>"<li><b>"+botEsc(p.it)+"</b>"+(p.goal?"<br><small>"+botEsc(p.goal)+"</small>":"")+"</li>").join("")+"</ol>":""),
+  [["Ouvrir le rapport",()=>{botToggle(false);nav("report")}],["Rédiger le message",()=>{botToggle(false);nav("pitch")}]],["Que proposer ?","Explique le score","Ce qu’il reste à vérifier"]);
+}
+function botOffer(){
+ if(!botHasAudit())return botNoAudit();
+ const by={};issuesList().forEach(p=>{if(p.offer)(by[p.offer]=by[p.offer]||[]).push(p)});
+ const L=Object.entries(by).sort((a,b)=>b[1].reduce((s,p)=>s+p.prio,0)-a[1].reduce((s,p)=>s+p.prio,0)).slice(0,3);
+ if(!L.length)return botSay("Aucun point à améliorer n’est relevé sur cet audit : proposez plutôt un suivi (nouvel audit dans 3 mois) et des contenus vidéo pour garder l’avance.");
+ const f=(state.data.findings||[])[0];
+ botSay("Pour <b>"+botEsc(state.biz.name)+"</b>, je proposerais dans cet ordre :<ol class=\"blist\">"+L.map(([o,ps])=>"<li><b>"+botEsc(o)+"</b><br><small>"+botEsc(ps.slice(0,3).map(p=>p.it).join(" · "))+"</small></li>").join("")+"</ol>"+(f?'<p class="bsub">Accroche conseillée</p><p>« '+botEsc(f.text)+' »</p>':"")+"<p><small>Ne promettez pas de position ou de chiffre d’affaires : appuyez-vous sur les constats datés du rapport.</small></p>",
+  [["Rédiger le message",()=>{botToggle(false);nav("pitch")}],["Voir le plan d’action",()=>{botToggle(false);nav("report")}]],["Résumer l’audit","Explique le score","Ce qu’il reste à vérifier"]);
+}
+function botToCheck(){
+ if(!botHasAudit())return botNoAudit();
+ const L=keys.filter(k=>!state.checks[k]||(state.auto[k]&&state.auto[k].status==="info")).map(k=>{const [gi,ii]=k.split("-").map(Number);return groups[gi].items[ii]});
+ botSay(L.length?"Points à confirmer avec le commerçant ou à la main ("+L.length+") :<ul class=\"blist\">"+L.slice(0,8).map(x=>"<li>"+botEsc(x)+"</li>").join("")+"</ul>"+(L.length>8?"<small>+ "+(L.length-8)+" autres dans la checklist.</small>":""):"Tous les points ont été vérifiés.",[["Ouvrir la checklist",()=>{botToggle(false);nav("audit")}]],["Résumer l’audit","Que proposer ?"]);
+}
+function botScore(){
+ const c=calc(),gs=groupScores();
+ botSay("Le score est la part des contrôles réussis parmi ceux vérifiés, <b>pondérée par l’importance</b> de chaque point : les avis ou la position locale comptent trois fois plus qu’un point secondaire. Les points non vérifiés ne comptent pas."+(c.score!=null?'<p class="bsub">Audit ouvert : '+c.score+'/100</p><ul class="blist">'+gs.map(g=>"<li>"+botEsc(g.title.replace(/^[A-E] · /,""))+" : <b>"+(g.score==null?"non évalué":g.score+"/100")+"</b></li>").join("")+"</ul>":""),null,["Résumer l’audit","Que proposer ?"]);
+}
 function auditsSorted(){return Object.values(db.audits).filter(a=>a.biz&&a.biz.name).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)))}
 function auditLine(a){const sc=scoreOf(a);return "<b>"+botEsc(a.biz.name)+"</b>"+(a.biz.city?" · "+botEsc(a.biz.city):"")+(sc!=null?" · score "+sc+"/100":"")+(a.biz.date?" · "+botEsc(frDate(a.biz.date)):"")}
 function botShowAudits(list,title){
@@ -1380,6 +1439,10 @@ function botFind(q){
  botShowAudits(res,res.length?"J’ai trouvé "+res.length+" audit"+(res.length>1?"s":"")+" pour « "+botEsc(term)+" »":"");
 }
 const INTENTS=[
+ {re:/(resum|synthese|bilan|recap).*(audit|client|en cours)?|^resume/,run:botSummary},
+ {re:/(propos|vendre|offre|prestation|quoi faire pour|que faire pour)/,run:botOffer},
+ {re:/(reste a verifier|a verifier|manque|manquant|verifier avec)/,run:botToCheck},
+ {re:/(explique|comment).*(score)|^score|calcul.*score/,run:botScore},
  {re:/(chang|modifi|nouveau|oubli).*(code|mot de passe|mdp|pin)|(code|mot de passe|mdp).*(chang|modifi)/,run:q=>{
    if(/oubli/.test(norm(q)))return botSay("Sans le code, seule l’option « Code oublié ? » de l’écran de verrouillage permet de repartir de zéro : elle efface les données de cet appareil. Si la synchronisation est active, vous les récupérez ensuite en reliant l’appareil avec le QR code.");
    if(!Lock.cfg||!Lock.cfg.hash)return botSay("Aucun code n’est encore défini sur cet appareil.",[["Créer un code",()=>{botToggle(false);showGate("create")}]]);
@@ -1407,7 +1470,7 @@ const INTENTS=[
  {re:/(pdf|imprim|rapport)/,run:()=>botSay("Le rapport client se prépare automatiquement après chaque audit. Touchez « PDF » en haut pour l’enregistrer ou l’imprimer.",[["Ouvrir le rapport",()=>{botToggle(false);nav("report")}],["Enregistrer en PDF",()=>{botToggle(false);nav("report");setTimeout(()=>window.print(),400)}]])},
  {re:/(message|prospect|whatsapp|mail|e-mail|email)/,run:()=>botSay("Le message de prospection est rédigé à partir des constats de l’audit, au format Instagram, e-mail ou WhatsApp.",[["Rédiger le message",()=>{botToggle(false);nav("pitch")}]])},
  {re:/(sombre|clair|theme|thème|dark)/,run:q=>{const t=/sombre|dark/.test(norm(q))?"dark":/clair/.test(norm(q))?"light":"auto";settings.theme=t;saveSettings();applyTheme();botSay("Thème "+({dark:"sombre",light:"clair",auto:"automatique"})[t]+" appliqué.")}},
- {re:/(score|calcul|note sur 100)/,run:()=>botSay("Le score indicatif est la part des contrôles réussis parmi ceux effectués (fiche Google, site, réseaux, réputation, IA). Ce n’est pas un classement officiel : il sert à prioriser les actions.")},
+ {re:/(score|calcul|note sur 100)/,run:botScore},
  {re:/(install|ecran d.accueil|écran d.accueil|appli sur)/,run:()=>botSay("Sur iPhone : ouvrez l’appli dans Safari, touchez Partager puis « Sur l’écran d’accueil ». Sur ordinateur : bouton d’installation dans la barre d’adresse, ou Réglages → Installer l’appli.")},
  {re:/^(bonjour|salut|hello|coucou|merci)/,run:q=>botSay(/merci/.test(norm(q))?"Avec plaisir !":"Bonjour ! Que puis-je faire pour vous ?")}
 ];
@@ -1418,18 +1481,35 @@ function botQr(){
  const last=$("botLog").lastElementChild.querySelector(".bbub");last.insertBefore(box,last.querySelector(".bacts"));
  loadQr().then(()=>{const q=qrcode(0,"M");q.addData(syncLink());q.make();box.querySelector(".bqrimg").innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}).catch(()=>{box.innerHTML='<small>QR code indisponible : utilisez « Copier le lien ».</small>'});
 }
-const BOT_GUIDE="Tu es l’assistant intégré de l’appli AffiAds Audit 360° de "+"Denis (AffiAds : visibilité en ligne des commerces locaux). Réponds en français, en 3 phrases maximum, simplement, au vouvoiement. Écrans : Audit (taper le nom du commerce et le choisir), Clients (liste des audits), Rapport (PDF), Message (prospection), Plus → Fiche commerce, Checklist, Visibilité IA, Recherche web, Tests du site, Boîte à outils, Réglages (thème, Face ID, code, synchronisation, clé Google, signature, export). Ne promets jamais de résultat chiffré. Si la question ne concerne pas l’appli ou le marketing local, dis-le poliment.";
+const BOT_GUIDE="Tu es l’assistant intégré de l’appli AffiAds Audit 360° de Denis (AffiAds : visibilité en ligne des commerces locaux : fiche Google, photos et vidéos, réseaux sociaux, site mobile, avis). Réponds en français, au vouvoiement, simplement, en 5 phrases maximum ou une courte liste. Appuie-toi uniquement sur les données d’audit fournies ; si une donnée manque, dis-le au lieu d’inventer. Ne promets jamais de position ni de résultat chiffré. Écrans de l’appli : Audit (taper le nom du commerce, le choisir, puis lancer), Clients, Rapport (PDF), Message (prospection), Plus → Fiche commerce, Checklist, Visibilité IA, Recherche web, Tests du site, Boîte à outils, Réglages (thème, Face ID, code, synchronisation, clé Google, signature, export). Si la question ne concerne ni l’appli ni le marketing local, dis-le poliment.";
+function botContext(){
+ const L="Audits enregistrés : "+auditsSorted().slice(0,15).map(a=>a.biz.name+(a.biz.city?" ("+a.biz.city+")":"")+(scoreOf(a)!=null?" score "+scoreOf(a):"")).join(" ; ")+".";
+ if(!botHasAudit())return L;
+ const b=state.biz,c=calc();
+ return L+"\nAudit ouvert : "+b.name+(b.city?", "+b.city:"")+(b.type?", "+b.type:"")+". Score "+(c.score??"—")+"/100. Constats : "+(state.data.findings||[]).map(f=>f.text).join(" | ")+"\nPlan d’action : "+issuesList().slice(0,8).map(p=>p.it+" → "+p.reco+(p.goal?" (objectif : "+p.goal+")":"")).join(" | ");
+}
 async function botAsk(text){
- text=String(text||"").trim();if(!text)return;botUser(text);$("botInput").value="";
+ text=String(text||"").trim();if(!text)return;botUser(text);$("botInput").value="";botGrow();
  const n=norm(text);const it=INTENTS.find(i=>i.re.test(n));
  if(it){try{await it.run(text)}catch(e){botSay("Une erreur est survenue : "+botEsc(frErr(e).text))}return}
- if(hasKey()){botTyping(true);try{const ctx="Audits enregistrés : "+auditsSorted().slice(0,15).map(a=>a.biz.name+(a.biz.city?" ("+a.biz.city+")":"")+(scoreOf(a)!=null?" score "+scoreOf(a):"")).join(" ; ")+".";const t=await geminiChat(BOT_GUIDE+"\n"+ctx+"\nQuestion : "+text);botTyping(false);botSay(botEsc(t.replace(/[*#]/g,"")||"Je n’ai pas de réponse pour le moment."))}catch(e){botTyping(false);const f=frErr(e);botSay("Je n’ai pas pu interroger Gemini : "+botEsc(f.text),f.link?[[f.link.label,()=>window.open(f.link.href,"_blank","noopener")]]:[])}return}
- botSay("Je n’ai pas bien compris. Voici ce que je sais faire :",[["Trouver un audit",()=>botAsk("Trouver un audit")],["Changer mon code",()=>botAsk("Changer mon code")],["Ajouter un appareil",()=>botAsk("Ajouter un appareil")]]);
+ if(hasKey()){botTyping(true);try{const hist=Bot.history.slice(-7,-1).map(h=>(h.who==="me"?"Utilisateur : ":"Assistant : ")+h.text).join("\n");const t=await geminiChat(BOT_GUIDE+"\n\n"+botContext()+(hist?"\n\nConversation récente :\n"+hist:"")+"\n\nQuestion : "+text);botTyping(false);botSay(botMd(t)||"Je n’ai pas de réponse pour le moment.",null,["Résumer l’audit","Que proposer ?"])}catch(e){botTyping(false);const f=frErr(e);botSay("Je n’ai pas pu interroger Gemini : "+botEsc(f.text),f.link?[[f.link.label,()=>window.open(f.link.href,"_blank","noopener")]]:[])}return}
+ botSay("Je n’ai pas compris cette demande. Choisissez une action ci-dessous, ou ajoutez une clé Google dans Réglages pour que je puisse répondre à toutes vos questions avec Gemini.",[["Résumer l’audit",()=>botAsk("Résume l’audit en cours")],["Trouver un audit",()=>botAsk("Trouver un audit")],["Changer mon code",()=>botAsk("Changer mon code")]]);
 }
+function botGrow(){const t=$("botInput");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,120)+"px"}
 function initBot(){
- $("botFab").onclick=()=>botToggle();$("botClose").onclick=()=>botToggle(false);
+ $("botFab").onclick=()=>botToggle();$("botClose").onclick=()=>botToggle(false);$("botNew").onclick=botReset;
  $("botForm").onsubmit=e=>{e.preventDefault();botAsk($("botInput").value)};
+ $("botInput").addEventListener("input",botGrow);
+ $("botInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();botAsk($("botInput").value)}});
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Bot.open)botToggle(false)});
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(SR){const mic=$("botMic");mic.hidden=false;mic.onclick=()=>{
+  if(Bot.rec){try{Bot.rec.stop()}catch(e){}return}
+  const r=new SR();r.lang="fr-FR";r.interimResults=true;r.maxAlternatives=1;Bot.rec=r;mic.classList.add("on");mic.setAttribute("aria-label","Arrêter la dictée");
+  let finalText="";r.onresult=ev=>{let t="";for(const res of ev.results)t+=res[0].transcript;$("botInput").value=t;botGrow();if(ev.results[ev.results.length-1].isFinal)finalText=t};
+  r.onend=()=>{Bot.rec=null;mic.classList.remove("on");mic.setAttribute("aria-label","Dicter la question");if(finalText.trim())botAsk(finalText)};
+  r.onerror=ev=>{if(ev.error==="not-allowed")toast("Autorisez le micro pour dicter vos questions.")};
+  try{r.start()}catch(e){Bot.rec=null;mic.classList.remove("on")}}}
 }
 
 /* ---------- Démarrage ---------- */
