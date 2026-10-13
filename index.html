@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=2026-8">
+<link rel="stylesheet" href="assets/app.css?v=2026-9">
 <title>AffiAds Audit 360°</title>
 </head>
 <body class="locked">
@@ -29,7 +29,7 @@
    <p id="gateMsg" class="gatemsg" role="status" aria-live="polite"></p>
    <input id="pinInput" class="pininput" type="password" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Code d’accès">
    <div class="pinpad" id="pinPad"></div>
-   <div class="gatelinks"><button type="button" id="gateForgot" class="linkbtn">Code oublié ?</button></div>
+   <button type="button" id="gateBio" class="biobtn" hidden>Déverrouiller avec Face ID / Touch ID</button><div class="gatelinks"><button type="button" id="gateForgot" class="linkbtn">Code oublié ?</button></div>
   </div>
  </div>
 </div>
@@ -174,7 +174,7 @@
 <section id="view-settings" class="hidden"><div class="grid">
 <div class="card s7"><h2>Apparence</h2><p class="muted">Le mode automatique suit le réglage clair ou sombre du téléphone.</p><div class="seg" role="radiogroup" aria-label="Thème"><button type="button" role="radio" data-theme-set="auto">Automatique</button><button type="button" role="radio" data-theme-set="light">Clair</button><button type="button" role="radio" data-theme-set="dark">Sombre</button></div></div>
 <div class="card"><h2>Synchronisation entre appareils</h2><div id="syncBox"></div></div>
-<div class="card s7"><h2>Code d’accès</h2><p class="muted" id="pinStatus"></p><div class="field"><label for="pinDelay">Verrouillage automatique</label><select id="pinDelay"><option value="1">Après 1 minute d’inactivité</option><option value="5">Après 5 minutes</option><option value="15">Après 15 minutes</option><option value="60">Après 1 heure</option><option value="0">Seulement à la réouverture de l’appli</option></select></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="pinChange">Changer le code</button><button class="btn" id="pinLockNow">Verrouiller maintenant</button><button class="btn" id="pinDisable">Désactiver le code</button></div></div>
+<div class="card s7"><h2>Code d’accès</h2><p class="muted" id="pinStatus"></p><div class="field"><label for="pinDelay">Redemander le code</label><select id="pinDelay"><option value="5">Après 5 minutes d’absence</option><option value="60">Après 1 heure d’absence</option><option value="1440">Après 1 jour d’absence (recommandé)</option><option value="10080">Après 1 semaine d’absence</option><option value="-1">Jamais : cet appareil est de confiance</option><option value="0">À chaque ouverture de l’appli</option></select></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="pinBio" hidden>Activer Face ID / Touch ID</button><button class="btn" id="pinChange">Changer le code</button><button class="btn" id="pinLockNow">Verrouiller maintenant</button><button class="btn" id="pinDisable">Désactiver le code</button></div></div>
 <div class="card s5"><h2>Appli sur l’écran d’accueil</h2><p class="muted" id="installHelp">Installez AffiAds Audit comme une vraie appli : ouverture plein écran, et l’interface reste disponible même sans réseau.</p><div class="actions"><button class="btn primary hidden" id="installApp">Installer l’appli</button></div></div>
 <div class="card s7"><h2>Clé Google (facultative)</h2><p class="muted">L'application fonctionne sans clé. Une clé Google gratuite ajoute la fiche Google, la note et les avis, les concurrents Google, les positions sur les recherches et la vitesse comparée des sites. Elle reste uniquement dans ce navigateur ; elle n'est jamais publiée sur GitHub.</p>
 <div class="field"><label for="googleKey">Clé API Google</label><input id="googleKey" type="password" placeholder="AIza..." autocomplete="off"></div>
@@ -195,6 +195,6 @@
 
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-8"></script>
+<script src="assets/app.js?v=2026-9"></script>
 </body>
 </html>
