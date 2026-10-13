@@ -156,7 +156,7 @@ async function fetchJson(url,opts={},timeout=90000){const ctl=new AbortControlle
 const STORE="affiads-audits-v2", OLD="affiads-audit-360", SETTINGS="affiads-settings";
 function blankState(){return {id:uid(),createdAt:today(),checks:{},issues:{},auto:{},notes:"",biz:{date:today()},aiTests:[],campaign:{},campaignPrompts:[],data:{},pitch:""}}
 let db={current:null,audits:{}};
-let settings={googleKey:"",senderName:"",senderLine:"AffiAds — Votre image, notre expertise",senderContact:""};
+let settings={googleKey:"",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
 let state=blankState();
 function loadAll(){
  try{const s=JSON.parse(localStorage.getItem(SETTINGS)||"null");if(s)settings={...settings,...s}}catch(e){}
