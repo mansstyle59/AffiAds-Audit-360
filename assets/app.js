@@ -1457,7 +1457,7 @@ function buildPad(){
  $("pinPad").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>pinKey(b.dataset.k)));
 }
 function showGate(mode){
- Lock.mode=mode;Lock.entry="";Lock.first="";document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
+ Lock.mode=mode;Lock.entry="";Lock.first="";$("gateLoad").hidden=true;$("gateTag").hidden=true;document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
  $("gateForgot").hidden=mode!=="unlock";$("gateBio").hidden=!((mode==="unlock"||mode==="verify")&&Lock.cfg&&Lock.cfg.bio);$("gateBio").textContent="Déverrouiller avec "+bioLabel();
  $("gateCancel").hidden=!(mode==="verify"||mode==="change");$("rememberWrap").hidden=mode==="verify";$("rememberMe").checked=mode==="create"||!Lock.cfg||lockDelay()<0||mode==="unlock";
  if(mode==="unlock")gateText("Entrez votre code","Votre code protège vos audits et votre clé sur cet appareil.");
