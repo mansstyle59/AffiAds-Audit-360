@@ -140,7 +140,8 @@ $("buildResearch").onclick=()=>{
  if(name)searches.push(["Visibilité assistants IA (test manuel)", "https://www.google.com/search?q="+q(name+" "+city+" recommandé")]);
  $("researchResults").innerHTML=searches.map(s=>'<a target="_blank" rel="noopener" href="'+s[1]+'"><b>'+esc(s[0])+'</b><br><span class="muted">Ouvrir les résultats ↗</span></a>').join("");
 };
-\ntry{let saved=JSON.parse(localStorage.getItem("affiads-audit-360")||"null");if(saved){state=saved;fields.forEach(id=>{if(state.biz&&state.biz[id]!==undefined)$(id).value=state.biz[id]});$("notes").value=state.notes||""}}catch(e){}
+
+try{let saved=JSON.parse(localStorage.getItem("affiads-audit-360")||"null");if(saved){state=saved;fields.forEach(id=>{if(state.biz&&state.biz[id]!==undefined)$(id).value=state.biz[id]});$("notes").value=state.notes||""}}catch(e){}
 renderChecklist();update();
 </script>
 </body>
