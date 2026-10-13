@@ -10,15 +10,15 @@
 const BIZ_TYPES=[
  {label:"Restaurant",kw:"restaurant",g:["restaurant"],osm:'["amenity"~"^(restaurant|fast_food)$"]'},
  {label:"Café / bar",kw:"bar",g:["cafe","bar"],osm:'["amenity"~"^(cafe|bar|pub)$"]'},
- {label:"Boulangerie",kw:"boulangerie",g:["bakery"],osm:'["shop"~"^(bakery|pastry)$"]'},
- {label:"Commerce de proximité",kw:"épicerie",g:["convenience_store","grocery_store","supermarket"],osm:'["shop"~"^(convenience|supermarket|greengrocer|butcher|deli)$"]'},
+ {label:"Boulangerie",kw:"boulangerie",f:1,g:["bakery"],osm:'["shop"~"^(bakery|pastry)$"]'},
+ {label:"Commerce de proximité",kw:"épicerie",f:1,g:["convenience_store","grocery_store","supermarket"],osm:'["shop"~"^(convenience|supermarket|greengrocer|butcher|deli)$"]'},
  {label:"Salon / beauté",kw:"coiffeur",g:["hair_salon","beauty_salon"],osm:'["shop"~"^(hairdresser|beauty)$"]'},
  {label:"Hôtel / hébergement",kw:"hôtel",g:["lodging"],osm:'["tourism"~"^(hotel|guest_house|motel)$"]'},
  {label:"Artisan / dépannage",kw:"artisan",g:["plumber","electrician","painter","general_contractor"],osm:'["craft"]'},
- {label:"Boutique / mode",kw:"boutique",g:["clothing_store","store"],osm:'["shop"~"^(clothes|shoes|boutique|gift)$"]'},
+ {label:"Boutique / mode",kw:"boutique",f:1,g:["clothing_store","store"],osm:'["shop"~"^(clothes|shoes|boutique|gift)$"]'},
  {label:"Garage / auto",kw:"garage automobile",g:["car_repair"],osm:'["shop"~"^(car_repair|car|tyres)$"]'},
- {label:"Santé / bien-être",kw:"bien-être",g:["spa","physiotherapist"],osm:'["leisure"~"^(spa|sauna)$"]'},
- {label:"Autre commerce",kw:"",g:[],osm:""}
+ {label:"Santé / bien-être",kw:"institut de bien-être",g:["spa","physiotherapist"],osm:'["leisure"~"^(spa|sauna)$"]'},
+ {label:"Autre commerce",kw:"commerce",g:[],osm:""}
 ];
 /* Les nouveaux points sont TOUJOURS ajoutés en fin de groupe pour garder la compatibilité des sauvegardes. */
 const groups=[
@@ -140,7 +140,9 @@ function renderClientSelect(){
  $("clientList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{switchTo(b.dataset.open);nav("auto")});
  $("clientList").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=db.audits[b.dataset.del];if(!a||!confirm("Supprimer définitivement l’audit « "+auditLabel(a)+" » de cet appareil ?"))return;(db.deleted=db.deleted||{})[a.id]=new Date().toISOString();delete db.audits[a.id];if(a.id===state.id){const ids=Object.keys(db.audits);state=ids.length?fixState(db.audits[ids[0]]):blankState();persistLocal();hydrate()}else{try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}renderClientSelect();syncSoon()}toast("Audit supprimé.")});
 }
-function scoreOf(a){const ks=keys;let n=ks.filter(k=>a.checks&&a.checks[k]).length,bad=ks.filter(k=>a.checks&&a.checks[k]&&a.issues&&a.issues[k]).length;return n?Math.round((n-bad)/n*100):null}
+function wOf(k){return (RECO[k]&&RECO[k][1])||2}
+function wScore(ks,checks,issues){let tot=0,okw=0;ks.forEach(k=>{if(checks&&checks[k]){tot+=wOf(k);if(!(issues&&issues[k]))okw+=wOf(k)}});return tot?Math.round(okw/tot*100):null}
+function scoreOf(a){return wScore(keys,a.checks,a.issues)}
 function switchTo(id){read();persistLocal();state=fixState(db.audits[id]);db.current=id;persistLocal();hydrate()}
 function hydrate(){
  fields.forEach(id=>{$(id).value=state.biz[id]??(id==="date"?today():"")});
@@ -159,11 +161,35 @@ function renderChecklist(){
  $("checklist").querySelectorAll("[data-check]").forEach(el=>el.addEventListener("change",()=>{state.checks[el.dataset.check]=el.checked;update();persistLocal()}));
  $("checklist").querySelectorAll("[data-issue]").forEach(el=>el.addEventListener("change",()=>{state.issues[el.dataset.issue]=el.checked;if(el.checked)state.checks[el.dataset.issue]=true;renderChecklist();update();persistLocal()}));
 }
-function calc(subset){const ks=subset||keys;let n=ks.filter(k=>state.checks[k]).length,issues=ks.filter(k=>state.issues[k]).length,bad=ks.filter(k=>state.checks[k]&&state.issues[k]).length;return {n,issues,score:n?Math.round((n-bad)/n*100):null,pct:Math.round(n/ks.length*100)}}
+function calc(subset){const ks=subset||keys;let n=ks.filter(k=>state.checks[k]).length,issues=ks.filter(k=>state.issues[k]).length,bad=ks.filter(k=>state.checks[k]&&state.issues[k]).length;return {n,issues,bad,score:wScore(ks,state.checks,state.issues),pct:Math.round(n/ks.length*100)}}
 function groupScores(){return groups.map((g,gi)=>({title:g.title,...calc(g.items.map((_,ii)=>gi+"-"+ii))}))}
 function issuesList(){
- const out=[];groups.forEach((g,gi)=>g.items.forEach((it,ii)=>{const k=gi+"-"+ii;if(state.issues[k]){const r=RECO[k]||["Corriger ce point.",2,2,""];out.push({k,it,group:g.title,reco:r[0],impact:r[1],effort:r[2],offer:r[3],evidence:state.auto[k]&&state.auto[k].evidence,prio:r[1]*2-r[2]})}}));
+ const out=[];groups.forEach((g,gi)=>g.items.forEach((it,ii)=>{const k=gi+"-"+ii;if(state.issues[k]){const r=RECO[k]||["Corriger ce point.",2,2,""];const t=tailor(k);out.push({k,it,group:g.title,reco:t.reco||r[0],goal:t.goal||"",impact:r[1],effort:r[2],offer:r[3],evidence:state.auto[k]&&state.auto[k].evidence,prio:r[1]*2-r[2]})}}));
  return out.sort((a,b)=>b.prio-a.prio||b.impact-a.impact);
+}
+/* Conseil adapté aux chiffres réels de l'audit, avec un objectif mesurable */
+function tailor(k){
+ const d=state.data||{},p=d.place,m=d.median||{},R=d.rankings||[],H=d.html,P=d.psi,F=(d.social&&d.social.found)||{};
+ const myC=p&&p.userRatingCount,myR=p&&p.rating,o={};
+ switch(k){
+  case "0-0":{const a=state.auto[k];if(a&&/Manquant/.test(a.evidence))o.reco="Ajouter sur la fiche Google ce qui manque ("+a.evidence.replace(/^Manquant sur la fiche : /,"").replace(/\.$/,"")+"), puis vérifier que les horaires exceptionnels (jours fériés, vacances) sont publiés.";o.goal="Fiche complète à 100 % : adresse, téléphone, horaires, site.";break}
+  case "0-4":o.goal="Au moins 10 photos récentes, puis 2 à 4 nouvelles photos par mois.";break;
+  case "0-10":o.goal="Au moins 10 photos publiées par le propriétaire"+(m.ownerPhotos!=null?" (médiane des concurrents : "+m.ownerPhotos+")":"")+", renouvelées chaque mois.";break;
+  case "0-5":{const parts=[];if(myC!=null&&m.count!=null&&myC<m.count){const step=Math.min(m.count,myC+50);parts.push(step<m.count?"atteindre "+step+" avis dans les 6 mois, puis se rapprocher de la médiane des concurrents ("+m.count+" avis)":"atteindre "+m.count+" avis, la médiane des concurrents, dans les 6 mois")}else if(myC!=null&&myC<50)parts.push("atteindre au moins 50 avis");if(myR!=null&&myR<4.2)parts.push("remonter la note au-dessus de 4,2/5 en traitant les critiques récurrentes");o.goal=parts.length?parts.join(", et ").replace(/^./,c=>c.toUpperCase())+". Rythme réaliste avec une collecte en caisse : 6 à 10 nouveaux avis par mois.":"Rythme réaliste avec une collecte en caisse : 6 à 10 nouveaux avis par mois.";break}
+  case "0-9":o.reco="Vérifier immédiatement le statut dans Google Business Profile : la fiche apparaît fermée, ce qui fait perdre la quasi-totalité des clients venant de Google.";o.goal="Fiche affichée « Ouvert » dès cette semaine.";break;
+  case "0-8":o.reco="Vérifier si la fiche au nom proche est un doublon. Si oui, demander sa fusion ou sa suppression à Google depuis Google Business Profile ; sinon, rien à faire.";break;
+  case "1-0":o.reco=normalizeUrl(state.biz.site)?"Rendre le site lisible sur téléphone (balise viewport, mise en page adaptée), car la majorité des visites locales se font sur mobile.":"Créer un site mobile simple d’une à trois pages : infos pratiques, "+(/Restaurant|Café|Boulangerie/.test(state.biz.type||"")?"carte et prix":"prestations et tarifs")+", photos, bouton d’appel, itinéraire et liens vers les réseaux. Puis l’indiquer sur la fiche Google.";o.goal=normalizeUrl(state.biz.site)?"Site validé « adapté aux mobiles ».":"Site en ligne et relié à la fiche Google.";break;
+  case "1-1":if(P)o.goal="Passer de "+(P.scores.perf??"—")+"/100 à 70/100 ou plus en performance mobile, avec un contenu principal affiché en moins de 2,5 s (actuellement "+(P.lab.lcp||"—")+").";break;
+  case "1-3":if(H){const miss=[!H.tel.length&&"bouton d’appel cliquable",!H.whatsapp&&"WhatsApp",!H.booking.length&&"réservation ou commande en ligne"].filter(Boolean);o.reco="Ajouter en haut de la page d’accueil, visible sur téléphone : "+miss.join(", ")+".";}o.goal="Un client peut appeler ou réserver en un seul geste depuis la page d’accueil.";break;
+  case "1-4":{const a=state.auto[k];if(a&&/à corriger : /.test(a.evidence))o.reco="À corriger sur la page d’accueil : "+a.evidence.split("à corriger : ")[1].replace(/\.$/,"")+". Formule conseillée pour le titre : « "+(state.biz.name||"Nom")+" – "+kwOf(state.biz.type)+" à "+(state.biz.city||"Ville")+" ».";break}
+  case "1-8":o.goal="Pixel Meta et Google Analytics actifs, avec bannière de consentement, avant la première campagne.";break;
+  case "2-0":{const miss=["Instagram","Facebook"].filter(n=>!F[n]);if(miss.length&&d.social)o.reco=(miss.length===2?"Aucun compte Facebook ni Instagram n’a été trouvé : ":"Compte "+miss[0]+" non trouvé : ")+"créer ou relier "+(miss.length===2?"les comptes":"le compte")+" avec le même nom, le même logo, l’adresse, les horaires et le lien vers le site, puis les relier depuis le site et la fiche Google.";o.goal="Comptes actifs, reliés depuis le site et la fiche Google.";break}
+  case "2-2":case "2-6":o.goal="2 à 3 publications par semaine, dont au moins une vidéo verticale.";break;
+  case "3-3":if(m.count!=null||m.rating!=null)o.goal="Rattraper la médiane des concurrents visibles : "+(m.rating!=null?fr1(m.rating)+"/5":"")+(m.count!=null?" et "+m.count+" avis":"")+".";break;
+  case "3-5":{const miss=R.filter(r=>!r.rank||r.rank>3);if(miss.length)o.reco="Travailler la pertinence de la fiche sur "+miss.map(r=>"« "+r.query+" » ("+(r.rank?"n° "+r.rank:"absent")+")").join(", ")+" : catégories exactes, description avec l’activité et la ville, photos et avis récents qui citent l’activité.";o.goal="Entrer dans le top 3 sur ces recherches"+(d.grid?" et depuis au moins 6 des 9 points de la carte (actuellement "+d.grid.top3+")":"")+". Résultat à mesurer à 3 mois, sans garantie de position.";break}
+  case "3-6":o.goal="Fiche Bing Places active et commerce visible en recherchant son nom sur Bing.";break;
+ }
+ return o;
 }
 function prioLabel(p){return p.impact>=3&&p.effort<=1?["Gain rapide","b-ok"]:p.prio>=4?["Priorité haute","b-bad"]:p.prio>=2?["Priorité moyenne","b-mid"]:["À planifier","b-auto"]}
 function scoreColor(s){return s===null?"":s>=85?"good":s>=60?"mid":"bad"}
@@ -171,7 +197,7 @@ function update(){
  read();const c=calc();
  $("mDone").innerHTML=c.pct+"%<small>Audit complété</small>";$("mIssues").innerHTML=c.issues+"<small>Points à améliorer</small>";$("mScore").innerHTML=(c.score===null?"—":c.score)+"<small>Score indicatif</small>";$("mChecks").innerHTML=c.n+"<small>Contrôles effectués</small>";
  $("gaugeHome").innerHTML=gauge(c.score);$("count").textContent=c.n+" / "+keys.length+" vérifiés";
- $("scoreText").textContent=c.score===null?"Lance l'audit automatique ou coche les contrôles pour calculer un indicateur.":c.score>=85?"Bon résultat sur les éléments évalués ; traite les points signalés.":c.score>=60?"Des améliorations sont à prioriser.":"Plusieurs points évalués restent à améliorer.";
+ $("scoreText").textContent=c.score===null?"Lancez l’audit automatique ou cochez les contrôles pour calculer un indicateur.":c.score>=85?"Bon résultat sur les éléments évalués ; traitez les points signalés.":c.score>=60?"Des améliorations sont à prioriser.":"Plusieurs points évalués restent à améliorer.";
  groups.forEach((g,gi)=>{let n=g.items.filter((_,ii)=>state.checks[gi+"-"+ii]).length;let el=$("g"+gi);if(el)el.textContent=n+"/"+g.items.length});
  $("catBars").innerHTML=groupScores().map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("");
  const probs=issuesList();
@@ -345,7 +371,10 @@ const G_TYPE_MAP=[
  [/^(spa|physiotherapist|massage|wellness_center|gym|fitness_center|yoga_studio|sauna|dentist|doctor|chiropractor)$/,"Santé / bien-être"]];
 function typeFromGoogle(types){for(const t of types||[])for(const [rx,label] of G_TYPE_MAP)if(rx.test(t))return label;return null}
 function typeFromOsm(key,val){const v=String(val||"");if(key==="amenity"&&/^(restaurant|fast_food|food_court)$/.test(v))return "Restaurant";if(key==="amenity"&&/^(cafe|bar|pub|biergarten)$/.test(v))return "Café / bar";if(key==="shop"&&/^(bakery|pastry|confectionery)$/.test(v))return "Boulangerie";if(key==="shop"&&/^(convenience|supermarket|greengrocer|butcher|deli|cheese|wine|alcohol|farm)$/.test(v))return "Commerce de proximité";if(key==="shop"&&/^(hairdresser|beauty|cosmetics)$/.test(v))return "Salon / beauté";if(key==="tourism"&&/^(hotel|guest_house|motel|hostel|apartment|chalet|camp_site)$/.test(v))return "Hôtel / hébergement";if(key==="craft")return "Artisan / dépannage";if(key==="shop"&&/^(car_repair|car|tyres|car_parts)$/.test(v))return "Garage / auto";if(key==="shop")return "Boutique / mode";if(/^(leisure|healthcare)$/.test(key))return "Santé / bien-être";return null}
-function defaultKeywords(label){const k=typeInfo(label).kw;return k?k+", meilleur "+k:""}
+function kwOf(label){return typeInfo(label).kw||String(label||"commerce").toLowerCase()}
+function artOf(label){return typeInfo(label).f?"une ":(/^[aeiouyhéè]/i.test(kwOf(label))?"un ":"un ")}
+function bestOf(label){return typeInfo(label).f?"meilleure ":"meilleur "}
+function defaultKeywords(label){const k=typeInfo(label).kw;return k?k+", "+bestOf(label)+k:""}
 function applyDetectedType(label){if(!label||$("autoType").dataset.touched)return;$("autoType").value=label;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(label)}
 let sessionToken=uid(),suggestTimer=null,suggestItems=[],suggestIdx=-1,suggestSeq=0;
 async function googleSuggest(input){
@@ -382,7 +411,7 @@ function pickSuggestion(s){
  if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types))}
  else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType(typeFromOsm(s.key,s.value))}
  setPickInfo();persistLocal();
- if($("autoCity").value.trim())setTimeout(runAuto,60);else $("autoCity").focus();
+ if($("autoCity").value.trim()){try{$("runAuto").focus({preventScroll:true})}catch(e){}toast("Établissement choisi : touchez « Lancer l’audit » quand vous êtes prêt.")}else $("autoCity").focus();
 }
 async function placeDetails(id){
  const r=await fetchJson("https://places.googleapis.com/v1/places/"+encodeURIComponent(id)+"?languageCode=fr&regionCode=FR&sessionToken="+encodeURIComponent(sessionToken),{headers:{"X-Goog-Api-Key":settings.googleKey.trim(),"X-Goog-FieldMask":DETAIL_FIELDS}},20000);
@@ -397,8 +426,8 @@ function renderPlaceChoice(){
 }
 function keywordList(type,city){
  let raw=$("autoKeyword").value.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
- const base=typeInfo(type).kw||type.toLowerCase();
- if(!raw.length)raw=[base,"meilleur "+base];
+ const base=kwOf(type);
+ if(!raw.length)raw=[base,bestOf(type)+base];
  const cityN=norm(city);
  return [...new Set(raw.map(k=>norm(k).includes(cityN)&&cityN?k:k+" "+city))].slice(0,3);
 }
@@ -436,7 +465,7 @@ async function bingSearch(q){
  if(!rows.length)throw new Error("aucun résultat lisible");
  return {engine:"DuckDuckGo (résultats Bing)",rows};
 }
-function matchBiz(row,name,siteHost){if(siteHost&&row.host&&(row.host===siteHost||row.host.endsWith("."+siteHost)))return "site";const t=norm(row.title+" "+row.url.replace(/[-_/]/g," "));const tk=toks(name);return tk.length&&tk.every(w=>t.includes(w))?"mention":null}
+function matchBiz(row,name,siteHost){if(siteHost&&row.host&&(row.host===siteHost||row.host.endsWith("."+siteHost)))return "site";let path="";try{path=decodeURIComponent(new URL(row.url).pathname)}catch(e){}return nameIn(row.title,name)||nameIn(path.replace(/[-_/.]/g," "),name)?"mention":null}
 /* IA avec recherche web : Gemini + Recherche Google (clé Google, API « Generative Language » activée) */
 const GEMINI_MODELS=["gemini-flash-latest","gemini-2.5-flash"];
 async function geminiAsk(question){
@@ -451,7 +480,8 @@ async function geminiAsk(question){
 async function geminiChat(prompt){
  let last;for(const m of GEMINI_MODELS){try{const r=await fetchJson("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:700}})},45000);return (((r.candidates||[])[0]||{}).content||{parts:[]}).parts.map(p=>p.text||"").join("").trim()}catch(e){last=e;if(e.status!==404)throw e}}throw last;
 }
-function aiMentions(text,name){const t=norm(text),tk=toks(name);return tk.length?tk.every(w=>t.includes(w)):false}
+function nameIn(text,name){const tk=toks(name);if(!tk.length)return false;const T=toks(text);for(let i=0;i+tk.length<=T.length;i++){let ok=true;for(let j=0;j<tk.length;j++)if(T[i+j]!==tk[j]){ok=false;break}if(ok)return true}return T.join("").includes(tk.join(""))&&tk.join("").length>=6}
+function aiMentions(text,name){return nameIn(text,name)}
 function aiRank(text,name){const lines=String(text).split(/\n+/).filter(l=>/^\s*(\d+[.)]|[-*•])\s+/.test(l));const i=lines.findIndex(l=>aiMentions(l,name));return i>=0?i+1:null}
 
 /* Réseaux sociaux : site du commerce + OpenStreetMap + recherche Bing ciblée */
@@ -540,24 +570,24 @@ async function runAuto(){
    if(missing.length)findings.push({sev:2,text:"La fiche Google ne mentionne pas : "+missing.join(", ")+"."});
    setAuto("0-1","info","Catégorie principale affichée : "+((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+". Catégories secondaires à vérifier dans Google Business Profile.",src);
    const ph=(p.photos||[]).length;data.photos=ph;const own=ownerPhotoCount(p);data.ownerPhotos=own;
-   setAuto("0-10",ph&&own>=Math.min(4,ph)?"ok":"issue",ph?own+" photo(s) du propriétaire parmi les "+ph+" photos que Google met en avant"+(own<4?" : la fiche est surtout illustrée par les clients.":"."):"Aucune photo sur la fiche.","Google Places, "+data.fetchedAt);
-   if(ph&&own<3)findings.push({sev:2,text:"Sur les "+ph+" photos que Google met en avant, seulement "+own+" vien"+(own>1?"nent":"t")+" du propriétaire : l’image du commerce dépend des photos de clients."});
+   setAuto("0-10",ph&&own>=Math.min(3,ph)?"ok":"issue",ph?own+" photo(s) du propriétaire parmi les "+ph+" photos que Google met en avant"+(own<3?" : la fiche est surtout illustrée par les clients.":"."):"Aucune photo sur la fiche.","Google Places, "+data.fetchedAt);
+   if(ph&&own<Math.min(3,ph))findings.push({sev:2,text:"Sur les "+ph+" photos que Google met en avant, "+(own?"seulement "+own+" vien"+(own>1?"nent":"t"):"aucune ne vient")+" du propriétaire : l’image du commerce dépend des photos de clients."});
    setStep("photos","run","Récupération des photos de la fiche");
    try{data.photoList=await photoUris(p,6);setStep("photos",data.photoList.length?"ok":"warn",data.photoList.length?data.photoList.length+" photos récupérées · "+own+" / "+ph+" publiées par le propriétaire":"Photos non disponibles","Les photos s’affichent dans les résultats et le rapport.")}catch(e){setStep("photos","warn","Photos non disponibles",frErr(e).text)}
-   setAuto("0-4",ph<5?"issue":"info",ph<5?"Seulement "+ph+" photo(s) visible(s) via Google.":"Au moins "+ph+" photos publiées (Google en renvoie 10 au maximum). Récence et qualité à contrôler visuellement.",src);
+   setAuto("0-4",ph<5?"issue":"info",ph<5?"Seulement "+ph+" photo(s) sur la fiche Google.":ph+" photos mises en avant par Google (l’outil en lit 10 au maximum). Récence et qualité à contrôler visuellement.",src);
    if(ph<5)findings.push({sev:2,text:"Très peu de photos sur la fiche Google ("+ph+")."});
    const rv=(p.reviews||[]).map(r=>({rating:r.rating,when:r.relativePublishTimeDescription||"",time:r.publishTime||"",text:(r.text&&r.text.text||r.originalText&&r.originalText.text||"").slice(0,280)}));
    data.reviews=rv;
    const last=rv.map(r=>Date.parse(r.time)).filter(Boolean).sort((a,b)=>b-a)[0];const daysSince=last?Math.round((Date.now()-last)/864e5):null;data.daysSinceReview=daysSince;
-   const rProb=[];if(p.rating!=null&&p.rating<4.2)rProb.push("note de "+fr1(p.rating)+"/5");if(p.userRatingCount!=null&&p.userRatingCount<50)rProb.push("seulement "+p.userRatingCount+" avis");if(daysSince!=null&&daysSince>45)rProb.push("dernier avis il y a "+daysSince+" jours");if(p.rating==null)rProb.push("aucune note");
-   setAuto("0-5",rProb.length?"issue":"ok",(p.rating!=null?fr1(p.rating)+"/5 sur "+p.userRatingCount+" avis":"Aucun avis")+(daysSince!=null?" · avis le plus récent il y a "+daysSince+" j":"")+(rProb.length?" — à améliorer : "+rProb.join(", ")+".":"."),src);
+   const rProb=[];if(p.rating!=null&&p.rating<4.2)rProb.push("note de "+fr1(p.rating)+"/5");if(p.userRatingCount!=null&&p.userRatingCount<50)rProb.push("seulement "+p.userRatingCount+" avis");if(p.rating==null)rProb.push("aucune note");
+   setAuto("0-5",rProb.length?"issue":"ok",(p.rating!=null?fr1(p.rating)+"/5 sur "+p.userRatingCount+" avis":"Aucun avis")+(daysSince!=null?" · parmi les 5 avis mis en avant par Google, le plus récent date de "+daysSince+" j":"")+(rProb.length?" — à améliorer : "+rProb.join(", ")+".":"."),src);
    if(rProb.length)findings.push({sev:3,text:"Avis Google : "+rProb.join(", ")+"."});
    const neg=rv.filter(r=>r.rating&&r.rating<=3);
    if(rv.length){setAuto("3-0","info",rv.filter(r=>r.rating>=4).length+" avis positifs parmi les "+rv.length+" plus pertinents (extraits dans le rapport).",src);setAuto("3-1",neg.length?"issue":"info",neg.length?neg.length+" avis à 3 étoiles ou moins parmi les "+rv.length+" plus pertinents : critiques à lire dans le rapport.":"Aucun avis négatif parmi les "+rv.length+" plus pertinents.",src)}
    const st=p.businessStatus||"";setAuto("0-9",st&&st!=="OPERATIONAL"?"issue":"ok",st==="OPERATIONAL"?"Fiche active (ouverte).":st==="CLOSED_TEMPORARILY"?"Fiche marquée « fermée temporairement ».":st==="CLOSED_PERMANENTLY"?"Fiche marquée « définitivement fermée ».":"Statut non communiqué.",src);
    if(st&&st!=="OPERATIONAL")findings.push({sev:3,text:"Google affiche le commerce comme fermé ("+st.toLowerCase().replace(/_/g," ")+")."});
-   setAuto("0-8",(data.duplicates||[]).length?"issue":"ok",(data.duplicates||[]).length?"Fiche(s) similaire(s) à proximité : "+data.duplicates.map(d=>d.name).join(", ")+".":"Aucun doublon évident dans les résultats.",src);
-   if((data.duplicates||[]).length)findings.push({sev:2,text:"Une ou plusieurs fiches Google en double semblent exister ("+data.duplicates.map(d=>d.name).join(", ")+")."});
+   setAuto("0-8",(data.duplicates||[]).length?"issue":"ok",(data.duplicates||[]).length?"Fiche(s) au nom très proche à moins de 1 km : "+data.duplicates.map(d=>d.name).join(", ")+". À vérifier : doublon ou autre établissement.":"Aucun doublon évident dans les résultats.",src);
+   if((data.duplicates||[]).length)findings.push({sev:2,text:"Une autre fiche Google au nom très proche existe à moins de 1 km ("+data.duplicates.map(d=>d.name).join(", ")+") : s’il s’agit d’un doublon, il disperse les avis et peut tromper les clients."});
    if(p.editorialSummary&&p.editorialSummary.text)setAuto("0-2","info","Résumé Google : « "+p.editorialSummary.text+" ». Description du propriétaire et lien de réservation à vérifier.",src);
    const serv=[p.reservable&&"réservation",p.delivery&&"livraison",p.takeout&&"à emporter",p.dineIn&&"sur place"].filter(Boolean);if(serv.length)data.services=serv;
   }
@@ -592,7 +622,7 @@ async function runAuto(){
     const comps=Object.values(agg).sort((a,b)=>b.hits-a.hits||a.bestRank-b.bestRank).slice(0,8);data.competitors=comps;
     if(found.length<R.length){const miss=R.filter(r=>!r.rank);findings.push({sev:3,text:"Le commerce n'apparaît pas dans les "+miss[0].total+" premiers résultats Google sur "+miss.map(r=>"« "+r.query+" »").join(", ")+(comps.length?" — on y trouve notamment "+comps.slice(0,3).map(c=>c.name).join(", "):"")+"."})}
     const behind=found.filter(r=>r.rank>3);if(behind.length)findings.push({sev:2,text:"Sur "+behind.map(r=>"« "+r.query+" » (n° "+r.rank+")").join(", ")+", le commerce est devancé par "+behind[0].rows.filter(x=>x.rank<behind[0].rank).slice(0,3).map(x=>x.name).join(", ")+"."});
-    if(comps.length>=3){const med=a=>{a=a.filter(x=>x!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};const mR=med(comps.map(c=>c.rating)),mC=med(comps.map(c=>c.count||0)),mP=med(comps.map(c=>c.photos));data.median={rating:mR,count:mC,photos:mP};
+    if(comps.length>=3){const med=a=>{a=a.filter(x=>x!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};const mR=med(comps.map(c=>c.rating)),mC=med(comps.map(c=>c.count||0)),mP=med(comps.map(c=>c.photos)),mO=med(comps.map(c=>c.ownerPhotos));data.median={rating:mR,count:mC,photos:mP,ownerPhotos:mO};
      const myR=place&&place.rating,myC=place&&place.userRatingCount;const below=(myR!=null&&mR!=null&&myR<mR)||(myC!=null&&mC!=null&&myC<mC);
      setAuto("3-3",below?"issue":"ok","Médiane des "+comps.length+" concurrents : "+(mR!=null?fr1(mR)+"/5":"—")+" et "+(mC??"—")+" avis"+(myR!=null?" · ce commerce : "+fr1(myR)+"/5 et "+(myC??0)+" avis":"")+".","Google Places, "+data.fetchedAt);
      if(below)findings.push({sev:2,text:"Les concurrents visibles ont en médiane "+(mR!=null?fr1(mR)+"/5":"")+" et "+mC+" avis, contre "+(myR!=null?fr1(myR)+"/5":"pas de note")+" et "+(myC??0)+" avis ici."});}
@@ -630,7 +660,7 @@ async function runAuto(){
   const compSites=hasKey()&&$("autoCompSpeed").checked?(data.competitors||[]).filter(c=>normalizeUrl(c.website)).slice(0,3):[];
   if(compSites.length)setStep("psic","run","Vitesse des sites concurrents",compSites.map(c=>c.name).join(", "));
   const compJobs=compSites.map(c=>pageSpeed(normalizeUrl(c.website).href,["performance"]).then(r=>{c.perf=r.scores.perf;c.lcp=r.lab.lcp}).catch(()=>{c.perf=null}));
-  if(!u){setAuto("1-0","issue","Aucun site web trouvé (fiche Google et OpenStreetMap).","Audit automatique, "+data.fetchedAt);findings.push({sev:3,text:"Aucun site web n'est associé au commerce."+(compSites.length?" "+compSites.length+" des concurrents principaux en ont un.":"")});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
+  if(!u){setAuto("1-0","issue","Aucun site web indiqué sur la fiche Google ni sur OpenStreetMap. Si un site existe, ajoutez-le dans les options et relancez.","Audit automatique, "+data.fetchedAt);const cw=(data.competitors||[]).slice(0,5),cws=cw.filter(c=>c.website).length;findings.push({sev:3,text:"Aucun site web n'est indiqué sur la fiche Google ni sur OpenStreetMap."+(cw.length>=3?" "+cws+" des "+cw.length+" concurrents les plus visibles en ont un.":"")});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
   else{
    state.biz.site=u.href;
    setStep("psi","run","Vitesse et qualité du site (Lighthouse mobile)","Compter 20 à 60 secondes.");
@@ -661,17 +691,17 @@ async function runAuto(){
    if(H){if(!H.title)seoProbs.push("titre de page absent");else if(city&&!norm(H.title).includes(norm(city)))seoProbs.push("la ville n'apparaît pas dans le titre");if(!H.metaDesc)seoProbs.push("méta-description absente");if(!H.h1s.length)seoProbs.push("aucun titre principal (H1)")}
    else if(P){if(P.audits.title===false)seoProbs.push("titre de page absent");if(P.audits.meta===false)seoProbs.push("méta-description absente")}
    if(P&&P.audits.crawlable===false)seoProbs.push("page bloquée pour Google");
-   if(H||P)setAuto("1-4",seoProbs.length?"issue":"ok",(P&&P.scores.seo!=null?"SEO technique "+P.scores.seo+"/100 · ":"")+(H&&H.title?"titre « "+H.title.slice(0,70)+" »":"")+(seoProbs.length?" · à corriger : "+seoProbs.join(", "):" · titre, description et H1 présents"),H?srcH:srcP);
+   if(H||P)setAuto("1-4",seoProbs.length?"issue":"ok",[P&&P.scores.seo!=null&&"SEO technique "+P.scores.seo+"/100",H&&H.title&&"titre « "+H.title.slice(0,70)+" »",seoProbs.length?"à corriger : "+seoProbs.join(", "):"titre, description et H1 présents"].filter(Boolean).join(" · "),H?srcH:srcP);
    if(seoProbs.length)findings.push({sev:2,text:"Référencement du site : "+seoProbs.join(", ")+"."});
    /* Suivi publicitaire */
    const track=[...new Set([...(H?H.tracking:[]),...(P?P.tracking:[])])];data.tracking=track;
-   if(H||P){const meta=track.includes("Pixel Meta");setAuto("1-8",meta?"ok":"issue",track.length?"Outils détectés : "+track.join(", ")+(meta?"":" · Pixel Meta absent."):"Aucun outil de mesure (Pixel Meta, Google Analytics) détecté.",H?srcH:srcP);
-    if(!meta)findings.push({sev:1,text:"Aucun Pixel Meta détecté : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."})}
+   if(H||P){const meta=track.includes("Pixel Meta"),gtm=track.includes("Google Tag Manager");setAuto("1-8",meta?"ok":gtm?"info":"issue",track.length?"Outils détectés : "+track.join(", ")+(meta?"":gtm?" · Pixel Meta non visible : il peut être installé via Google Tag Manager, à confirmer avec l’extension Meta Pixel Helper.":" · Pixel Meta non détecté."):"Aucun outil de mesure (Pixel Meta, Google Analytics) détecté sur la page d’accueil.",H?srcH:srcP);
+    if(!meta&&!gtm)findings.push({sev:1,text:"Aucun Pixel Meta détecté sur le site : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."})}
    if(H){
     setStep("html","ok","Site lu : "+(H.title?"« "+H.title.slice(0,60)+" »":"sans titre"),[H.socials.length?"Réseaux : "+H.socials.map(s=>s.net).join(", "):"aucun lien vers les réseaux",H.tel.length?"bouton d'appel":"pas de bouton d'appel",H.booking.length?"réservation : "+H.booking.join(", "):"pas de lien de réservation",H.cms?"site "+H.cms:""].filter(Boolean).join(" · "));
     /* Cohérence avec la fiche */
     if(H.phoneOnSite!=null||H.hoursOnSite||H.addressOnSite){const miss=[H.phoneOnSite===false&&"le téléphone de la fiche",!H.hoursOnSite&&"les horaires",!H.addressOnSite&&"l'adresse"].filter(Boolean);
-     setAuto("1-2",miss.length?"issue":"ok",miss.length?"Absent(s) de la page d'accueil : "+miss.join(", ")+".":"Téléphone, horaires et adresse visibles sur le site et cohérents avec la fiche.",srcH);
+     setAuto("1-2",miss.length?"issue":"ok",miss.length?"Absent(s) de la page d'accueil : "+miss.join(", ")+".":(H.phoneOnSite?"Téléphone identique à la fiche Google, ":"Téléphone, ")+"horaires et adresse présents sur la page d’accueil.",srcH);
      setAuto("4-2",miss.length?"issue":"ok",miss.length?"Infos pratiques incomplètes sur le site : "+miss.join(", ")+".":"Infos pratiques claires sur la page d'accueil.",srcH);
      if(H.phoneOnSite===false)findings.push({sev:2,text:"Le numéro de téléphone public du commerce ("+(place?"fiche Google":"OpenStreetMap")+") n'apparaît pas sur la page d'accueil du site."})}
     /* Boutons d'action */
@@ -702,19 +732,20 @@ async function runAuto(){
   setStep("social","run","Présence sur les réseaux sociaux","Facebook, Instagram, TikTok, YouTube, Snapchat");
   try{const known=[...(data.socials||[]).map(s=>({...s,src:"site ou OpenStreetMap"}))];const sc=await socialScan(name,city,known);data.social=sc;
    const F=sc.found,list=NETS.map(n=>n[0]).filter(n=>F[n]);
-   setAuto("2-0",F.Facebook||F.Instagram?"ok":"issue",(F.Facebook||F.Instagram)?"Comptes trouvés : "+list.join(", ")+". Fréquence des publications à vérifier.":"Aucun compte Facebook ni Instagram trouvé (site, OpenStreetMap et recherche Bing).","Recherche des réseaux, "+data.fetchedAt);
+   const searched=!!sc.engine;
+   setAuto("2-0",F.Facebook||F.Instagram?"ok":searched?"issue":"info",(F.Facebook||F.Instagram)?"Comptes trouvés : "+list.join(", ")+". Fréquence des publications à vérifier.":(searched?"Aucun compte Facebook ni Instagram trouvé (site, OpenStreetMap et recherche Bing).":"Aucun compte relié depuis le site ou OpenStreetMap ; la recherche web n’a pas répondu : à vérifier à la main."),"Recherche des réseaux, "+data.fetchedAt);
    setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok trouvé.":"Aucun compte TikTok trouvé : à envisager si la clientèle visée y est présente.","Recherche des réseaux, "+data.fetchedAt);
    setAuto("2-4",list.length?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
-   if(!F.Facebook&&!F.Instagram)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."});
-   else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux trouvés : "+list.join(", ")+". Absent de : "+miss.join(", ")+"."})}
+   if(!F.Facebook&&!F.Instagram){if(searched)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce (ni sur son site, ni par recherche) : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."})}
+   else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux trouvés : "+list.join(", ")+". Non trouvé"+(miss.length>1?"s":"")+" : "+miss.join(", ")+" (aucun compte relié ni trouvé par recherche)."})}
    setStep("social",list.length?"ok":"warn",list.length?"Réseaux trouvés : "+list.join(", "):"Aucun réseau social trouvé",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non trouvés : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"");
   }catch(e){setStep("social","warn","Réseaux sociaux non vérifiés",frErr(e).text)}
   /* 6. Visibilité IA : Gemini avec Recherche Google, puis questions prêtes pour les autres assistants */
   $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=typeInfo(type).kw||type;$("campaignService").value="";
   if(!state.campaignPrompts.length||state.campaign.name!==name)getCampaignPrompts(true);
   if(hasKey()){
-   const kw=typeInfo(type).kw||type.toLowerCase();
-   const QS=[["Découverte locale","Je cherche "+(/^[aeiouyhé]/i.test(kw)?"un ":"un ")+kw+" à "+city+". Quels établissements me recommandes-tu ? Réponds avec une liste numérotée."],["Meilleur choix","Quel est le meilleur "+kw+" à "+city+" et dans les environs ? Donne une liste numérotée de 5 établissements maximum avec la raison."],["Marque exacte","Que sais-tu de « "+name+" » à "+city+" ? Adresse, horaires, avis, site officiel et réseaux sociaux."]];
+   const kw=kwOf(type),fem=!!typeInfo(type).f;
+   const QS=[["Découverte locale","Je cherche "+artOf(type)+kw+" à "+city+". Quels établissements me recommandes-tu ? Réponds avec une liste numérotée."],["Meilleur choix",(fem?"Quelle est la ":"Quel est le ")+bestOf(type)+kw+" à "+city+" et dans les environs ? Donne une liste numérotée de 5 établissements maximum avec la raison."],["Marque exacte","Que sais-tu de « "+name+" » à "+city+" ? Adresse, horaires, avis, site officiel et réseaux sociaux."]];
    setStep("ai","run","Test IA : Gemini avec Recherche Google","3 questions de clients");
    state.aiTests=state.aiTests.filter(t=>!t.auto);const out=[];let aiErr=null;
    for(const [kind,q] of QS){try{const r=await geminiAsk(q);const neg=/(pas (pu )?trouv|aucune information|pas d.information|ne (dispose|trouve) pas|introuvable)/i.test(r.text);const present=aiMentions(r.text,name)&&!(kind==="Marque exacte"&&neg);const rank=kind!=="Marque exacte"?aiRank(r.text,name):null;const comps=(data.competitors||[]).filter(c=>c.name&&aiMentions(r.text,c.name)).map(c=>c.name);
@@ -723,7 +754,7 @@ async function runAuto(){
     }catch(e){aiErr=e;break}}
    data.aiAuto=out;
    if(out.length){const yes=out.filter(o=>o.present).length;setStep("ai",yes?"ok":"warn","Gemini cite le commerce dans "+yes+" réponse(s) sur "+out.length,"Les 6 questions pour ChatGPT, Claude, Perplexity… sont prêtes dans « Visibilité IA ».");
-    const disc=out.filter(o=>o.kind!=="Marque exacte");if(disc.length&&!disc.some(o=>o.present))findings.push({sev:3,text:"Quand on demande à l’IA de Google (Gemini, avec recherche web) "+(disc[0].competitors.length?"où manger à "+city+", elle recommande "+disc[0].competitors.slice(0,3).join(", ")+", mais jamais le commerce.":"de recommander un établissement à "+city+", elle ne cite pas le commerce.")});
+    const disc=out.filter(o=>o.kind!=="Marque exacte");if(disc.length&&!disc.some(o=>o.present))findings.push({sev:3,text:"Quand on demande à l’IA de Google (Gemini, avec recherche web) "+"de recommander "+artOf(type)+kwOf(type)+" à "+city+", elle "+(disc.flatMap(o=>o.competitors).length?"cite "+[...new Set(disc.flatMap(o=>o.competitors))].slice(0,3).join(", ")+", mais pas le commerce.":"ne cite pas le commerce.")});
    }else{const f=frErr(aiErr);setStep("ai","warn",f.code==="disabled"||f.code==="blocked"?"Test IA : Gemini à activer sur votre clé":"Test IA automatique non réalisé",f.text+" Les 6 questions pour les assistants sont prêtes dans « Visibilité IA ».",f.link)}
    drawAiTests();
   }else setStep("ai","ok","6 questions IA prêtes","Ajoutez une clé Google pour tester Gemini automatiquement ; les autres assistants s’ouvrent avec la question déjà remplie.");
@@ -759,7 +790,7 @@ function hbars(title,sub,items,fmt){
 function kpiRow(){
  const d=state.data||{},p=d.place,ps=d.psi,vis=d.visibility,rk=d.ranking;
  if(d.fetchedAt&&!p){const H=d.html,ctas=H?[H.tel.length,H.whatsapp,H.booking.length].filter(Boolean).length:null,soc=(d.socials||[]).length,comp=(d.competitors||[]).length,hasSite=!!normalizeUrl(state.biz.site);
-  return '<div class="kpis">'+kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(hasSite?"—":"Aucun site"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(hasSite?"":"bad"))+kpiBox(H?ctas+"<small style=font-size:12px> / 3</small>":"—","Boutons d’action (appel, WhatsApp, réservation)",H?(ctas>=2?"good":ctas?"mid":"bad"):"")+kpiBox(soc,"Réseaux sociaux liés",soc>=2?"good":soc?"mid":"bad")+kpiBox(comp,"Concurrents à moins de 2,5 km","")+'</div>'}
+  return '<div class="kpis">'+kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(hasSite?"—":"Aucun site"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(hasSite?"":"bad"))+kpiBox(H?ctas+"<small style=font-size:12px> / 3</small>":"—","Boutons d’action (appel, WhatsApp, réservation)",H?(ctas>=2?"good":ctas?"mid":"bad"):"")+kpiBox(soc,"Réseaux sociaux liés",soc>=2?"good":soc?"mid":"bad")+kpiBox(comp,"Commerces similaires à proximité","")+'</div>'}
  return '<div class="kpis">'+kpiBox(p&&p.rating!=null?fr1(p.rating)+"/5":"—","Note Google",p&&p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p&&p.userRatingCount!=null?p.userRatingCount:"—","Avis Google",p&&p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")
  +(vis&&vis.n>1?kpiBox(vis.top3+'<small style="font-size:12px"> / '+vis.n+'</small>',"Recherches où il est dans le top 3",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):kpiBox(rk?(rk.rank?rk.rank+'<small style="font-size:12px"> / '+rk.total+'</small>':"Absent"):"—","Position « "+esc(rk?rk.query:"recherche locale")+" »",rk?(rk.rank&&rk.rank<=3?"good":rk.rank&&rk.rank<=10?"mid":"bad"):""))
  +kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(d.fetchedAt&&!normalizeUrl(state.biz.site)?"Aucun site":"—"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(d.fetchedAt&&!normalizeUrl(state.biz.site)?"bad":""))+'</div>';
@@ -789,7 +820,7 @@ function compBlock(forReport){
   const mk=(f,mev)=>rows.map(r=>({label:r.label,me:r.me,value:r.me?mev:f(r.c)}));
   h+='<div class="charts">'+hbars("Nombre d’avis Google","Plus d’avis = plus de confiance et de visibilité",mk(c=>c.count??null,p.userRatingCount??null),v=>String(Math.round(v)))
    +hbars("Note Google","Sur 5",mk(c=>c.rating??null,p.rating??null),v=>fr1(v))
-   +hbars("Photos du propriétaire","Parmi les 10 photos que Google met en avant",mk(c=>c.ownerPhotos??null,d.ownerPhotos??null),v=>v+" / 10")
+   +hbars("Photos du propriétaire","Parmi les photos que Google met en avant (10 au maximum)",mk(c=>c.ownerPhotos??null,d.ownerPhotos??null),v=>String(v))
    +(top.some(c=>c.perf!=null)||d.psi?hbars("Vitesse du site sur mobile","Score PageSpeed / 100",mk(c=>c.perf??null,d.psi&&d.psi.scores.perf),v=>String(v)):"")+'</div>';
  }
  if(comps.length&&!p){h+='<h3 style="margin-top:14px">Commerces similaires à proximité</h3><p class="muted">Source : OpenStreetMap. Ajoutez une clé Google pour comparer notes, avis et positions.</p><div class="tablewrap"><table class="t"><thead><tr><th>Établissement</th><th>Site web</th><th>Distance</th></tr></thead><tbody>'+comps.map(c=>'<tr><td>'+esc(c.name)+'</td><td>'+(c.website?"Oui":"Non")+'</td><td>'+(c.dist!=null?fr1(c.dist)+" km":"—")+'</td></tr>').join("")+'</tbody></table></div>';return h}
@@ -800,7 +831,7 @@ function compBlock(forReport){
 }
 function googleBlock(){
  const d=state.data||{},p=d.place;if(!p)return "";
- return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"—","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p.userRatingCount??"—","Avis",p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox((d.ownerPhotos??"—")+(d.photos!=null?'<small style="font-size:13px"> / '+d.photos+'</small>':""),"Photos du propriétaire",d.ownerPhotos==null?"":d.ownerPhotos>=6?"good":d.ownerPhotos>=3?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Depuis le dernier avis",d.daysSinceReview==null?"":d.daysSinceReview<=30?"good":d.daysSinceReview<=60?"mid":"bad")+'</div>'
+ return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"—","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p.userRatingCount??"—","Avis",p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox((d.ownerPhotos??"—")+(d.photos!=null?'<small style="font-size:13px"> / '+d.photos+'</small>':""),"Photos du propriétaire",d.ownerPhotos==null?"":d.ownerPhotos>=6?"good":d.ownerPhotos>=3?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Âge de l’avis le plus récent parmi les 5 mis en avant","")+'</div>'
  +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
  +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
 }
@@ -822,7 +853,7 @@ function socialBlock(forReport){
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
  const comps=(d.competitors||[]).filter(c=>c.ownerPhotos!=null);const med=comps.length?comps.map(c=>c.ownerPhotos).sort((a,b)=>a-b)[Math.floor(comps.length/2)]:null;
- return '<div class="photohead"><b>'+(d.ownerPhotos??0)+' / '+(d.photos??0)+'</b><span>photos publiées par le propriétaire, parmi celles que Google met en avant'+(med!=null?'. Médiane des concurrents : '+med+' / 10':'')+'.</span></div>'
+ return '<div class="photohead"><b>'+(d.ownerPhotos??0)+' / '+(d.photos??0)+'</b><span>photos publiées par le propriétaire, parmi celles que Google met en avant'+(med!=null?'. Médiane des concurrents : '+med:'')+'.</span></div>'
   +(L.length?'<div class="photostrip">'+L.map(ph=>'<figure><img src="'+esc(ph.uri)+'" alt="Photo de la fiche Google" loading="lazy" referrerpolicy="no-referrer"><figcaption>'+(ph.owner?'Propriétaire':'Client'+(ph.author?' · '+esc(ph.author):''))+'</figcaption></figure>').join("")+'</div>':'');
 }
 function gridBlock(){
@@ -837,7 +868,7 @@ function bingBlock(forReport){
 }
 function aiAutoBlock(forReport){
  const A=(state.data||{}).aiAuto;if(!A||!A.length)return "";
- return '<div class="aiq">'+A.map(o=>'<div class="box"><div class="aihead"><span class="badge '+(o.present?"b-ok":o.partial?"b-mid":"b-bad")+'">'+(o.present?"Cité"+(o.rank?" · n° "+o.rank:""):o.partial?"Infos incomplètes":"Non cité")+'</span><b>'+esc(o.kind)+'</b></div><p class="muted q">« '+esc(o.q)+' »</p>'+(o.competitors.length?'<p><small>Concurrents cités : '+esc(o.competitors.join(", "))+'</small></p>':'')+'<p class="excerpt">'+esc(o.excerpt.replace(/[*#]/g,"").slice(0,forReport?420:600))+(o.excerpt.length>420?"…":"")+'</p>'+(o.sources.length?'<p><small>Sources citées : '+o.sources.map(s=>forReport?esc(s.title||hostOf(s.uri)):'<a href="'+esc(safeUrl(s.uri))+'" target="_blank" rel="noopener">'+esc(s.title||hostOf(s.uri))+'</a>').join(", ")+'</small></p>':'')+'</div>').join("")+'</div><p class="muted"><small>Réponses de Gemini avec Recherche Google ('+esc(A[0].model)+'), le '+esc((state.data||{}).fetchedAt||"")+'. Les réponses des assistants varient selon le moment et la formulation.</small></p>';
+ return '<div class="aiq">'+A.map(o=>'<div class="box"><div class="aihead"><span class="badge '+(o.present?"b-ok":o.partial?"b-mid":"b-bad")+'">'+(o.present?"Cité"+(o.rank?" · n° "+o.rank:""):o.partial?"Infos incomplètes":"Non cité")+'</span><b>'+esc(o.kind)+'</b></div><p class="muted q">« '+esc(o.q)+' »</p>'+(o.competitors.length?'<p><small>Concurrents cités : '+esc(o.competitors.join(", "))+'</small></p>':'')+'<p class="excerpt">'+esc(o.excerpt.replace(/[*#]/g,"").slice(0,forReport?420:600))+(o.excerpt.length>(forReport?420:600)?"…":"")+'</p>'+(o.sources.length?'<p><small>Sources citées : '+o.sources.map(s=>forReport?esc(s.title||hostOf(s.uri)):'<a href="'+esc(safeUrl(s.uri))+'" target="_blank" rel="noopener">'+esc(s.title||hostOf(s.uri))+'</a>').join(", ")+'</small></p>':'')+'</div>').join("")+'</div><p class="muted"><small>Réponses de Gemini avec Recherche Google ('+esc(A[0].model)+'), le '+esc((state.data||{}).fetchedAt||"")+'. Les réponses des assistants varient selon le moment et la formulation.</small></p>';
 }
 function offersBlock(issues){
  const by={};issues.forEach(p=>{if(!p.offer)return;(by[p.offer]=by[p.offer]||[]).push(p)});
@@ -851,7 +882,7 @@ function scopeBlock(issues){
  const d=state.data||{},has=k=>issues.some(p=>p.k===k);
  const can=[
   ["Fiche Google optimisée",(has("0-0")||has("0-1")||has("0-2")||has("0-7")||has("0-8")||has("0-9")?"Corriger et compléter les points relevés : ":"Compléter et tenir à jour : ")+"catégories, description, services, horaires, liens et doublons."],
-  ["Photos et vidéos sur mesure","Photos professionnelles et pubs vidéo verticales (15 s et plus, format Reels) au goût du commerce, pour la fiche Google, le site et les réseaux"+(d.ownerPhotos!=null&&d.ownerPhotos<4?", là où l’audit montre peu de photos du propriétaire.":".")],
+  ["Photos et vidéos sur mesure","Photos professionnelles et pubs vidéo verticales (15 s et plus, format Reels) au goût du commerce, pour la fiche Google, le site et les réseaux"+(d.ownerPhotos!=null&&d.ownerPhotos<3?", là où l’audit montre peu de photos du propriétaire.":".")],
   ["Réseaux sociaux","Contenus réguliers pour Instagram, Facebook, TikTok et YouTube, avec une identité cohérente partout."],
   ["Site web mobile",normalizeUrl(state.biz.site)?"Améliorer le site existant : vitesse, boutons d’appel et de réservation, infos pratiques et données pour Google et les IA.":"Créer un site mobile simple : infos pratiques, carte, bouton d’appel, liens vers les réseaux."],
   ["Collecte d’avis","Outils simples pour obtenir plus d’avis récents (QR code, message après la visite) et réponses aux avis."],
@@ -894,11 +925,13 @@ function renderReport(){
  const aiHtml=(aiAutoBlock(true)||'<p class="muted">Test automatique non réalisé : ajoutez une clé Google avec Gemini activé.</p>')
   +(completed.length?'<h3 style="margin-top:16px">Tests manuels dans les autres assistants</h3><div class="tablewrap"><table class="t"><thead><tr><th>IA / date</th><th>Question</th><th>Résultat</th></tr></thead><tbody>'+ai.filter(t=>!t.auto).map(t=>'<tr><td>'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td>'+esc(t.prompt)+'</td><td>'+(t.presence==="yes"?"Cité":t.presence==="no"?"Non cité":"Incertain")+(t.rank?" · n° "+esc(t.rank):"")+(t.competitors?"<br><small>Concurrents : "+esc(t.competitors)+"</small>":"")+'</td></tr>').join("")+'</tbody></table></div>':'');
  const siteHtml=(d.psi||d.html||d.shotUrl)?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' : analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce. Un site mobile simple (infos pratiques, carte, bouton d’appel) aide Google, Bing et les assistants IA à le recommander.')+'</p>';
+ const toCheck=keys.filter(k=>!state.checks[k]||(state.auto[k]&&state.auto[k].status==="info")).map(k=>{const [gi,ii]=k.split("-").map(Number);return {it:groups[gi].items[ii],ev:state.auto[k]&&state.auto[k].status==="info"?state.auto[k].evidence:""}});
+ const checkHtml=toCheck.length?'<h3 style="margin-top:20px">À vérifier avec le commerçant</h3><p class="muted">Ces points ne peuvent pas être mesurés de façon fiable depuis l’extérieur, ou demandent l’accès aux comptes : ils sont à confirmer lors de l’échange avant d’être chiffrés.</p><ul class="detail">'+toCheck.slice(0,12).map(x=>'<li>'+esc(x.it)+(x.ev?' <span class="muted">('+esc(x.ev)+')</span>':'')+'</li>').join("")+'</ul>'+(toCheck.length>12?'<p class="muted">+ '+(toCheck.length-12)+' autre(s) point(s) dans la checklist.</p>':''):'';
  const buckets=[["Gain rapide","À faire tout de suite"],["Priorité haute","Dans le mois"],["Priorité moyenne","Ensuite"],["À planifier","À planifier"]];
- const plan=issues.length?buckets.map(([lab,title])=>{const its=issues.filter(p=>prioLabel(p)[0]===lab);return its.length?'<h3 style="margin-top:12px">'+esc(title)+'</h3>'+its.map(p=>{const l=prioLabel(p);return '<div class="reco"><b>'+esc(p.it)+'</b>'+esc(p.reco)+(p.evidence?'<br><small>Constat : '+esc(p.evidence)+'</small>':'')+'<div class="tags"><span class="badge '+l[1]+'">'+l[0]+'</span><span class="badge b-auto">Impact '+"●".repeat(p.impact)+"○".repeat(3-p.impact)+'</span><span class="badge b-auto">Effort '+"●".repeat(p.effort)+"○".repeat(3-p.effort)+'</span></div></div>'}).join(""):""}).join(""):"<p>Aucun point signalé.</p>";
+ const plan=issues.length?buckets.map(([lab,title])=>{const its=issues.filter(p=>prioLabel(p)[0]===lab);return its.length?'<h3 style="margin-top:12px">'+esc(title)+'</h3>'+its.map(p=>{const l=prioLabel(p);return '<div class="reco"><b>'+esc(p.it)+'</b>'+esc(p.reco)+(p.evidence?'<br><small><b>Constat :</b> '+esc(p.evidence)+'</small>':'')+(p.goal?'<br><small><b>Objectif :</b> '+esc(p.goal)+'</small>':'')+'<div class="tags"><span class="badge '+l[1]+'">'+l[0]+'</span><span class="badge b-auto">Impact '+"●".repeat(p.impact)+"○".repeat(3-p.impact)+'</span><span class="badge b-auto">Effort '+"●".repeat(p.effort)+"○".repeat(3-p.effort)+'</span></div></div>'}).join(""):""}).join(""):"<p>Aucun point signalé.</p>";
  const detail=groups.map((g,gi)=>{const rows=g.items.map((it,ii)=>({it,k:gi+"-"+ii})).filter(x=>state.checks[x.k]||state.issues[x.k]);return rows.length?'<h3>'+esc(g.title)+'</h3><ul class="detail">'+rows.map(x=>'<li class="'+(state.issues[x.k]?"ko":"ok")+'">'+esc(x.it)+' : '+(state.issues[x.k]?'<b>à améliorer</b>':'vérifié')+(state.auto[x.k]?' <span class="muted">('+esc(state.auto[x.k].evidence)+')</span>':'')+'</li>').join("")+'</ul>':""}).join("")||'<p class="muted">Aucun contrôle renseigné.</p>';
  const sources=[d.place&&"Google Places API (fiche, avis, photos, concurrents, carte de visibilité)",d.psi&&(d.psi.via||"Lighthouse")+" (site mobile)",d.html&&"lecture du site (Jina Reader)",d.bing&&"Bing France",d.aiAuto&&d.aiAuto.length&&"Gemini avec Recherche Google",d.osm&&"OpenStreetMap"].filter(Boolean);
- const method='<p>L’audit combine des données publiques collectées automatiquement et des vérifications manuelles. Le score indicatif correspond à la part des contrôles réussis parmi ceux effectués ; il ne s’agit pas d’un classement officiel.</p>'+(sources.length?'<p><b>Sources :</b> '+esc(sources.join(" ; "))+'.</p>':'')+'<p class="muted">Les positions Google et Bing sont mesurées depuis des recherches neutres : les résultats réels varient selon la position, l’appareil et l’historique de chaque personne. Les statistiques privées (vues de la fiche, Search Console) nécessitent l’accès du propriétaire. Aucun résultat n’est garanti.</p>'+detail+(state.notes?'<h3>Observations complémentaires</h3><p>'+esc(state.notes)+'</p>':'');
+ const method='<p>L’audit combine des données publiques collectées automatiquement et des vérifications manuelles. Le score indicatif correspond à la part des contrôles réussis parmi ceux effectués, pondérée par l’importance de chaque point (un point à fort impact, comme les avis ou la position locale, compte trois fois plus qu’un point secondaire). Les points non vérifiés n’entrent pas dans le score. Il ne s’agit pas d’un classement officiel.</p>'+(sources.length?'<p><b>Sources :</b> '+esc(sources.join(" ; "))+'.</p>':'')+'<p class="muted">Les positions Google et Bing sont mesurées depuis des recherches neutres : les résultats réels varient selon la position, l’appareil et l’historique de chaque personne. Les statistiques privées (vues de la fiche, Search Console) nécessitent l’accès du propriétaire. Aucun résultat n’est garanti.</p>'+detail+(state.notes?'<h3>Observations complémentaires</h3><p>'+esc(state.notes)+'</p>':'');
  const closing='<div class="closing"><b style="font-size:17px">Prochaine étape</b><p class="muted" style="margin:6px 0 12px">Un échange de 10 minutes pour parcourir ce rapport et choisir ensemble les actions prioritaires. Démo et devis gratuits, sans engagement.</p><div class="brandline"><img src="assets/logo-64.png" alt="" width="36" height="36"><div><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<br><span class="muted">'+esc(contact)+'</span>':'')+'</div></div></div>';
  const body=cover+toc
   +sec(1,"Synthèse",syn)
@@ -907,7 +940,7 @@ function renderReport(){
   +sec(4,"Visibilité sur Bing",bing+'<p class="muted"><small>Bing alimente aussi DuckDuckGo, Ecosia et Microsoft Copilot.</small></p>')
   +sec(5,"Visibilité dans les assistants IA",aiHtml)
   +sec(6,"Site web sur mobile",siteHtml)
-  +sec(7,"Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre.</p>'+plan,"newpage")
+  +sec(7,"Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre. Chaque action s’appuie sur un constat daté de l’audit.</p>'+plan+checkHtml,"newpage")
   +sec(8,"Ce qu’AffiAds peut apporter",scopeBlock(issues)+'<h3 style="margin-top:20px">Proposition adaptée à cet audit</h3><p>Les actions du plan regroupées par prestation, de la plus utile à la moins urgente :</p>'+offersBlock(issues)+closing,"newpage")
   +sec(9,"Méthode et détail des contrôles",method);
  const head='<div class="phead"><span><img src="assets/logo-64.png" alt="" width="18" height="18"> AffiAds Audit 360°</span><span>'+esc(b.name||"")+(b.city?" · "+esc(b.city):"")+'</span></div>';
