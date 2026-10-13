@@ -178,12 +178,14 @@ function update(){
 }
 
 /* ---------- Clé Google ---------- */
-function hasKey(){return !!(settings.googleKey&&settings.googleKey.trim())}
+function keyLooksValid(k){return /^AIza[0-9A-Za-z_\-]{30,}$/.test(String(k||"").trim())}
+function hasKey(){return keyLooksValid(settings.googleKey)}
+const WRONG_KEY_MSG="Ce n’est pas une clé API Google Maps : une bonne clé commence par « AIza ». Celle-ci ressemble à un identifiant Vertex AI ou Gemini, refusé par Places API. Créez une « Clé API » dans Google Cloud → Identifiants (voir l’aide ci-dessous).";
 function renderKeyNotice(){
  $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Gratuit</span> Site, réseaux, concurrents à proximité et IA analysés sans clé. <a href="#" data-goto="settings">Ajouter les avis Google</a>';
  const a=$("keyNotice").querySelector("[data-goto]");if(a)a.onclick=e=>{e.preventDefault();nav("settings")};
  $("googleKey").value=settings.googleKey||"";
- $("keyStatus").innerHTML=hasKey()?'<span class="keyok">Clé enregistrée dans ce navigateur.</span>':'Aucune clé enregistrée.';
+ $("keyStatus").innerHTML=hasKey()?'<span class="keyok">Clé enregistrée dans ce navigateur.</span>':(settings.googleKey?'<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>':'Aucune clé enregistrée : l’appli fonctionne en mode gratuit.');
 }
 
 /* ---------- Sources de données ---------- */
@@ -406,6 +408,7 @@ function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(
 function frErr(e){
  const m=String(e&&e.message||e||"");const url=(m.match(/https:\/\/console\.(?:developers|cloud)\.google\.com\/[^\s"']+/)||[])[0]||"";
  if(/has not been used|is disabled|SERVICE_DISABLED|API_NOT_ACTIVATED|not been enabled/i.test(m)){const api=/pagespeed/i.test(m+url)?"PageSpeed Insights API":"Places API (New)";return {code:"disabled",text:"« "+api+" » n’est pas encore activée dans votre projet Google. Touchez « Activer l’API », puis « Activer », attendez 2 minutes et relancez l’audit.",link:{href:url||(api.startsWith("Places")?"https://console.cloud.google.com/apis/library/places.googleapis.com":"https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com"),label:"Activer l’API"}}}
+ if(/API keys are not supported|Expected OAuth2|CREDENTIALS_MISSING|ACCESS_TOKEN_TYPE_UNSUPPORTED/i.test(m))return {code:"badkey",text:WRONG_KEY_MSG,link:{href:"#settings",label:"Ouvrir les réglages"}};
  if(/API key not valid|API_KEY_INVALID/i.test(m))return {code:"badkey",text:"La clé Google n’est pas valide : copiez-la à nouveau dans Réglages.",link:{href:"#settings",label:"Ouvrir les réglages"}};
  if(/referer|referrer|API_KEY_HTTP_REFERRER_BLOCKED/i.test(m))return {code:"referer",text:"La clé n’autorise pas ce site : dans Google Cloud, ajoutez https://mansstyle59.github.io/* aux sites web autorisés.",link:{href:"https://console.cloud.google.com/apis/credentials",label:"Modifier la clé"}};
  if(/billing|BILLING/i.test(m))return {code:"billing",text:"Google demande d’associer un compte de facturation au projet (le volume gratuit reste gratuit).",link:{href:"https://console.cloud.google.com/billing",label:"Ouvrir la facturation"}};
@@ -902,9 +905,9 @@ function bind(){
  $("pitchWhatsapp").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent($("pitchText").value),"_blank","noopener");
  $("pitchMail").onclick=()=>{let t=$("pitchText").value,sub="Audit de visibilité";const m=t.match(/^Objet : (.*)\n+/);if(m){sub=m[1];t=t.slice(m[0].length)}location.href="mailto:?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(t)};
  /* Réglages */
- $("saveKey").onclick=()=>{settings.googleKey=$("googleKey").value.trim();saveSettings();renderKeyNotice();toast(settings.googleKey?"Clé enregistrée.":"Clé retirée.")};
+ $("saveKey").onclick=()=>{const k=$("googleKey").value.trim();if(k&&!keyLooksValid(k)){$("keyStatus").innerHTML='<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>';$("help-key").open=true;return}settings.googleKey=k;saveSettings();renderKeyNotice();toast(k?"Clé enregistrée.":"Clé retirée.")};
  $("removeKey").onclick=()=>{settings.googleKey="";saveSettings();renderKeyNotice();toast("Clé retirée de ce navigateur.")};
- $("testKey").onclick=async()=>{settings.googleKey=$("googleKey").value.trim();saveSettings();if(!hasKey()){$("keyStatus").innerHTML='<span class="keybad">Collez d’abord une clé.</span>';return}$("keyStatus").textContent="Test en cours…";
+ $("testKey").onclick=async()=>{const k=$("googleKey").value.trim();if(k&&!keyLooksValid(k)){$("keyStatus").innerHTML='<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>';$("help-key").open=true;return}settings.googleKey=k;saveSettings();if(!hasKey()){$("keyStatus").innerHTML='<span class="keybad">Collez d’abord une clé.</span>';return}$("keyStatus").textContent="Test en cours…";
   const res=[];try{const l=await placesSearch("Tour Eiffel Paris","places.id,places.displayName",1);res.push(l.length?'<span class="keyok">✓ Places API (New) fonctionne.</span>':'<span class="keybad">Places API : réponse vide.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ Places API (New) : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
   try{await fetchJson("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&category=seo&url="+encodeURIComponent("https://example.com")+"&key="+encodeURIComponent(settings.googleKey),{},90000);res.push('<span class="keyok">✓ PageSpeed Insights API fonctionne.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ PageSpeed Insights API : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
   $("keyStatus").innerHTML=res.join("<br>");renderKeyNotice2()};
