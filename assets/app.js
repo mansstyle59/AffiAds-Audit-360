@@ -1132,11 +1132,11 @@ async function pinHash(pin,saltB64){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);
  return b64(await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},key,256));
 }
-async function pinSet(pin){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));Lock.cfg={salt,hash:await pinHash(pin,salt),len:pin.length,delay:(Lock.cfg&&Lock.cfg.delay)??1440,fails:0,until:0,v:2,bio:Lock.cfg&&Lock.cfg.bio||null};lockSave()}
+async function pinSet(pin){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));Lock.cfg={salt,hash:await pinHash(pin,salt),len:pin.length,delay:(Lock.cfg&&Lock.cfg.delay)??-1,forceLock:false,fails:0,until:0,v:2,bio:Lock.cfg&&Lock.cfg.bio||null};lockSave()}
 const LOCK_SEEN="affiads-last-seen";
 function lockDelay(){return Lock.cfg?(Lock.cfg.delay??1440):1440}
 function markSeen(){Lock.lastActive=Date.now();try{localStorage.setItem(LOCK_SEEN,String(Lock.lastActive))}catch(e){}}
-function stillTrusted(){const d=lockDelay();if(d<0)return true;if(d===0)return false;let t=0;try{t=+localStorage.getItem(LOCK_SEEN)||0}catch(e){}return t>0&&Date.now()-t<d*60000}
+function stillTrusted(){if(Lock.cfg&&Lock.cfg.forceLock)return false;const d=lockDelay();if(d<0)return true;if(d===0)return false;let t=0;try{t=+localStorage.getItem(LOCK_SEEN)||0}catch(e){}return t>0&&Date.now()-t<d*60000}
 function unlockedThisSession(){try{if(sessionStorage.getItem(LOCK_SESSION)==="1")return true}catch(e){}return stillTrusted()}
 function setSession(v){try{if(v){sessionStorage.setItem(LOCK_SESSION,"1");markSeen()}else{sessionStorage.removeItem(LOCK_SESSION);localStorage.removeItem(LOCK_SEEN)}}catch(e){}}
 function gateText(title,hint){$("gateTitle").textContent=title;$("gateHint").textContent=hint}
@@ -1150,14 +1150,15 @@ function buildPad(){
 function showGate(mode){
  Lock.mode=mode;Lock.entry="";Lock.first="";document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
  $("gateForgot").hidden=mode!=="unlock";$("gateBio").hidden=!((mode==="unlock"||mode==="verify")&&Lock.cfg&&Lock.cfg.bio);$("gateBio").textContent="Déverrouiller avec "+bioLabel();
- $("gateCancel").hidden=!(mode==="verify"||mode==="change");
+ $("gateCancel").hidden=!(mode==="verify"||mode==="change");$("rememberWrap").hidden=mode==="verify";$("rememberMe").checked=mode==="create"||!Lock.cfg||lockDelay()<0||mode==="unlock";
  if(mode==="unlock")gateText("Entrez votre code","Votre code protège vos audits et votre clé sur cet appareil.");
  else if(mode==="verify")gateText("Confirmez que c’est vous",Lock.verifyWhy||"Saisissez votre code pour continuer.");
  else if(mode==="create")gateText("Créez votre code","Choisissez un code de 4 à 6 chiffres pour protéger l’appli sur cet appareil.");
  else if(mode==="change")gateText("Nouveau code","Choisissez un nouveau code de 4 à 6 chiffres.");
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
-function hideGate(){const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function applyRemember(){const cb=$("rememberMe");if(!Lock.cfg||!cb||$("rememberWrap").hidden)return;if(cb.checked)Lock.cfg.delay=-1;else if(lockDelay()<0)Lock.cfg.delay=1440;Lock.cfg.forceLock=false;lockSave()}
+function hideGate(){if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
@@ -1180,7 +1181,7 @@ async function pinSubmit(){
 }
 function renderPinSettings(){
  if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
- $("pinStatus").textContent=on?(lockDelay()<0?"Cet appareil est de confiance : le code n’est demandé qu’après « Verrouiller maintenant ».":"Code actif : il est demandé après la durée d’absence choisie ci-dessous."):"Aucun code : n’importe qui utilisant cet appareil peut ouvrir l’appli.";
+ $("pinStatus").textContent=on?(lockDelay()<0?"Cet appareil se souvient de vous : l’appli s’ouvre sans code. Le code n’est redemandé qu’après « Verrouiller maintenant ».":"Code actif : il est demandé après la durée d’absence choisie ci-dessous."):"Aucun code : n’importe qui utilisant cet appareil peut ouvrir l’appli.";
  $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
  $("pinDelay").value=String(on?lockDelay():1440);$("pinDelay").disabled=!on;
  const pb=$("pinBio");if(pb){pb.hidden=!(on&&Lock.bioOk);pb.textContent=(Lock.cfg&&Lock.cfg.bio?"Désactiver ":"Activer ")+bioLabel()}
@@ -1202,8 +1203,8 @@ async function bioUnlock(){
 }
 function requireOwner(why,then){if(!Lock.cfg||!Lock.cfg.hash){then();return}Lock.onVerify=then;Lock.verifyWhy=why;showGate("verify");if(Lock.cfg.bio)bioUnlock()}
 function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;Lock.onVerify=null;Lock.verifyWhy="";const g=$("gate");document.body.classList.remove("locked");g.classList.add("hidden");Lock.mode="unlock"}
-function lockNow(){if(Lock.cfg&&Lock.cfg.hash){setSession(false);showGate("unlock")}}
-function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow()}
+function lockNow(manual){if(Lock.cfg&&Lock.cfg.hash){if(manual!==false){Lock.cfg.forceLock=true;lockSave()}setSession(false);showGate("unlock")}}
+function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow(false)}
 function initLock(){
  lockLoad();if(Lock.cfg&&Lock.cfg.hash&&!Lock.cfg.v){Lock.cfg.v=2;if((Lock.cfg.delay??5)<=5)Lock.cfg.delay=1440;lockSave()}buildPad();
  const pin=$("pinInput");
@@ -1212,7 +1213,7 @@ function initLock(){
  $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
  $("gateForgot").onclick=()=>{if(!confirm("Sans le code, la seule solution est d’effacer toutes les données de l’appli sur cet appareil : audits, clients, clé Google et réglages. Pensez à vos exports. Tout effacer ?"))return;try{localStorage.removeItem(STORE);localStorage.removeItem(OLD);localStorage.removeItem(SETTINGS);localStorage.removeItem(LOCK_KEY)}catch(e){}setSession(false);location.reload()};
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
- document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!document.body.classList.contains("locked"))markSeen()}else if(Lock.hiddenAt){const d=lockDelay();if(Lock.cfg&&Lock.cfg.hash&&d>0&&Date.now()-Lock.hiddenAt>d*60000)lockNow();Lock.hiddenAt=0}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!document.body.classList.contains("locked"))markSeen()}else if(Lock.hiddenAt){const d=lockDelay();if(Lock.cfg&&Lock.cfg.hash&&d>0&&Date.now()-Lock.hiddenAt>d*60000)lockNow(false);Lock.hiddenAt=0}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
  $("pinChange").onclick=()=>{if(Lock.cfg&&Lock.cfg.hash)requireOwner("Saisissez votre code actuel pour en choisir un nouveau.",()=>showGate("change"));else showGate("create")};
  $("gateCancel").onclick=cancelGate;
@@ -1225,7 +1226,7 @@ function initLock(){
  /* Écran d'accueil : le logo s'affiche, puis le code (ou sa création au premier lancement) */
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  setTimeout(()=>{
-  if(Lock.cfg&&Lock.cfg.hash){if(unlockedThisSession()){hideGate()}else{showGate("unlock");if(Lock.cfg.bio)bioUnlock()}}
+  if(Lock.cfg&&Lock.cfg.hash){if(unlockedThisSession()){Lock.mode="auto";hideGate()}else{showGate("unlock");if(Lock.cfg.bio)bioUnlock()}}
   else showGate("create");
  },reduce?0:900);
 }
@@ -1358,7 +1359,7 @@ const INTENTS=[
    if(Lock.cfg.bio)return botSay(bioLabel()+" est déjà activé sur cet appareil.",[["Désactiver",()=>requireOwner("Confirmez pour désactiver "+bioLabel()+".",()=>{Lock.cfg.bio=null;lockSave();renderPinSettings();botSay(bioLabel()+" désactivé.")})]]);
    if(!Lock.bioOk)return botSay("Cet appareil ou ce navigateur ne propose pas la reconnaissance biométrique ici. Sur iPhone, ouvrez l’appli dans Safari ou depuis l’écran d’accueil.");
    botSay("Je peux activer "+bioLabel()+" : vous n’aurez plus à taper le code.",[["Activer "+bioLabel(),async()=>{try{await bioEnable();renderPinSettings();botSay(bioLabel()+" activé.")}catch(e){botSay("Activation annulée ou impossible sur cet appareil.")}}]])}},
- {re:/(redemand|demand|tape|saisi|chaque fois|tout le temps|delai|délai|verrouill)/,run:()=>botSay("Le code est redemandé après la durée d’absence choisie (actuellement : "+({"-1":"jamais","0":"à chaque ouverture","5":"5 minutes","60":"1 heure","1440":"1 jour","10080":"1 semaine"}[String(lockDelay())]||lockDelay()+" min")+"). Vous pouvez la changer, ou verrouiller tout de suite.",[["Régler le délai",()=>{botToggle(false);nav("settings");setTimeout(()=>$("pinDelay").focus(),300)}],["Verrouiller maintenant",()=>{botToggle(false);lockNow()}]])},
+ {re:/(redemand|demand|tape|saisi|chaque fois|tout le temps|delai|délai|verrouill)/,run:()=>botSay("Le code est redemandé après la durée d’absence choisie (actuellement : "+({"-1":"jamais, l’appareil se souvient de vous","0":"à chaque ouverture","5":"5 minutes","60":"1 heure","1440":"1 jour","10080":"1 semaine"}[String(lockDelay())]||lockDelay()+" min")+"). Vous pouvez la changer, ou verrouiller tout de suite.",[["Régler le délai",()=>{botToggle(false);nav("settings");setTimeout(()=>$("pinDelay").focus(),300)}],["Verrouiller maintenant",()=>{botToggle(false);lockNow()}]])},
  {re:/(nouvel|nouveau|lanc|fai[st]|commenc|demarr|démarr).*(audit)|^audit(e|er)? /,run:q=>{
    const m=q.match(/audit(?:e|er)?\s+(?:de\s+|du\s+|pour\s+)?(.+?)(?:\s+(?:à|a|sur)\s+(.+))?$/i);
    botToggle(false);state=fixState(state);read();persistLocal();state=blankState();persistLocal();hydrate();nav("auto");
