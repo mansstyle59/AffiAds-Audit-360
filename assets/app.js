@@ -129,6 +129,7 @@ function hydrate(){
  if(!$("type").value)$("type").value=BIZ_TYPES[0].label;
  $("notes").value=state.notes||"";
  $("autoName").value=state.biz.name||"";$("autoCity").value=state.biz.city||"";$("autoType").value=state.biz.type||BIZ_TYPES[0].label;$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||"";
+ ["autoType","autoKeyword"].forEach(id=>delete $(id).dataset.touched);if(state.biz.keyword)$("autoKeyword").dataset.touched="1";setPickInfo();renderPlaceChoice();closeSuggest();
  renderClientSelect();renderChecklist();update();drawAiTests();renderCampaignPrompts();renderAutoSteps(state.data.steps||[]);renderAutoSummary();$("pitchText").value=state.pitch||"";renderTools();renderKeyNotice();
 }
 
@@ -151,10 +152,10 @@ function scoreColor(s){return s===null?"":s>=85?"good":s>=60?"mid":"bad"}
 function update(){
  read();const c=calc();
  $("mDone").innerHTML=c.pct+"%<small>Audit complété</small>";$("mIssues").innerHTML=c.issues+"<small>Points à améliorer</small>";$("mScore").innerHTML=(c.score===null?"—":c.score)+"<small>Score indicatif</small>";$("mChecks").innerHTML=c.n+"<small>Contrôles effectués</small>";
- $("bigScore").innerHTML=(c.score===null?"—":c.score)+"<small>/ 100</small>";$("bar").style.width=(c.score||0)+"%";$("count").textContent=c.n+" / "+keys.length+" vérifiés";
+ $("gaugeHome").innerHTML=gauge(c.score);$("count").textContent=c.n+" / "+keys.length+" vérifiés";
  $("scoreText").textContent=c.score===null?"Lance l'audit automatique ou coche les contrôles pour calculer un indicateur.":c.score>=85?"Bon résultat sur les éléments évalués ; traite les points signalés.":c.score>=60?"Des améliorations sont à prioriser.":"Plusieurs points évalués restent à améliorer.";
  groups.forEach((g,gi)=>{let n=g.items.filter((_,ii)=>state.checks[gi+"-"+ii]).length;let el=$("g"+gi);if(el)el.textContent=n+"/"+g.items.length});
- $("catBars").innerHTML=groupScores().map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div style="width:'+(g.score||0)+'%"></div></div></div>').join("");
+ $("catBars").innerHTML=groupScores().map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("");
  const probs=issuesList();
  $("priorityList").innerHTML=probs.length?probs.slice(0,6).map(p=>{const l=prioLabel(p);return '<div class="priority"><b>'+esc(p.it)+' <span class="badge '+l[1]+'">'+l[0]+'</span></b><small>'+esc(p.reco)+'</small></div>'}).join("")+(probs.length>6?'<p class="muted">+ '+(probs.length-6)+' autre(s) dans le rapport.</p>':""):"Aucun problème signalé pour le moment.";
  renderReport();
@@ -171,7 +172,7 @@ function renderKeyNotice(){
 
 /* ---------- Sources de données ---------- */
 const PLACE_FIELDS=["places.id","places.displayName","places.formattedAddress","places.location","places.rating","places.userRatingCount","places.websiteUri","places.nationalPhoneNumber","places.internationalPhoneNumber","places.regularOpeningHours","places.businessStatus","places.primaryType","places.primaryTypeDisplayName","places.types","places.googleMapsUri","places.photos","places.reviews","places.editorialSummary","places.priceLevel","places.reservable","places.delivery","places.takeout","places.dineIn"].join(",");
-const RANK_FIELDS="places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.googleMapsUri,places.websiteUri,places.primaryTypeDisplayName";
+const RANK_FIELDS="places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.googleMapsUri,places.websiteUri,places.primaryTypeDisplayName,places.photos";
 async function placesSearch(textQuery,fieldMask,size,bias){
  const body={textQuery,languageCode:"fr",regionCode:"FR",pageSize:size};
  if(bias)body.locationBias={circle:{center:{latitude:bias.lat,longitude:bias.lng},radius:15000}};
@@ -202,9 +203,9 @@ async function osmLookup(name,center,type){
  const seen=new Set();const competitors=comp.filter(e=>{const k=norm(e.tags.name);if(seen.has(k))return false;seen.add(k);return true}).map(e=>({name:e.tags.name,website:e.tags.website||e.tags["contact:website"]||"",loc:pos(e),src:"OSM"}));
  return {me:me?{name:me.tags.name,tags:me.tags,loc:pos(me),url:"https://www.openstreetmap.org/"+me.type+"/"+me.id}:null,competitors};
 }
-async function pageSpeed(url){
+async function pageSpeed(url,cats){
  let api="https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&locale=fr&url="+encodeURIComponent(url);
- ["performance","accessibility","best-practices","seo"].forEach(c=>api+="&category="+c);
+ (cats||["performance","accessibility","best-practices","seo"]).forEach(c=>api+="&category="+c);
  if(hasKey())api+="&key="+encodeURIComponent(settings.googleKey.trim());
  const r=await fetchJson(api,{},120000);
  const lh=r.lighthouseResult||{},cat=lh.categories||{},au=lh.audits||{};
@@ -223,6 +224,78 @@ async function pageSpeed(url){
   entities,tracking,shot:shotData.length<400000?shotData:""};
 }
 
+/* ---------- Recherche assistée : suggestions et choix exact du commerce ---------- */
+const DETAIL_FIELDS=PLACE_FIELDS.split(",").map(f=>f.replace(/^places\./,"")).join(",");
+const G_TYPE_MAP=[
+ [/(^|_)restaurant$|meal_takeaway|meal_delivery|pizza|sandwich_shop|brunch|diner|steak_house|food_court/,"Restaurant"],
+ [/^(cafe|bar|pub|wine_bar|coffee_shop|cocktail_bar|tea_house|night_club|cafeteria|juice_shop)$/,"Café / bar"],
+ [/^(bakery|pastry_shop|confectionery|dessert_shop|chocolate_shop)$/,"Boulangerie"],
+ [/^(convenience_store|grocery_store|supermarket|butcher_shop|food_store|market|liquor_store|health_food_store|asian_grocery_store)$/,"Commerce de proximité"],
+ [/^(hair_salon|beauty_salon|nail_salon|barber_shop|hair_care|beautician|makeup_artist|tanning_studio)$/,"Salon / beauté"],
+ [/^(lodging|hotel|bed_and_breakfast|guest_house|motel|hostel|inn|resort_hotel|campground|cottage)$/,"Hôtel / hébergement"],
+ [/^(plumber|electrician|painter|roofing_contractor|general_contractor|locksmith|moving_company|carpenter|hvac_contractor)$/,"Artisan / dépannage"],
+ [/^(clothing_store|shoe_store|jewelry_store|gift_shop|book_store|furniture_store|home_goods_store|florist|store|shopping_mall|sporting_goods_store|electronics_store)$/,"Boutique / mode"],
+ [/^(car_repair|car_dealer|car_wash|auto_parts_store|car_rental|tire_shop)$/,"Garage / auto"],
+ [/^(spa|physiotherapist|massage|wellness_center|gym|fitness_center|yoga_studio|sauna|dentist|doctor|chiropractor)$/,"Santé / bien-être"]];
+function typeFromGoogle(types){for(const t of types||[])for(const [rx,label] of G_TYPE_MAP)if(rx.test(t))return label;return null}
+function typeFromOsm(key,val){const v=String(val||"");if(key==="amenity"&&/^(restaurant|fast_food|food_court)$/.test(v))return "Restaurant";if(key==="amenity"&&/^(cafe|bar|pub|biergarten)$/.test(v))return "Café / bar";if(key==="shop"&&/^(bakery|pastry|confectionery)$/.test(v))return "Boulangerie";if(key==="shop"&&/^(convenience|supermarket|greengrocer|butcher|deli|cheese|wine|alcohol|farm)$/.test(v))return "Commerce de proximité";if(key==="shop"&&/^(hairdresser|beauty|cosmetics)$/.test(v))return "Salon / beauté";if(key==="tourism"&&/^(hotel|guest_house|motel|hostel|apartment|chalet|camp_site)$/.test(v))return "Hôtel / hébergement";if(key==="craft")return "Artisan / dépannage";if(key==="shop"&&/^(car_repair|car|tyres|car_parts)$/.test(v))return "Garage / auto";if(key==="shop")return "Boutique / mode";if(/^(leisure|healthcare)$/.test(key))return "Santé / bien-être";return null}
+function defaultKeywords(label){const k=typeInfo(label).kw;return k?k+", meilleur "+k:""}
+function applyDetectedType(label){if(!label||$("autoType").dataset.touched)return;$("autoType").value=label;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(label)}
+let sessionToken=uid(),suggestTimer=null,suggestItems=[],suggestIdx=-1,suggestSeq=0;
+async function googleSuggest(input){
+ const body={input,languageCode:"fr",includedRegionCodes:["fr","be","ch","lu","mc"],sessionToken};
+ const r=await fetchJson("https://places.googleapis.com/v1/places:autocomplete",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify(body)},12000);
+ return (r.suggestions||[]).map(s=>s.placePrediction).filter(Boolean).map(p=>({src:"google",id:p.placeId,main:p.structuredFormat&&p.structuredFormat.mainText&&p.structuredFormat.mainText.text||p.text&&p.text.text||"",secondary:p.structuredFormat&&p.structuredFormat.secondaryText&&p.structuredFormat.secondaryText.text||"",types:p.types||[]}));
+}
+async function photonSuggest(input){
+ const r=await fetchJson("https://photon.komoot.io/api/?lang=fr&limit=8&q="+encodeURIComponent(input),{},12000);
+ return (r.features||[]).filter(f=>f.properties&&f.properties.name&&["FR","BE","CH","LU","MC"].includes(String(f.properties.countrycode).toUpperCase())&&f.properties.osm_key!=="place"&&f.properties.osm_key!=="highway"&&f.properties.osm_key!=="boundary").slice(0,6).map(f=>{const p=f.properties;return {src:"osm",main:p.name,secondary:[[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.town||p.village].filter(Boolean).join(" ")].filter(Boolean).join(", "),city:p.city||p.town||p.village||"",lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],key:p.osm_key,value:p.osm_value}});
+}
+function cityFromSecondary(sec){const parts=String(sec||"").split(",").map(x=>x.trim()).filter(Boolean);if(parts.length>=2&&/france|belgique|suisse|luxembourg|monaco/i.test(parts[parts.length-1]))parts.pop();const last=parts[parts.length-1]||"";return last.replace(/^\d{4,5}\s*/,"").trim()}
+function closeSuggest(){$("suggest").classList.add("hidden");$("autoName").setAttribute("aria-expanded","false");suggestIdx=-1}
+function renderSuggest(){
+ const box=$("suggest");
+ if(!suggestItems.length){closeSuggest();return}
+ box.innerHTML=suggestItems.map((s,i)=>'<button type="button" role="option" id="sg'+i+'" aria-selected="'+(i===suggestIdx)+'" data-sg="'+i+'"><b>'+esc(s.main)+'</b><span>'+esc(s.secondary||"")+'</span></button>').join("")+'<div class="src">'+(suggestItems[0].src==="google"?"Suggestions Google":"Suggestions OpenStreetMap — ajoutez une clé Google pour des résultats plus complets")+'</div>';
+ box.classList.remove("hidden");$("autoName").setAttribute("aria-expanded","true");
+ box.querySelectorAll("[data-sg]").forEach(b=>b.addEventListener("mousedown",e=>{e.preventDefault();pickSuggestion(suggestItems[Number(b.dataset.sg)])}));
+}
+function queueSuggest(){
+ clearTimeout(suggestTimer);
+ const name=$("autoName").value.trim();if(name.length<3){suggestItems=[];closeSuggest();return}
+ const q=name+($("autoCity").value.trim()?" "+$("autoCity").value.trim():"");
+ suggestTimer=setTimeout(async()=>{const seq=++suggestSeq;try{let items=[];if(hasKey()){try{items=await googleSuggest(q)}catch(e){items=[]}}if(!items.length)items=await photonSuggest(q);if(seq!==suggestSeq)return;suggestItems=items;suggestIdx=-1;renderSuggest()}catch(e){suggestItems=[];closeSuggest()}},hasKey()?280:650);
+}
+function setPickInfo(){const b=state.biz;$("pickInfo").textContent=b.placeId?"✓ Établissement Google sélectionné : "+(b.pickLabel||b.name):b.osmPick?"✓ Établissement OpenStreetMap sélectionné : "+(b.pickLabel||b.name):""}
+function clearPick(){delete state.biz.placeId;delete state.biz.osmPick;delete state.biz.pickLabel;setPickInfo()}
+function pickSuggestion(s){
+ if(!s)return;closeSuggest();clearPick();
+ $("autoName").value=s.main;
+ const city=s.city||cityFromSecondary(s.secondary);if(city)$("autoCity").value=city;
+ state.biz.pickLabel=s.main+(s.secondary?" — "+s.secondary:"");
+ if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types))}
+ else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value};applyDetectedType(typeFromOsm(s.key,s.value))}
+ setPickInfo();persistLocal();
+}
+async function placeDetails(id){
+ const r=await fetchJson("https://places.googleapis.com/v1/places/"+encodeURIComponent(id)+"?languageCode=fr&regionCode=FR&sessionToken="+encodeURIComponent(sessionToken),{headers:{"X-Goog-Api-Key":settings.googleKey.trim(),"X-Goog-FieldMask":DETAIL_FIELDS}},20000);
+ sessionToken=uid();return r;
+}
+function renderPlaceChoice(){
+ const box=$("placeChoice"),d=state.data||{},c=(d.placeCandidates||[]);
+ if(c.length<2||!d.place){box.classList.add("hidden");box.innerHTML="";return}
+ box.classList.remove("hidden");
+ box.innerHTML='<h2>Est-ce le bon établissement ?</h2><p class="muted">Google a trouvé plusieurs fiches proches. Si l\'analyse ne porte pas sur le bon commerce, choisissez-le et relancez.</p>'+c.map(x=>'<div class="choice'+(x.id===d.place.id?" cur":"")+'"><span><b>'+esc(x.name)+'</b><br><span class="muted">'+esc(x.address||"")+(x.rating!=null?" · "+fr1(x.rating)+"/5 ("+(x.count||0)+" avis)":"")+'</span></span>'+(x.id===d.place.id?'<span class="badge b-ok">Analysé</span>':'<button class="btn" data-repick="'+esc(x.id)+'">Analyser celui-ci</button>')+'</div>').join("");
+ box.querySelectorAll("[data-repick]").forEach(b=>b.onclick=()=>{const x=c.find(y=>y.id===b.dataset.repick);state.biz.placeId=x.id;state.biz.pickLabel=x.name+" — "+(x.address||"");setPickInfo();runAuto()});
+}
+function keywordList(type,city){
+ let raw=$("autoKeyword").value.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+ const base=typeInfo(type).kw||type.toLowerCase();
+ if(!raw.length)raw=[base,"meilleur "+base];
+ const cityN=norm(city);
+ return [...new Set(raw.map(k=>norm(k).includes(cityN)&&cityN?k:k+" "+city))].slice(0,3);
+}
+
 /* ---------- Audit automatique ---------- */
 let steps=[];
 function setStep(id,status,title,detail){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||""});renderAutoSteps(steps)}
@@ -235,87 +308,114 @@ function setAuto(k,status,evidence,source){state.auto[k]={status,evidence,source
 let running=false;
 async function runAuto(){
  if(running)return;
- const name=$("autoName").value.trim(),city=$("autoCity").value.trim(),type=$("autoType").value;
+ const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
- running=true;$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";
+ running=true;closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";
  steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
- const keyword=($("autoKeyword").value.trim()||typeInfo(type).kw||type).trim();
- state.biz.name=name;state.biz.city=city;state.biz.type=type;state.biz.keyword=keyword;state.biz.date=today();
+ state.biz.name=name;state.biz.city=city;state.biz.date=today();
  let site=$("autoSite").value.trim();
  try{
   /* 1. Ville */
-  setStep("geo","run","Localisation de la ville");
-  let center=null;try{center=await nominatimCity(city);setStep("geo",center?"ok":"warn",center?"Ville localisée":"Ville introuvable sur OpenStreetMap",center?center.label:"Les recherches se feront sans centre géographique.")}catch(e){setStep("geo","warn","Localisation indisponible",e.message)}
+  setStep("geo","run","Localisation");
+  let center=null;
+  if(state.biz.osmPick){center={lat:state.biz.osmPick.lat,lng:state.biz.osmPick.lng,label:"Position de l'établissement choisi"};setStep("geo","ok","Établissement localisé",state.biz.pickLabel||"")}
+  else{try{center=await nominatimCity(city);setStep("geo",center?"ok":"warn",center?"Ville localisée":"Ville introuvable sur OpenStreetMap",center?center.label:"Les recherches se feront sans centre géographique.")}catch(e){setStep("geo","warn","Localisation indisponible",e.message)}}
   data.center=center;
   /* 2. Fiche Google */
   let place=null;
   if(hasKey()){
    setStep("place","run","Recherche de la fiche Google");
-   try{const list=await placesSearch(name+" "+city,PLACE_FIELDS,5,center);place=pickPlace(list,name,city);data.place=place;data.placeCandidates=list.map(p=>({id:p.id,name:p.displayName&&p.displayName.text,address:p.formattedAddress}));
-    if(place){setStep("place","ok","Fiche Google trouvée : "+(place.displayName&&place.displayName.text),place.formattedAddress||"");
-     const dup=list.filter(p=>p.id!==place.id&&similar(p.displayName&&p.displayName.text,name)&&distKm(place.location&&{lat:place.location.latitude,lng:place.location.longitude},p.location&&{lat:p.location.latitude,lng:p.location.longitude})<1);data.duplicates=dup.map(p=>({name:p.displayName&&p.displayName.text,address:p.formattedAddress,url:p.googleMapsUri}));
-    }else setStep("place","warn","Aucune fiche Google trouvée","Vérifiez l'orthographe du nom ou ajoutez le lien Maps à la main.");
+   try{
+    let list=[];try{list=await placesSearch(name+" "+city,PLACE_FIELDS,5,center)}catch(e){if(!state.biz.placeId)throw e}
+    if(state.biz.placeId){place=list.find(p=>p.id===state.biz.placeId)||await placeDetails(state.biz.placeId)}
+    else place=pickPlace(list,name,city);
+    data.place=place;
+    const cands=list.filter(p=>p.id);if(place&&!cands.some(p=>p.id===place.id))cands.unshift(place);
+    data.placeCandidates=cands.slice(0,5).map(p=>({id:p.id,name:p.displayName&&p.displayName.text,address:p.formattedAddress,rating:p.rating,count:p.userRatingCount}));
+    if(place){
+     setStep("place","ok","Fiche Google trouvée : "+(place.displayName&&place.displayName.text),(place.formattedAddress||"")+(state.biz.placeId?" · sélection exacte":" · meilleure correspondance"));
+     const pl=place.location&&{lat:place.location.latitude,lng:place.location.longitude};
+     const dup=list.filter(p=>p.id!==place.id&&similar(p.displayName&&p.displayName.text,place.displayName&&place.displayName.text||name)&&distKm(pl,p.location&&{lat:p.location.latitude,lng:p.location.longitude})<1);data.duplicates=dup.map(p=>({name:p.displayName&&p.displayName.text,address:p.formattedAddress,url:p.googleMapsUri}));
+     const det=typeFromGoogle([place.primaryType,...(place.types||[])]);if(det&&!$("autoType").dataset.touched&&det!==type){type=det;$("autoType").value=det;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(det)}
+    }else setStep("place","warn","Aucune fiche Google trouvée","Vérifiez l'orthographe ou choisissez le commerce dans les suggestions en tapant son nom.");
    }catch(e){setStep("place","err","Fiche Google : erreur",e.status===403?"Clé refusée : vérifiez que « Places API (New) » est activée et que l'adresse du site est autorisée.":e.message)}
   }else setStep("place","skip","Fiche Google non analysée","Ajoutez une clé Google dans Réglages pour obtenir note, avis, photos et concurrents.");
+  state.biz.type=type;
   if(place){
    const p=place,loc=p.location?{lat:p.location.latitude,lng:p.location.longitude}:null;data.loc=loc;
    state.biz.maps=p.googleMapsUri||state.biz.maps;if(p.rating!=null)state.biz.rating=p.rating;if(p.userRatingCount!=null)state.biz.reviews=p.userRatingCount;
    state.biz.phone=p.nationalPhoneNumber||state.biz.phone||"";state.biz.address=p.formattedAddress||state.biz.address||"";
    if(!site&&p.websiteUri)site=p.websiteUri;
    const src="Google Places, "+data.fetchedAt;
-   const hasHours=!!(p.regularOpeningHours&&p.regularOpeningHours.weekdayDescriptions&&p.regularOpeningHours.weekdayDescriptions.length);
-   const missing=[!p.formattedAddress&&"adresse",!p.nationalPhoneNumber&&"téléphone",!hasHours&&"horaires",!p.websiteUri&&"site web"].filter(Boolean);
+   data.hours=p.regularOpeningHours&&p.regularOpeningHours.weekdayDescriptions||[];
+   const missing=[!p.formattedAddress&&"adresse",!p.nationalPhoneNumber&&"téléphone",!data.hours.length&&"horaires",!p.websiteUri&&"site web"].filter(Boolean);
    setAuto("0-0",missing.length?"issue":"ok",missing.length?"Manquant sur la fiche : "+missing.join(", ")+".":"Adresse, téléphone, horaires et site renseignés.",src);
    if(missing.length)findings.push({sev:2,text:"La fiche Google ne mentionne pas : "+missing.join(", ")+"."});
    setAuto("0-1","info","Catégorie principale affichée : "+((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+". Catégories secondaires à vérifier dans Google Business Profile.",src);
-   const ph=(p.photos||[]).length;
-   setAuto("0-4",ph<5?"issue":"info",ph<5?"Seulement "+ph+" photo(s) visible(s) via Google.":"Au moins "+ph+" photos publiées (l'API en renvoie 10 maximum). Récence et qualité à contrôler visuellement.",src);
+   const ph=(p.photos||[]).length;data.photos=ph;
+   setAuto("0-4",ph<5?"issue":"info",ph<5?"Seulement "+ph+" photo(s) visible(s) via Google.":"Au moins "+ph+" photos publiées (Google en renvoie 10 au maximum). Récence et qualité à contrôler visuellement.",src);
    if(ph<5)findings.push({sev:2,text:"Très peu de photos sur la fiche Google ("+ph+")."});
-   const rv=(p.reviews||[]).map(r=>({rating:r.rating,when:r.relativePublishTimeDescription||"",time:r.publishTime||"",author:r.authorAttribution&&r.authorAttribution.displayName||"",text:(r.text&&r.text.text||r.originalText&&r.originalText.text||"").slice(0,280)}));
+   const rv=(p.reviews||[]).map(r=>({rating:r.rating,when:r.relativePublishTimeDescription||"",time:r.publishTime||"",text:(r.text&&r.text.text||r.originalText&&r.originalText.text||"").slice(0,280)}));
    data.reviews=rv;
    const last=rv.map(r=>Date.parse(r.time)).filter(Boolean).sort((a,b)=>b-a)[0];const daysSince=last?Math.round((Date.now()-last)/864e5):null;data.daysSinceReview=daysSince;
    const rProb=[];if(p.rating!=null&&p.rating<4.2)rProb.push("note de "+fr1(p.rating)+"/5");if(p.userRatingCount!=null&&p.userRatingCount<50)rProb.push("seulement "+p.userRatingCount+" avis");if(daysSince!=null&&daysSince>45)rProb.push("dernier avis il y a "+daysSince+" jours");if(p.rating==null)rProb.push("aucune note");
    setAuto("0-5",rProb.length?"issue":"ok",(p.rating!=null?fr1(p.rating)+"/5 sur "+p.userRatingCount+" avis":"Aucun avis")+(daysSince!=null?" · avis le plus récent il y a "+daysSince+" j":"")+(rProb.length?" — à améliorer : "+rProb.join(", ")+".":"."),src);
    if(rProb.length)findings.push({sev:3,text:"Avis Google : "+rProb.join(", ")+"."});
    const neg=rv.filter(r=>r.rating&&r.rating<=3);
-   if(rv.length){setAuto("3-0","info",rv.filter(r=>r.rating>=4).length+" avis positifs parmi les "+rv.length+" plus pertinents (extraits dans le rapport).",src);setAuto("3-1",neg.length?"issue":"info",neg.length?neg.length+" avis à 3 étoiles ou moins parmi les "+rv.length+" plus pertinents : lire les critiques dans le rapport.":"Aucun avis négatif parmi les "+rv.length+" plus pertinents.",src)}
+   if(rv.length){setAuto("3-0","info",rv.filter(r=>r.rating>=4).length+" avis positifs parmi les "+rv.length+" plus pertinents (extraits dans le rapport).",src);setAuto("3-1",neg.length?"issue":"info",neg.length?neg.length+" avis à 3 étoiles ou moins parmi les "+rv.length+" plus pertinents : critiques à lire dans le rapport.":"Aucun avis négatif parmi les "+rv.length+" plus pertinents.",src)}
    const st=p.businessStatus||"";setAuto("0-9",st&&st!=="OPERATIONAL"?"issue":"ok",st==="OPERATIONAL"?"Fiche active (ouverte).":st==="CLOSED_TEMPORARILY"?"Fiche marquée « fermée temporairement ».":st==="CLOSED_PERMANENTLY"?"Fiche marquée « définitivement fermée ».":"Statut non communiqué.",src);
    if(st&&st!=="OPERATIONAL")findings.push({sev:3,text:"Google affiche le commerce comme fermé ("+st.toLowerCase().replace(/_/g," ")+")."});
    setAuto("0-8",(data.duplicates||[]).length?"issue":"ok",(data.duplicates||[]).length?"Fiche(s) similaire(s) à proximité : "+data.duplicates.map(d=>d.name).join(", ")+".":"Aucun doublon évident dans les résultats.",src);
+   if((data.duplicates||[]).length)findings.push({sev:2,text:"Une ou plusieurs fiches Google en double semblent exister ("+data.duplicates.map(d=>d.name).join(", ")+")."});
    if(p.editorialSummary&&p.editorialSummary.text)setAuto("0-2","info","Résumé Google : « "+p.editorialSummary.text+" ». Description du propriétaire et lien de réservation à vérifier.",src);
+   const serv=[p.reservable&&"réservation",p.delivery&&"livraison",p.takeout&&"à emporter",p.dineIn&&"sur place"].filter(Boolean);if(serv.length)data.services=serv;
   }
-  /* 3. OpenStreetMap (secours + réseaux sociaux + concurrents sans clé) */
+  /* 3. OpenStreetMap */
   if(center){setStep("osm","run","Recherche OpenStreetMap");
    try{const o=await osmLookup(name,data.loc||center,type);data.osm=o;const t=o.me&&o.me.tags||{};
     if(!site&&(t.website||t["contact:website"]))site=t.website||t["contact:website"];
     const socials=[["Facebook",t["contact:facebook"]||t.facebook],["Instagram",t["contact:instagram"]||t.instagram],["TikTok",t["contact:tiktok"]]].filter(x=>x[1]);data.socials=socials.map(s=>({net:s[0],url:s[1]}));
-    if(!place&&o.me){state.biz.phone=state.biz.phone||t.phone||t["contact:phone"]||"";state.biz.address=state.biz.address||[t["addr:housenumber"],t["addr:street"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" ");if(t.opening_hours)setAuto("0-0","info","Horaires OpenStreetMap : "+t.opening_hours+". À comparer avec la fiche Google.","OpenStreetMap")}
+    if(!place&&o.me){state.biz.phone=state.biz.phone||t.phone||t["contact:phone"]||"";state.biz.address=state.biz.address||[t["addr:housenumber"],t["addr:street"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" ");if(t.opening_hours){data.hours=[t.opening_hours];setAuto("0-0","info","Horaires OpenStreetMap : "+t.opening_hours+". À comparer avec la fiche Google.","OpenStreetMap")}}
     if(socials.length)setAuto("2-0","info","Réseaux déclarés sur OpenStreetMap : "+socials.map(s=>s[0]).join(", ")+". Activité à vérifier.","OpenStreetMap");
     setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?"":"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+o.competitors.length+" commerce(s) similaire(s) à proximité.");
    }catch(e){setStep("osm","warn","OpenStreetMap indisponible",e.message)}}
-  /* 4. Position locale & concurrents */
-  if(hasKey()&&keyword){setStep("rank","run","Position sur « "+keyword+" "+city+" »");
-   try{const list=await placesSearch(keyword+" "+city,RANK_FIELDS,20,data.loc||center);const myId=place&&place.id;
-    const rows=list.map((p,i)=>({rank:i+1,id:p.id,name:p.displayName&&p.displayName.text,rating:p.rating,count:p.userRatingCount,url:p.googleMapsUri,website:p.websiteUri||"",address:p.formattedAddress,dist:distKm(data.loc,p.location&&{lat:p.location.latitude,lng:p.location.longitude}),me:!!myId&&p.id===myId||(!myId&&similar(p.displayName&&p.displayName.text,name))}));
-    const mine=rows.find(r=>r.me);data.ranking={query:keyword+" "+city,rank:mine?mine.rank:null,total:rows.length,rows,fetchedAt:data.fetchedAt};
-    setAuto("3-5",mine&&mine.rank<=3?"ok":"issue",mine?"Position "+mine.rank+" sur "+rows.length+" pour « "+keyword+" "+city+" » (recherche Google Places, indicative).":"Absent des "+rows.length+" premiers résultats pour « "+keyword+" "+city+" » (recherche Google Places, indicative).","Google Places, "+data.fetchedAt);
-    const comps=rows.filter(r=>!r.me).slice(0,8);data.competitors=comps;
-    if(comps.length>=3){const ratings=comps.map(c=>c.rating).filter(x=>x!=null).sort((a,b)=>a-b);const counts=comps.map(c=>c.count||0).sort((a,b)=>a-b);const med=a=>a.length?a[Math.floor(a.length/2)]:null;const mR=med(ratings),mC=med(counts);data.median={rating:mR,count:mC};
+  /* 4. Visibilité locale sur plusieurs recherches + concurrents */
+  const queries=keywordList(type,city);state.biz.keyword=$("autoKeyword").value.trim()||queries.map(q=>q.replace(new RegExp("\\s*"+rxEscape(city)+"$","i"),"")).join(", ");
+  if(hasKey()){
+   data.rankings=[];const myId=place&&place.id;const agg={};
+   for(const [qi,q] of queries.entries()){
+    setStep("rank"+qi,"run","Position sur « "+q+" »");
+    try{const list=await placesSearch(q,RANK_FIELDS,20,data.loc||center);
+     const rows=list.map((p,i)=>({rank:i+1,id:p.id,name:p.displayName&&p.displayName.text,rating:p.rating,count:p.userRatingCount,photos:(p.photos||[]).length,url:p.googleMapsUri,website:p.websiteUri||"",address:p.formattedAddress,dist:distKm(data.loc||center,p.location&&{lat:p.location.latitude,lng:p.location.longitude}),me:myId?p.id===myId:similar(p.displayName&&p.displayName.text,name)}));
+     const mine=rows.find(r=>r.me);data.rankings.push({query:q,rank:mine?mine.rank:null,total:rows.length,rows,fetchedAt:data.fetchedAt});
+     rows.filter(r=>!r.me).forEach(r=>{const a=agg[r.id]||(agg[r.id]={...r,bestRank:r.rank,hits:0,ranks:{}});a.hits++;a.ranks[qi]=r.rank;if(r.rank<a.bestRank)a.bestRank=r.rank});
+     setStep("rank"+qi,mine?(mine.rank<=3?"ok":"warn"):"warn",mine?"Position "+mine.rank+" / "+rows.length+" sur « "+q+" »":"Absent des "+rows.length+" premiers sur « "+q+" »","Recherche Google Places, indicative.");
+    }catch(e){setStep("rank"+qi,"err","Recherche « "+q+" » : erreur",e.message)}
+   }
+   const R=data.rankings;data.ranking=R[0]||null;
+   if(R.length){
+    const found=R.filter(r=>r.rank),top3=R.filter(r=>r.rank&&r.rank<=3);
+    data.visibility={n:R.length,found:found.length,top3:top3.length,avg:found.length?found.reduce((s,r)=>s+r.rank,0)/found.length:null};
+    setAuto("3-5",top3.length===R.length?"ok":"issue","Top 3 sur "+top3.length+" recherche(s) sur "+R.length+" · "+R.map(r=>"« "+r.query+" » : "+(r.rank?"n° "+r.rank:"absent")).join(" · ")+" (Google Places, indicatif).","Google Places, "+data.fetchedAt);
+    const comps=Object.values(agg).sort((a,b)=>b.hits-a.hits||a.bestRank-b.bestRank).slice(0,8);data.competitors=comps;
+    if(found.length<R.length){const miss=R.filter(r=>!r.rank);findings.push({sev:3,text:"Le commerce n'apparaît pas dans les "+miss[0].total+" premiers résultats Google sur "+miss.map(r=>"« "+r.query+" »").join(", ")+(comps.length?" — on y trouve notamment "+comps.slice(0,3).map(c=>c.name).join(", "):"")+"."})}
+    const behind=found.filter(r=>r.rank>3);if(behind.length)findings.push({sev:2,text:"Sur "+behind.map(r=>"« "+r.query+" » (n° "+r.rank+")").join(", ")+", le commerce est devancé par "+behind[0].rows.filter(x=>x.rank<behind[0].rank).slice(0,3).map(x=>x.name).join(", ")+"."});
+    if(comps.length>=3){const med=a=>{a=a.filter(x=>x!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};const mR=med(comps.map(c=>c.rating)),mC=med(comps.map(c=>c.count||0)),mP=med(comps.map(c=>c.photos));data.median={rating:mR,count:mC,photos:mP};
      const myR=place&&place.rating,myC=place&&place.userRatingCount;const below=(myR!=null&&mR!=null&&myR<mR)||(myC!=null&&mC!=null&&myC<mC);
      setAuto("3-3",below?"issue":"ok","Médiane des "+comps.length+" concurrents : "+(mR!=null?fr1(mR)+"/5":"—")+" et "+(mC??"—")+" avis"+(myR!=null?" · ce commerce : "+fr1(myR)+"/5 et "+(myC??0)+" avis":"")+".","Google Places, "+data.fetchedAt);
-     if(below)findings.push({sev:2,text:"Les concurrents visibles sur « "+keyword+" » ont en médiane "+(mR!=null?fr1(mR)+"/5":"")+" et "+mC+" avis, contre "+(myR!=null?fr1(myR)+"/5":"pas de note")+" et "+(myC??0)+" avis ici."});}
-    if(!mine)findings.push({sev:3,text:"Sur la recherche « "+keyword+" "+city+" », le commerce n'apparaît pas dans les "+rows.length+" premiers résultats Google"+(comps.length?" (on y trouve "+comps.slice(0,3).map(c=>c.name).join(", ")+")":"")+"."});
-    else if(mine.rank>3)findings.push({sev:2,text:"Sur la recherche « "+keyword+" "+city+" », le commerce arrive en position "+mine.rank+", derrière "+rows.filter(r=>r.rank<mine.rank).slice(0,3).map(c=>c.name).join(", ")+"."});
-    setStep("rank","ok",mine?"Position "+mine.rank+" / "+rows.length+" sur « "+keyword+" »":"Absent des "+rows.length+" premiers sur « "+keyword+" »",comps.length+" concurrent(s) relevé(s) avec leur note et leur nombre d'avis.");
-   }catch(e){setStep("rank","err","Position locale : erreur",e.message)}
-  }else if(!hasKey()){
-   const c=(data.osm&&data.osm.competitors)||[];data.competitors=c.slice(0,8).map((x,i)=>({rank:null,name:x.name,website:x.website,dist:distKm(data.loc||center,x.loc)}));
+     if(below)findings.push({sev:2,text:"Les concurrents visibles ont en médiane "+(mR!=null?fr1(mR)+"/5":"")+" et "+mC+" avis, contre "+(myR!=null?fr1(myR)+"/5":"pas de note")+" et "+(myC??0)+" avis ici."});}
+   }
+  }else{
+   const c=(data.osm&&data.osm.competitors)||[];data.competitors=c.slice(0,8).map(x=>({name:x.name,website:x.website,dist:distKm(data.loc||center,x.loc),hits:0}));
    if(c.length>=3)setAuto("3-3","info",c.length+" commerces similaires à moins de 2,5 km (OpenStreetMap) : "+c.slice(0,5).map(x=>x.name).join(", ")+". Notes à comparer sur Google Maps.","OpenStreetMap");
   }
-  /* 5. Site web */
+  /* 5. Site web du commerce + sites concurrents */
   const u=normalizeUrl(site);
-  if(!u){setAuto("1-0","issue","Aucun site web trouvé (fiche Google et OpenStreetMap).","Audit automatique, "+data.fetchedAt);findings.push({sev:3,text:"Aucun site web n'est associé au commerce."});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
+  const compSites=hasKey()&&$("autoCompSpeed").checked?(data.competitors||[]).filter(c=>normalizeUrl(c.website)).slice(0,3):[];
+  if(compSites.length)setStep("psic","run","Vitesse des sites concurrents",compSites.map(c=>c.name).join(", "));
+  const compJobs=compSites.map(c=>pageSpeed(normalizeUrl(c.website).href,["performance"]).then(r=>{c.perf=r.scores.perf;c.lcp=r.lab.lcp}).catch(()=>{c.perf=null}));
+  if(!u){setAuto("1-0","issue","Aucun site web trouvé (fiche Google et OpenStreetMap).","Audit automatique, "+data.fetchedAt);findings.push({sev:3,text:"Aucun site web n'est associé au commerce."+(compSites.length?" "+compSites.length+" des concurrents principaux en ont un.":"")});setStep("psi","warn","Pas de site web à analyser","Aucun site trouvé : c'est en soi une opportunité.")}
   else{state.biz.site=u.href;setStep("psi","run","Analyse du site sur mobile (PageSpeed)","Compter 20 à 60 secondes.");
    try{const r=await pageSpeed(u.href);data.psi=r;const src="PageSpeed Insights, "+r.fetchedAt;const s=r.scores,a=r.audits;
     setAuto("1-0",a.viewport===false?"issue":"ok",a.viewport===false?"Le site n'est pas configuré pour mobile (balise viewport absente).":"Site présent et configuré pour mobile.",src);
@@ -326,17 +426,20 @@ async function runAuto(){
     setAuto("1-4",seoProbs.length||(s.seo!=null&&s.seo<80)?"issue":"ok","SEO technique "+(s.seo??"—")+"/100"+(seoProbs.length?" · "+seoProbs.join(", "):" · titre, description et indexation corrects"),src);
     if(seoProbs.length)findings.push({sev:2,text:"Référencement du site : "+seoProbs.join(", ")+"."});
     setAuto("1-6",a.https===false||u.protocol==="http:"?"issue":"ok",a.https===false||u.protocol==="http:"?"Le site n'utilise pas entièrement HTTPS.":"Connexion HTTPS active.",src);
-    if(a.https===false)findings.push({sev:3,text:"Le site n'est pas entièrement sécurisé (HTTPS)."});
+    if(a.https===false||u.protocol==="http:")findings.push({sev:3,text:"Le site n'est pas entièrement sécurisé (HTTPS)."});
     setAuto("1-7",s.a11y!=null&&s.a11y<80?"issue":"ok","Accessibilité "+(s.a11y??"—")+"/100"+(a.alt===false?" · images sans texte alternatif":""),src);
-    setAuto("1-8",r.tracking.some(t=>/Meta/.test(t))?"ok":"issue",r.tracking.length?"Outils détectés : "+r.tracking.join(", ")+(r.tracking.some(t=>/Meta/.test(t))?"":" · Pixel Meta non détecté."):"Aucun outil de mesure publicitaire détecté sur la page d'accueil.",src);
-    if(!r.tracking.some(t=>/Meta/.test(t)))findings.push({sev:1,text:"Aucun Pixel Meta détecté : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."});
+    const meta=r.tracking.some(t=>/Meta/.test(t));
+    setAuto("1-8",meta?"ok":"issue",r.tracking.length?"Outils détectés : "+r.tracking.join(", ")+(meta?"":" · Pixel Meta non détecté."):"Aucun outil de mesure publicitaire détecté sur la page d'accueil.",src);
+    if(!meta)findings.push({sev:1,text:"Aucun Pixel Meta détecté : les futures publicités Facebook / Instagram ne pourraient pas être mesurées."});
     setAuto("1-5","info","À valider avec le test des résultats enrichis de Google (lien dans la boîte à outils).",src);
     setStep("psi","ok","Site analysé : performance "+(s.perf??"—")+" · SEO "+(s.seo??"—")+" · accessibilité "+(s.a11y??"—")+" · bonnes pratiques "+(s.bp??"—"),r.url);
    }catch(e){setStep("psi","err","Analyse du site impossible",e.status===429?"Quota PageSpeed gratuit épuisé : ajoutez votre clé Google dans Réglages, puis relancez.":e.message)}}
-  /* 6. Visibilité IA : préparer la campagne */
+  if(compJobs.length){await Promise.all(compJobs);const done=compSites.filter(c=>c.perf!=null);setStep("psic",done.length?"ok":"warn",done.length?"Vitesse comparée avec "+done.length+" site(s) concurrent(s)":"Vitesse des concurrents non mesurée",done.map(c=>c.name+" : "+c.perf+"/100").join(" · "));
+   const mine=data.psi&&data.psi.scores.perf;const faster=done.filter(c=>mine!=null&&c.perf>mine);if(mine!=null&&faster.length)findings.push({sev:2,text:faster.length+" concurrent(s) sur "+done.length+" ont un site plus rapide sur mobile ("+faster.map(c=>c.name+" : "+c.perf+"/100").join(", ")+", contre "+mine+"/100)."});}
+  /* 6. Visibilité IA */
   setStep("ai","run","Préparation des tests IA");
-  $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=keyword||type;$("campaignService").value="";
-  if(!state.campaignPrompts.length)getCampaignPrompts(true);
+  $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=typeInfo(type).kw||type;$("campaignService").value="";
+  if(!state.campaignPrompts.length||state.campaign.name!==name)getCampaignPrompts(true);
   setStep("ai","ok","6 questions IA prêtes","Ouvrez « Visibilité IA » : chaque bouton ouvre l'assistant avec la question déjà remplie.");
   aiAutoChecks();
   data.findings=findings.sort((a,b)=>b.sev-a.sev);
@@ -344,7 +447,7 @@ async function runAuto(){
   hydrateBizFields();
   state.pitch=buildPitch();
   persistLocal();
-  renderClientSelect();renderChecklist();update();renderAutoSummary();$("pitchText").value=state.pitch;renderTools();
+  renderClientSelect();renderChecklist();update();renderAutoSummary();renderPlaceChoice();$("pitchText").value=state.pitch;renderTools();
   toast("Audit automatique terminé.");
  }catch(e){setStep("fatal","err","Erreur inattendue",e.message)}
  finally{running=false;$("runAuto").disabled=false;$("runAuto").textContent="⚡ Relancer l'audit automatique";state.data.steps=steps;persistLocal()}
@@ -353,44 +456,97 @@ function hydrateBizFields(){fields.forEach(id=>{if(state.biz[id]!==undefined&&st
 
 function kpiBox(v,label,cls){return '<div class="kpi '+(cls||"")+'"><b>'+v+'</b><span>'+label+'</span></div>'}
 function cwvLabel(m,unit){if(!m)return "—";const v=unit==="s"?fr1(m.p75/1000)+" s":unit==="cls"?fr1(m.p75/100):m.p75+" ms";return v+" ("+({FAST:"bon",AVERAGE:"moyen",SLOW:"mauvais"}[m.cat]||"—")+")"}
-function dataBlocks(forReport){
- const d=state.data||{};let h="";
- if(!d.fetchedAt)return "";
- const p=d.place,ps=d.psi,rk=d.ranking;
- h+='<div class="kpis">'+kpiBox(p&&p.rating!=null?fr1(p.rating)+"/5":"—","Note Google",p&&p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p&&p.userRatingCount!=null?p.userRatingCount:"—","Avis Google",p&&p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox(rk?(rk.rank?rk.rank+"<small style=font-size:12px> / "+rk.total+"</small>":"Absent"):"—","Position « "+esc(rk?rk.query:"recherche locale")+" »",rk?(rk.rank&&rk.rank<=3?"good":rk.rank&&rk.rank<=10?"mid":"bad"):"")+kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":"—","Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):"")+'</div>';
- if(d.findings&&d.findings.length)h+='<h3 style="margin-top:14px">Constats clés</h3><ul class="findings">'+d.findings.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ul>';
- if(ps){h+='<h3 style="margin-top:14px">Site web sur mobile</h3><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">'+(ps.shot?'<img class="shot" src="'+esc(ps.shot)+'" alt="Capture mobile du site">':'')+'<div style="flex:1 1 260px;min-width:0"><div class="kpis">'+kpiBox(ps.scores.perf??"—","Performance",scoreColor(ps.scores.perf))+kpiBox(ps.scores.seo??"—","SEO",scoreColor(ps.scores.seo))+kpiBox(ps.scores.a11y??"—","Accessibilité",scoreColor(ps.scores.a11y))+kpiBox(ps.scores.bp??"—","Bonnes pratiques",scoreColor(ps.scores.bp))+'</div><p class="muted" style="margin:8px 0 0">Affichage du contenu principal : <b>'+esc(ps.lab.lcp||"—")+'</b> · Stabilité visuelle (CLS) : <b>'+esc(ps.lab.cls||"—")+'</b> · Blocage : <b>'+esc(ps.lab.tbt||"—")+'</b><br>Données réelles des visiteurs (Core Web Vitals) : '+(ps.field.lcp?"LCP "+cwvLabel(ps.field.lcp,"s")+" · INP "+cwvLabel(ps.field.inp,"ms")+" · CLS "+cwvLabel(ps.field.cls,"cls"):"pas assez de trafic mesuré par Chrome")+'<br>Outils de suivi : '+esc(ps.tracking.length?ps.tracking.join(", "):"aucun détecté")+'<br><small>'+esc(ps.url)+' · '+esc(ps.fetchedAt)+'</small></p></div></div>'}
- const comps=d.competitors||[];
- if(comps.length||rk){const rows=(rk&&rk.rows||comps).slice(0,10);h+='<h3 style="margin-top:14px">Concurrents sur « '+esc(rk?rk.query:"la zone")+' »</h3><div class="tablewrap"><table class="t"><thead><tr><th>#</th><th>Établissement</th><th>Note</th><th>Avis</th><th>Distance</th><th>Site</th></tr></thead><tbody>'+rows.map(r=>'<tr class="'+(r.me?"me":"")+'"><td>'+(r.rank||"—")+'</td><td>'+(r.url&&!forReport?'<a href="'+esc(safeUrl(r.url))+'" target="_blank" rel="noopener">'+esc(r.name)+'</a>':esc(r.name))+(r.me?" (audité)":"")+'</td><td>'+(r.rating!=null?fr1(r.rating):"—")+'</td><td>'+(r.count??"—")+'</td><td>'+(r.dist!=null?fr1(r.dist)+" km":"—")+'</td><td>'+(r.website?"Oui":"—")+'</td></tr>').join("")+(rk&&!rk.rank&&p?'<tr class="me"><td>—</td><td>'+esc(p.displayName&&p.displayName.text)+' (audité)</td><td>'+(p.rating!=null?fr1(p.rating):"—")+'</td><td>'+(p.userRatingCount??"—")+'</td><td>0 km</td><td>'+(p.websiteUri?"Oui":"—")+'</td></tr>':"")+'</tbody></table></div><p class="muted">Ordre des résultats de la recherche Google Places au '+esc(rk?rk.fetchedAt:d.fetchedAt)+'. Les résultats Maps réels varient selon la position et l\'historique de chaque personne.</p>'}
- if(d.reviews&&d.reviews.length){h+='<h3 style="margin-top:14px">Avis Google les plus pertinents</h3>'+d.reviews.map(r=>'<div class="review"><b>'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join("")}
+function verdict(score){return score===null?["Audit à compléter","Lancez l'audit automatique ou cochez les contrôles."]:score>=85?["Bonne visibilité","Les fondamentaux sont en place ; quelques optimisations restent possibles."]:score>=60?["Visibilité à renforcer","Plusieurs points freinent la découverte du commerce par de nouveaux clients."]:["Visibilité insuffisante","Des points importants empêchent le commerce d'être trouvé et choisi en ligne."]}
+function gauge(score,onDark){
+ const r=46,c=2*Math.PI*r,v=score==null?0:Math.max(0,Math.min(100,score)),col=score==null?"#9aa3b5":score>=85?"#16765d":score>=60?"#d99a1e":"#c23b50";
+ const track=onDark?"#ffffff33":"#eceff5",ink=onDark?"#fff":"#17171c",sub=onDark?"#e6e3ff":"#697386";const [t,sx]=verdict(score);
+ return '<div class="gauge"><svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Score '+(score??"non calculé")+' sur 100"><circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+track+'" stroke-width="11"/><circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+(onDark?"#ffd56b":col)+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+(c*v/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" font-size="30" font-weight="850" fill="'+ink+'" font-family="system-ui,sans-serif">'+(score??"—")+'</text><text x="60" y="82" text-anchor="middle" font-size="11" fill="'+sub+'" font-family="system-ui,sans-serif">/ 100</text></svg><div class="verdict"><b>'+t+'</b><span>'+sx+'<br>Score indicatif calculé sur les contrôles effectués.</span></div></div>';
+}
+function hbars(title,sub,items,fmt){
+ const vals=items.map(i=>i.value).filter(v=>v!=null&&!isNaN(v));if(!vals.length)return "";
+ const max=Math.max(...vals,1);
+ return '<div class="chartbox"><h4>'+esc(title)+'</h4>'+(sub?'<p>'+esc(sub)+'</p>':'')+'<div class="hbars">'+items.map(i=>'<div class="hbar'+(i.me?" me":"")+'" title="'+esc(i.label+" : "+(i.value==null?"non mesuré":fmt(i.value)))+'"><span class="lab">'+esc(i.label)+'</span><span class="trk"><span class="fill" style="display:block;width:'+(i.value==null?0:Math.max(1,i.value/max*100)).toFixed(1)+'%"></span></span><span class="val">'+(i.value==null?"—":fmt(i.value))+'</span></div>').join("")+'</div></div>';
+}
+function kpiRow(){
+ const d=state.data||{},p=d.place,ps=d.psi,vis=d.visibility,rk=d.ranking;
+ return '<div class="kpis">'+kpiBox(p&&p.rating!=null?fr1(p.rating)+"/5":"—","Note Google",p&&p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p&&p.userRatingCount!=null?p.userRatingCount:"—","Avis Google",p&&p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")
+ +(vis&&vis.n>1?kpiBox(vis.top3+'<small style="font-size:12px"> / '+vis.n+'</small>',"Recherches où il est dans le top 3",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):kpiBox(rk?(rk.rank?rk.rank+'<small style="font-size:12px"> / '+rk.total+'</small>':"Absent"):"—","Position « "+esc(rk?rk.query:"recherche locale")+" »",rk?(rk.rank&&rk.rank<=3?"good":rk.rank&&rk.rank<=10?"mid":"bad"):""))
+ +kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(d.fetchedAt&&!normalizeUrl(state.biz.site)?"Aucun site":"—"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(d.fetchedAt&&!normalizeUrl(state.biz.site)?"bad":""))+'</div>';
+}
+function findingsHtml(){const f=(state.data&&state.data.findings)||[];return f.length?'<ul class="findings">'+f.map(x=>'<li>'+esc(x.text)+'</li>').join("")+'</ul>':''}
+function strengths(){return keys.filter(k=>state.auto[k]&&state.auto[k].status==="ok"||(!state.auto[k]&&state.checks[k]&&!state.issues[k])).map(k=>{const [gi,ii]=k.split("-").map(Number);return {it:groups[gi].items[ii],ev:state.auto[k]&&state.auto[k].evidence}})}
+function siteBlock(){
+ const ps=(state.data||{}).psi;if(!ps)return "";
+ return '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">'+(ps.shot?'<img class="shot" src="'+esc(ps.shot)+'" alt="Capture mobile du site">':'')+'<div style="flex:1 1 260px;min-width:0"><div class="kpis">'+kpiBox(ps.scores.perf??"—","Performance",scoreColor(ps.scores.perf))+kpiBox(ps.scores.seo??"—","SEO",scoreColor(ps.scores.seo))+kpiBox(ps.scores.a11y??"—","Accessibilité",scoreColor(ps.scores.a11y))+kpiBox(ps.scores.bp??"—","Bonnes pratiques",scoreColor(ps.scores.bp))+'</div><p class="muted" style="margin:8px 0 0">Affichage du contenu principal : <b>'+esc(ps.lab.lcp||"—")+'</b> · Stabilité visuelle : <b>'+esc(ps.lab.cls||"—")+'</b> · Blocage : <b>'+esc(ps.lab.tbt||"—")+'</b><br>Mesures réelles des visiteurs (Core Web Vitals) : '+(ps.field.lcp?"LCP "+cwvLabel(ps.field.lcp,"s")+" · INP "+cwvLabel(ps.field.inp,"ms")+" · CLS "+cwvLabel(ps.field.cls,"cls"):"pas assez de trafic mesuré par Chrome")+'<br>Outils de suivi : '+esc(ps.tracking.length?ps.tracking.join(", "):"aucun détecté")+'<br><small>'+esc(ps.url)+' · '+esc(ps.fetchedAt)+'</small></p></div></div>';
+}
+function compBlock(forReport){
+ const d=state.data||{},p=d.place,comps=d.competitors||[],R=d.rankings||(d.ranking?[d.ranking]:[]);
+ if(!comps.length&&!R.length)return "";
+ const myName=(p&&p.displayName&&p.displayName.text)||state.biz.name||"Commerce audité";
+ let h="";
+ if(R.length)h+='<div class="box" style="margin-top:6px"><h3>Position sur les recherches clients</h3>'+R.map(r=>'<div class="qrow"><span>« '+esc(r.query)+' »</span><b>'+(r.rank?"n° "+r.rank+" / "+r.total:"absent des "+r.total+" premiers")+'</b></div>').join("")+'<p class="muted" style="margin:6px 0 0">Recherche Google Places du '+esc(d.fetchedAt||"")+'. Les résultats Maps réels varient selon la position et l’historique de chaque personne.</p></div>';
+ const top=comps.slice(0,6);
+ if(p&&top.length){
+  const me={label:myName,me:true},rows=[me,...top.map(c=>({label:c.name,c}))];
+  const mk=(f,mev)=>rows.map(r=>({label:r.label,me:r.me,value:r.me?mev:f(r.c)}));
+  h+='<div class="charts">'+hbars("Nombre d’avis Google","Plus d’avis = plus de confiance et de visibilité",mk(c=>c.count??null,p.userRatingCount??null),v=>String(Math.round(v)))
+   +hbars("Note Google","Sur 5",mk(c=>c.rating??null,p.rating??null),v=>fr1(v))
+   +hbars("Photos publiées","Google en renvoie 10 au maximum",mk(c=>c.photos??null,(p.photos||[]).length),v=>v>=10?"10+":String(v))
+   +(top.some(c=>c.perf!=null)||d.psi?hbars("Vitesse du site sur mobile","Score PageSpeed / 100",mk(c=>c.perf??null,d.psi&&d.psi.scores.perf),v=>String(v)):"")+'</div>';
+ }
+ if(comps.length){h+='<h3 style="margin-top:14px">Concurrents les plus visibles</h3><div class="tablewrap"><table class="t"><thead><tr><th>Établissement</th><th>Meilleure position</th><th>Note</th><th>Avis</th><th>Photos</th><th>Site</th><th>Distance</th></tr></thead><tbody>'
+  +(p?'<tr class="me"><td>'+esc(myName)+' (audité)</td><td>'+(R.some(r=>r.rank)?"n° "+Math.min(...R.filter(r=>r.rank).map(r=>r.rank)):"absent")+'</td><td>'+(p.rating!=null?fr1(p.rating):"—")+'</td><td>'+(p.userRatingCount??"—")+'</td><td>'+((p.photos||[]).length>=10?"10+":(p.photos||[]).length)+'</td><td>'+(d.psi?d.psi.scores.perf+"/100":p.websiteUri?"Oui":"Non")+'</td><td>—</td></tr>':'')
+  +comps.map(c=>'<tr><td>'+(c.url&&!forReport?'<a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.name)+'</a>':esc(c.name))+'</td><td>'+(c.bestRank?"n° "+c.bestRank+(c.hits>1?" ("+c.hits+" recherches)":""):"—")+'</td><td>'+(c.rating!=null?fr1(c.rating):"—")+'</td><td>'+(c.count??"—")+'</td><td>'+(c.photos!=null?(c.photos>=10?"10+":c.photos):"—")+'</td><td>'+(c.perf!=null?c.perf+"/100":c.website?"Oui":"Non")+'</td><td>'+(c.dist!=null?fr1(c.dist)+" km":"—")+'</td></tr>').join("")+'</tbody></table></div>'}
  return h;
 }
-function renderAutoSummary(){const h=dataBlocks(false);$("autoSummary").innerHTML=h||'<p class="muted">Les résultats apparaîtront ici après l\'analyse.</p>'}
+function googleBlock(){
+ const d=state.data||{},p=d.place;if(!p)return "";
+ return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"—","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p.userRatingCount??"—","Avis",p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox((d.photos>=10?"10+":d.photos??"—"),"Photos",d.photos>=10?"good":d.photos>=5?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Depuis le dernier avis",d.daysSinceReview==null?"":d.daysSinceReview<=30?"good":d.daysSinceReview<=60?"mid":"bad")+'</div>'
+ +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
+ +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
+}
+function renderAutoSummary(){
+ const d=state.data||{};
+ if(!d.fetchedAt){$("autoSummary").innerHTML='<p class="muted">Les résultats apparaîtront ici après l\'analyse.</p>';return}
+ $("autoSummary").innerHTML=kpiRow()+(d.findings&&d.findings.length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')+compBlock(false)+(d.psi?'<h3 style="margin-top:14px">Site web sur mobile</h3>'+siteBlock():'')+'<div class="actions" style="margin-top:14px"><button class="btn primary" data-go2="report">Voir le rapport complet →</button><button class="btn" data-go2="pitch">Rédiger le message prospect →</button></div>';
+ $("autoSummary").querySelectorAll("[data-go2]").forEach(b=>b.onclick=()=>nav(b.dataset.go2));
+}
 
 /* ---------- Rapport ---------- */
+function sec(n,title,body,cls){return '<section class="sec'+(cls?" "+cls:"")+'"><h2><span class="num">'+n+'</span>'+esc(title)+'</h2>'+body+'</section>'}
 function renderReport(){
  read();
  const totals=calc(),b=state.biz,ai=state.aiTests,d=state.data||{};
- const issues=issuesList();
- const groupsHtml=groups.map((g,gi)=>{const rows=g.items.map((it,ii)=>({it,k:gi+"-"+ii})).filter(x=>state.checks[x.k]||state.issues[x.k]);
-  return rows.length?'<h3>'+esc(g.title)+'</h3><ul>'+rows.map(x=>'<li>'+esc(x.it)+' — '+(state.issues[x.k]?'<b>À améliorer</b>':'Vérifié')+(state.auto[x.k]?' <span class="muted">('+esc(state.auto[x.k].evidence)+')</span>':'')+'</li>').join("")+'</ul>':""}).join("");
- const completed=ai.filter(t=>t.presence==="yes"||t.presence==="no");
- const rate=completed.length?Math.round(completed.filter(t=>t.presence==="yes").length/completed.length*100):null;
- const platforms=AI_TARGETS.map(a=>{const ts=completed.filter(t=>t.platform===a.name);const yes=ts.filter(t=>t.presence==="yes").length;return '<li>'+esc(a.name)+' : '+(ts.length?Math.round(yes/ts.length*100)+'% de présence ('+yes+'/'+ts.length+')':'non mesuré')+'</li>'}).join("");
- const aiTable=ai.length?'<div class="tablewrap"><table class="t"><thead><tr><th>IA / date</th><th>Question</th><th>Résultat</th><th>Concurrents / source</th></tr></thead><tbody>'+ai.map(t=>'<tr><td>'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td>'+esc(t.prompt)+'</td><td>'+(t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · position "+esc(t.rank):"")+(t.notes?"<br>"+esc(t.notes):"")+'</td><td>'+esc(t.competitors||"—")+(t.source?"<br>"+esc(t.source):"")+'</td></tr>').join("")+'</tbody></table></div>':'<p>Aucun test IA enregistré pour le moment.</p>';
- const aiHtml='<h2>Visibilité observée dans les assistants IA</h2><p>Taux de présence : '+(rate===null?"non calculé":rate+"%")+' ('+completed.length+' réponses oui/non sur '+ai.length+' tests). Les résultats varient selon la question, la date et le contexte.</p><ul>'+platforms+'</ul>'+aiTable;
- const plan=issues.length?issues.map((p,i)=>{const l=prioLabel(p);return '<div class="reco"><b>'+(i+1)+'. '+esc(p.it)+'</b>'+esc(p.reco)+(p.evidence?'<br><small>Constat : '+esc(p.evidence)+'</small>':'')+'<div class="tags"><span class="badge '+l[1]+'">'+l[0]+'</span><span class="badge b-auto">Impact '+"●".repeat(p.impact)+"○".repeat(3-p.impact)+'</span><span class="badge b-auto">Effort '+"●".repeat(p.effort)+"○".repeat(3-p.effort)+'</span>'+(p.offer?'<span class="badge b-mid">AffiAds : '+esc(p.offer)+'</span>':'')+'</div></div>'}).join(""):"<p>Aucun point signalé dans la checklist.</p>";
- const gs=groupScores();
- const sources=[d.place&&"Google Places API (fiche, avis, concurrents)",d.psi&&"Google PageSpeed Insights / Lighthouse (site mobile)",d.osm&&"OpenStreetMap (Nominatim, Overpass)",ai.length&&"Tests manuels dans les assistants IA"].filter(Boolean);
- $("report").innerHTML='<div class="reporthead"><img src="assets/logo-192.png" alt=""><div><div class="eyebrow">AffiAds · Audit de visibilité et communication</div><h1 style="margin:2px 0">Rapport d’audit 360°</h1></div></div><h2>'+esc(b.name||"Commerce à renseigner")+'</h2><p class="muted">'+esc(b.type||"Type non renseigné")+' · '+esc(b.city||"Ville non renseignée")+' · '+esc(b.date||"Date non renseignée")+(d.fetchedAt?' · données collectées le '+esc(d.fetchedAt):'')+'</p><hr>'
- +'<div class="kpis">'+kpiBox(totals.score===null?"—":totals.score+"<small style=font-size:12px>/100</small>","Score indicatif",scoreColor(totals.score))+kpiBox(totals.n+"<small style=font-size:12px>/"+keys.length+"</small>","Contrôles effectués")+kpiBox(totals.issues,"Points à améliorer",totals.issues?"bad":"good")+kpiBox(issues.filter(p=>prioLabel(p)[0]==="Gain rapide").length,"Gains rapides","good")+'</div>'
- +'<h2>Score par catégorie</h2><div class="catbars">'+gs.map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div style="width:'+(g.score||0)+'%"></div></div></div>').join("")+'</div>'
- +'<h2>Informations du commerce</h2><ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Site : '+(safeUrl(b.site)?'<a href="'+esc(safeUrl(b.site))+'">'+esc(b.site)+'</a>':"aucun site trouvé")+'</li><li>Fiche Google : '+(safeUrl(b.maps)?'<a href="'+esc(safeUrl(b.maps))+'">ouvrir la fiche</a>':"non renseignée")+'</li><li>Note Google : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li>'+((d.socials||[]).length?'<li>Réseaux déclarés : '+d.socials.map(s=>esc(s.net)).join(", ")+'</li>':'')+'</ul>'
- +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"")
- +(d.fetchedAt?'<h2>Données collectées automatiquement</h2>'+dataBlocks(true):"")
- +'<h2>Plan d’action recommandé</h2><p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre.</p>'+plan
- +aiHtml+'<h2>Détail des contrôles</h2>'+groupsHtml+'<h2>Observations complémentaires</h2><p>'+esc(state.notes||"Aucune note complémentaire.")+'</p>'
- +'<div class="notice"><b>Sources et limites.</b> '+(sources.length?"Sources : "+esc(sources.join(" ; "))+". ":"")+'Les données publiques sont datées et peuvent évoluer. La position locale provient d’une recherche Google Places et reste indicative : les résultats Maps varient selon la position et l’historique de chaque personne. Les tests IA sont des observations ponctuelles. Les statistiques privées (vues de la fiche, Search Console) nécessitent l’accès du propriétaire. Aucun résultat n’est garanti.</div>';
+ const issues=issuesList(),good=strengths();
+ const [vt]=verdict(totals.score);
+ const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AFFIADS · AUDIT 360°</div><div class="eyebrow" style="margin-top:18px">Audit de visibilité en ligne</div><h1>'+esc(b.name||"Commerce à renseigner")+'</h1><div class="meta">'+esc(b.type||"")+(b.city?" · "+esc(b.city):"")+" · audit du "+esc(b.date||today())+(d.fetchedAt?" · données collectées le "+esc(d.fetchedAt):"")+'</div>'+gauge(totals.score,true)+kpiRow()+'<div class="coverfoot">Rapport préparé par '+esc((settings.senderName?settings.senderName+" — ":"")+(settings.senderLine||"AffiAds"))+(settings.senderContact?" · "+esc(settings.senderContact):"")+'</div></div>';
+ const syn='<p>'+esc(b.name||"Le commerce")+' obtient un score indicatif de <b>'+(totals.score??"—")+'/100</b> ('+esc(vt.toLowerCase())+'), calculé sur '+totals.n+' contrôles. '+(issues.length?(()=>{const q=issues.filter(p=>prioLabel(p)[0]==="Gain rapide").length;return issues.length+' point(s) à améliorer ont été identifiés'+(q?', dont '+q+' gain(s) rapide(s) à faible effort.':'.')})():'Aucun point bloquant n’a été relevé.')+'</p>'
+  +'<div class="twocol"><div class="box good"><h3>Ce qui fonctionne</h3>'+(good.length?'<ul>'+good.slice(0,5).map(g=>'<li><b>'+esc(g.it)+'</b>'+(g.ev?'<br><span class="muted">'+esc(g.ev)+'</span>':'')+'</li>').join("")+'</ul>':'<p class="muted">À confirmer après vérification.</p>')+'</div><div class="box bad"><h3>Priorités</h3>'+(issues.length?'<ul>'+issues.slice(0,5).map(p=>'<li><b>'+esc(p.it)+'</b><br><span class="muted">'+esc(p.reco)+'</span></li>').join(""):'<p class="muted">Aucune priorité relevée.</p>')+'</div></div>'
+  +((d.findings||[]).length?'<h3 style="margin-top:14px">Constats clés</h3>'+findingsHtml():'')
+  +'<h3 style="margin-top:14px">Score par catégorie</h3><div class="catbars">'+groupScores().map(g=>'<div class="catbar">'+esc(g.title)+' — <b>'+(g.score===null?"non évalué":g.score+"/100")+'</b><div class="bar"><div class="s-'+(scoreColor(g.score)||"good")+'" style="width:'+(g.score||0)+'%"></div></div></div>').join("")+'</div>'
+  +(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"");
+ const gHtml=d.place?googleBlock():'<ul><li>Adresse : '+esc(b.address||"non relevée")+'</li><li>Téléphone : '+esc(b.phone||"non relevé")+'</li><li>Fiche Google : '+(safeUrl(b.maps)?'<a href="'+esc(safeUrl(b.maps))+'">ouvrir la fiche</a>':"non renseignée")+'</li><li>Note : '+(b.rating!==""&&b.rating!=null&&!isNaN(b.rating)?fr1(b.rating):"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul>';
+ const social=(d.socials||[]).length?'<p>Réseaux déclarés : '+d.socials.map(s=>esc(s.net)).join(", ")+'.</p>':'';
+ const siteHtml=d.psi?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' — analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce.')+'</p>';
+ const completed=ai.filter(t=>t.presence==="yes"||t.presence==="no"),rate=completed.length?Math.round(completed.filter(t=>t.presence==="yes").length/completed.length*100):null;
+ const aiItems=AI_TARGETS.map(a=>{const ts=completed.filter(t=>t.platform===a.name);const yes=ts.filter(t=>t.presence==="yes").length;return {label:a.name,value:ts.length?Math.round(yes/ts.length*100):null}});
+ const aiHtml='<p>Taux de présence : <b>'+(rate===null?"non mesuré":rate+"%")+'</b> ('+completed.length+' réponse(s) oui/non sur '+ai.length+' test(s)). Chaque test est une observation datée : les réponses varient selon la question et le moment.</p>'+(completed.length?'<div class="charts">'+hbars("Présence par assistant","% des tests où le commerce est cité",aiItems,v=>v+" %")+'</div>':'')
+  +(ai.length?'<div class="tablewrap" style="margin-top:10px"><table class="t"><thead><tr><th>IA / date</th><th>Question</th><th>Résultat</th><th>Concurrents / source</th></tr></thead><tbody>'+ai.map(t=>'<tr><td>'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td>'+esc(t.prompt)+'</td><td>'+(t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · position "+esc(t.rank):"")+(t.notes?"<br>"+esc(t.notes):"")+'</td><td>'+esc(t.competitors||"—")+(t.source?"<br>"+esc(t.source):"")+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Aucun test réalisé pour le moment : 6 questions sont prêtes dans « Visibilité IA ».</p>');
+ const buckets=[["Gain rapide","À faire tout de suite"],["Priorité haute","Dans le mois"],["Priorité moyenne","Ensuite"],["À planifier","À planifier"]];
+ const plan=issues.length?buckets.map(([lab,title])=>{const its=issues.filter(p=>prioLabel(p)[0]===lab);return its.length?'<h3 style="margin-top:12px">'+esc(title)+'</h3>'+its.map(p=>{const l=prioLabel(p);return '<div class="reco"><b>'+esc(p.it)+'</b>'+esc(p.reco)+(p.evidence?'<br><small>Constat : '+esc(p.evidence)+'</small>':'')+'<div class="tags"><span class="badge '+l[1]+'">'+l[0]+'</span><span class="badge b-auto">Impact '+"●".repeat(p.impact)+"○".repeat(3-p.impact)+'</span><span class="badge b-auto">Effort '+"●".repeat(p.effort)+"○".repeat(3-p.effort)+'</span>'+(p.offer?'<span class="badge b-mid">AffiAds : '+esc(p.offer)+'</span>':'')+'</div></div>'}).join(""):""}).join(""):"<p>Aucun point signalé.</p>";
+ const detail=groups.map((g,gi)=>{const rows=g.items.map((it,ii)=>({it,k:gi+"-"+ii})).filter(x=>state.checks[x.k]||state.issues[x.k]);return rows.length?'<h3>'+esc(g.title)+'</h3><ul>'+rows.map(x=>'<li>'+esc(x.it)+' — '+(state.issues[x.k]?'<b>À améliorer</b>':'Vérifié')+(state.auto[x.k]?' <span class="muted">('+esc(state.auto[x.k].evidence)+')</span>':'')+'</li>').join("")+'</ul>':""}).join("")||'<p class="muted">Aucun contrôle renseigné.</p>';
+ const sources=[d.place&&"Google Places API (fiche, avis, concurrents)",d.psi&&"Google PageSpeed Insights / Lighthouse (site mobile)",d.osm&&"OpenStreetMap (Nominatim, Overpass)",ai.length&&"tests dans les assistants IA"].filter(Boolean);
+ const sender=settings.senderName||"",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"";
+ const closing='<div class="closing"><b style="font-size:16px">Prochaine étape</b><p class="muted" style="margin:6px 0 10px">Échange de 10 minutes pour parcourir ce rapport et choisir les actions prioritaires. Démo et devis gratuits, sans engagement.</p><div class="brandline" style="display:flex;align-items:center;gap:10px"><img src="assets/logo-64.png" alt="" width="36" height="36"><div><b>'+esc(sender?sender+" — ":"")+esc(line)+'</b>'+(contact?'<br><span class="muted">'+esc(contact)+'</span>':'')+'</div></div></div>';
+ $("report").innerHTML=cover
+  +sec(1,"Synthèse",syn)
+  +sec(2,"Fiche Google et présence locale",gHtml+social)
+  +sec(3,"Site web sur mobile",siteHtml)
+  +sec(4,"Concurrence et visibilité locale",compBlock(true)||'<p class="muted">Concurrence non analysée (ajoutez une clé Google pour comparer notes, avis et positions).</p>')
+  +sec(5,"Visibilité dans les assistants IA",aiHtml)
+  +sec(6,"Plan d’action recommandé",'<p class="muted">Classé par priorité : impact attendu sur la visibilité, puis effort de mise en œuvre.</p>'+plan,"newpage")
+  +sec(7,"Détail des contrôles",detail+'<h3>Observations complémentaires</h3><p>'+esc(state.notes||"Aucune note complémentaire.")+'</p>')
+  +'<div class="notice" style="margin-top:18px"><b>Sources et limites.</b> '+(sources.length?"Sources : "+esc(sources.join(" ; "))+". ":"")+'Les données publiques sont datées et peuvent évoluer. Les positions proviennent de recherches Google Places et restent indicatives. Les statistiques privées (vues de la fiche, Search Console) nécessitent l’accès du propriétaire. Aucun résultat n’est garanti.</div>'+closing;
 }
 
 /* ---------- Message prospect ---------- */
@@ -509,9 +665,16 @@ function bind(){
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));
  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));
  fields.forEach(id=>$(id).addEventListener("input",()=>{read();renderReport();persistLocal()}));
- $("autoType").addEventListener("change",()=>{if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=typeInfo($("autoType").value).kw});
+ $("autoType").addEventListener("change",()=>{$("autoType").dataset.touched="1";if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords($("autoType").value)});
  $("autoKeyword").addEventListener("input",()=>$("autoKeyword").dataset.touched="1");
- ["autoName","autoCity"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter")runAuto()}));
+ $("autoName").addEventListener("input",()=>{if(state.biz.placeId||state.biz.osmPick)clearPick();queueSuggest()});
+ $("autoCity").addEventListener("input",()=>{if(!state.biz.placeId&&!state.biz.osmPick)queueSuggest()});
+ $("autoName").addEventListener("blur",()=>setTimeout(closeSuggest,150));
+ $("autoName").addEventListener("keydown",e=>{const open=!$("suggest").classList.contains("hidden")&&suggestItems.length;
+  if(open&&(e.key==="ArrowDown"||e.key==="ArrowUp")){e.preventDefault();suggestIdx=(suggestIdx+(e.key==="ArrowDown"?1:-1)+suggestItems.length)%suggestItems.length;renderSuggest();$("autoName").setAttribute("aria-activedescendant","sg"+suggestIdx);return}
+  if(e.key==="Escape"){closeSuggest();return}
+  if(e.key==="Enter"){e.preventDefault();if(open&&suggestIdx>=0)pickSuggestion(suggestItems[suggestIdx]);else runAuto()}});
+ $("autoCity").addEventListener("keydown",e=>{if(e.key==="Enter")runAuto()});
  $("runAuto").onclick=runAuto;$("autoToReport").onclick=()=>nav("report");
  $("notes").addEventListener("input",()=>{update();persistLocal()});
  $("save").onclick=()=>{read();toast(persistLocal()?"Audit enregistré dans ce navigateur.":"Sauvegarde impossible : exportez vos audits depuis Réglages.");renderClientSelect()};

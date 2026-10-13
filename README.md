@@ -4,15 +4,17 @@ Application web (ordinateur, tablette, téléphone) qui réalise **automatiqueme
 
 ## Ce que fait l'audit automatique
 
-Saisissez le **nom du commerce** et la **ville**, puis cliquez sur « Lancer l'audit automatique ». L'application :
+Tapez le **nom du commerce** : des **suggestions** (Google, ou OpenStreetMap sans clé) apparaissent et permettent de choisir l'établissement exact ; le type de commerce est détecté automatiquement. Cliquez ensuite sur « Lancer l'audit automatique ». L'application :
 
 1. **Trouve la fiche Google** : adresse, téléphone, horaires, catégorie, statut (ouvert/fermé), photos, note, nombre d'avis, avis récents, doublons éventuels.
-2. **Mesure la position locale** sur une recherche client (ex. « restaurant Narbonne ») et relève les **concurrents** avec leur note et leur nombre d'avis.
+2. **Mesure la position locale** sur jusqu'à **3 recherches clients** (ex. « restaurant Narbonne », « meilleur restaurant Narbonne ») et relève les **concurrents** les plus visibles : note, avis, photos, et **vitesse de leur site** comparée à celle du commerce.
 3. **Analyse le site sur mobile** avec Google PageSpeed Insights : performance, SEO, accessibilité, bonnes pratiques, Core Web Vitals réels, HTTPS, titre et description, capture d'écran, outils de suivi détectés (Pixel Meta, Google Analytics…).
 4. **Interroge OpenStreetMap** (sans clé) : présence du commerce, réseaux sociaux déclarés, commerces similaires à proximité.
 5. **Remplit la checklist** avec une preuve pour chaque point (badge AUTO), calcule un score par catégorie et un **plan d'action priorisé** (impact / effort / offre AffiAds liée).
 6. **Prépare 6 questions** pour tester la visibilité dans ChatGPT, Claude, Gemini, Perplexity, Copilot et Le Chat : un clic ouvre l'assistant avec la question déjà remplie.
 7. **Rédige un message de prospection** (Instagram, e-mail ou WhatsApp) à partir des constats réels.
+
+Le **rapport client** comprend une page de couverture avec jauge de score, une synthèse « ce qui fonctionne / priorités », des graphiques comparatifs avec les concurrents, les horaires et avis Google, l'analyse du site, un plan d'action classé (tout de suite, dans le mois, ensuite) et une page de contact.
 
 Autres fonctions : plusieurs clients enregistrés, export/import des audits (fichier JSON), rapport PDF, export CSV des tests IA, application installable sur l'écran d'accueil du téléphone.
 
