@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="layout">
-<aside class="side"><div class="brand"><img src="assets/affiads-icon.svg" alt="" width="42" height="42"><div>AFFIADS <span>AUDIT 360°</span></div></div><nav class="nav"><button class="active" data-view="home">▦ Tableau de bord</button><button data-view="audit">☑ Audit du commerce</button><button data-view="report">▤ Rapport client</button><button data-view="tools">↗ Boîte à outils</button><button data-view="webcheck">⌁ Tests web</button><button data-view="research">⌕ Recherche internet</button></nav><p>Analysez. Priorisez. Convainquez.<br>Transformez les constats en opportunités commerciales.</p></aside>
+<aside class="side"><div class="brand"><img src="assets/affiads-icon.svg" alt="" width="42" height="42"><div>AFFIADS <span>AUDIT 360°</span></div></div><nav class="nav"><button class="active" data-view="home">▦ Tableau de bord</button><button data-view="audit">☑ Audit du commerce</button><button data-view="report">▤ Rapport client</button><button data-view="tools">↗ Boîte à outils</button><button data-view="webcheck">⌁ Tests web</button><button data-view="research">⌕ Recherche internet</button><button data-view="campaign">◎ Campagne IA</button></nav><p>Analysez. Priorisez. Convainquez.<br>Transformez les constats en opportunités commerciales.</p></aside>
 <main class="main">
 <header class="top"><div><div class="eyebrow">Espace de travail AffiAds</div><h1 id="pageTitle">Vue d'ensemble</h1><div class="muted" id="pageSub">Préparez un audit concret et présentable à vos prospects.</div></div><div class="actions"><button class="btn" id="save">Enregistrer</button><button class="btn primary" id="pdf">Exporter en PDF</button></div></header>
 <section id="view-home"><div class="grid">
@@ -72,6 +72,33 @@
 </div>
 </div>
 </section>
+<section id="view-campaign" class="hidden">
+<div class="grid">
+<div class="card">
+<h2>Campagne de visibilité IA</h2>
+<p class="muted">Crée une série de questions reproductibles sur un commerce. AFFIADS prépare les tests et compare les résultats que tu observes dans les assistants ; la page n’interroge pas leurs comptes privés en arrière-plan.</p>
+<div class="fields">
+<div class="field"><label for="campaignBusiness">Nom du commerce</label><input id="campaignBusiness" placeholder="Nom du commerce"></div>
+<div class="field"><label for="campaignCity">Ville / zone</label><input id="campaignCity" placeholder="Ville"></div>
+<div class="field"><label for="campaignType">Activité principale</label><input id="campaignType" placeholder="Ex. restaurant, plombier, coiffeur"></div>
+<div class="field"><label for="campaignService">Service / spécialité recherchée</label><input id="campaignService" placeholder="Ex. viande à volonté, dépannage urgent"></div>
+<div class="field full"><label for="campaignExtra">Précision facultative</label><input id="campaignExtra" placeholder="Ex. prix accessibles, en famille, ouvert le dimanche"></div>
+</div>
+<div class="actions" style="margin-top:12px"><button class="btn" id="campaignFill">Reprendre depuis l’audit</button><button class="btn primary" id="generateCampaign">Générer les questions</button></div>
+<div id="campaignProgress" class="grid" style="margin-top:14px"></div>
+<div id="campaignQuestions" style="margin-top:14px"></div>
+<div class="actions" style="margin-top:14px"><button class="btn" id="exportAiCsv">Exporter les résultats CSV</button><button class="btn" id="clearCampaign">Effacer la campagne affichée</button></div>
+<div class="notice" style="margin-top:14px"><b>Comment tester :</b> ouvre chaque assistant, pose la question indiquée, observe s’il cite le commerce et les concurrents, puis utilise « Enregistrer le résultat ». Utilise autant que possible le même texte, la même langue et le même contexte pour pouvoir comparer les tests.</div>
+</div>
+<div class="card">
+<h2>Ce que signifie le score</h2>
+<div class="priority"><b>Taux de présence</b><small>Part des tests terminés où le commerce est explicitement cité. Les tests « incertains » ne sont pas comptés comme des absences.</small></div>
+<div class="priority"><b>Position observée</b><small>Position indiquée manuellement dans la réponse lorsqu’il existe une liste clairement ordonnée. Ce n’est pas un classement universel de l’IA.</small></div>
+<div class="priority"><b>Concurrents</b><small>Les noms souvent cités peuvent aider à repérer des sources, spécialités ou informations à renforcer, mais leur présence seule n’explique pas le classement.</small></div>
+<div class="priority"><b>Automatisation complète</b><small>Pour lancer les requêtes automatiquement, chaque fournisseur doit autoriser l’accès via une API adaptée et les identifiants doivent rester dans un backend sécurisé. Ils ne doivent jamais être inscrits dans le code public GitHub Pages.</small></div>
+</div>
+</div>
+</section>
 <section id="view-webcheck" class="hidden">
 <div class="grid">
 <div class="card s7">
@@ -104,7 +131,7 @@ const groups=[
 ];
 const tools=[["Google Business Profile","https://www.google.com/business/","Fiche Google"],["Google Maps","https://maps.google.com/","Avis et concurrents"],["PageSpeed Insights","https://pagespeed.web.dev/","Vitesse du site"],["Google Search Console","https://search.google.com/search-console/about?hl=fr","SEO du site"],["Test résultats enrichis","https://search.google.com/test/rich-results?hl=fr","Données structurées"],["Bibliothèque publicitaire Meta","https://www.facebook.com/ads/library/","Publicités visibles"],["BrightLocal","https://www.brightlocal.com/","SEO local"],["Semrush","https://www.semrush.com/","SEO et mots-clés"]];
 const $=id=>document.getElementById(id), keys=groups.flatMap((g,gi)=>g.items.map((x,ii)=>gi+"-"+ii));
-let state={checks:{},issues:{},notes:"",biz:{},aiTests:[]};
+let state={checks:{},issues:{},notes:"",biz:{},aiTests:[],campaign:{},campaignPrompts:[]};
 const fields=["name","type","city","date","site","maps","rating","reviews","context"];
 $("date").value=new Date().toISOString().slice(0,10);
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -113,10 +140,92 @@ function renderChecklist(){$("checklist").innerHTML=groups.map((g,gi)=>'<div cla
 function calc(){let n=keys.filter(k=>state.checks[k]).length,issues=keys.filter(k=>state.issues[k]).length,bad=keys.filter(k=>state.checks[k]&&state.issues[k]).length;return {n,issues,score:n?Math.round((n-bad)/n*100):null,pct:Math.round(n/keys.length*100)}}
 function update(){read();let c=calc();$("mDone").innerHTML=c.pct+"%<small>Audit complété</small>";$("mIssues").innerHTML=c.issues+"<small>Points à améliorer</small>";$("mScore").innerHTML=(c.score===null?"—":c.score)+ "<small>Score indicatif</small>";$("mChecks").innerHTML=c.n+"<small>Contrôles effectués</small>";$("bigScore").innerHTML=(c.score===null?"—":c.score)+"<small>/ 100</small>";$("bar").style.width=(c.score||0)+"%";$("count").textContent=c.n+" / "+keys.length+" vérifiés";$("scoreText").textContent=c.score===null?"Coche les contrôles dans l'audit pour calculer un indicateur.":c.score>=85?"Bon résultat sur les éléments évalués ; traite les points signalés.":c.score>=60?"Des améliorations sont à prioriser.":"Plusieurs points évalués restent à améliorer.";groups.forEach((g,gi)=>{let n=g.items.filter((_,ii)=>state.checks[gi+"-"+ii]).length;let el=$("g"+gi);if(el)el.textContent=n+"/"+g.items.length});let probs=[];groups.forEach((g,gi)=>g.items.forEach((it,ii)=>{let k=gi+"-"+ii;if(state.issues[k])probs.push({it,group:g.title,checked:state.checks[k]})}));$("priorityList").innerHTML=probs.length?probs.map(p=>'<div class="priority"><b>'+esc(p.it)+'</b><small>'+esc(p.group)+(p.checked?" · vérifié":" · à vérifier")+'</small></div>').join(""):"Aucun problème signalé pour le moment.";renderReport()}
 function renderReport(){read();let c=calc(),b=state.biz;let groupsHtml=groups.map((g,gi)=>{let rows=g.items.map((it,ii)=>({it,k:gi+"-"+ii})).filter(x=>state.checks[x.k]||state.issues[x.k]);return rows.length?'<h3>'+esc(g.title)+'</h3><ul>'+rows.map(x=>'<li>'+esc(x.it)+' — '+(state.issues[x.k]?'<b>À améliorer</b>':'Vérifié')+'</li>').join("")+'</ul>':""}).join("");let issues=groups.flatMap((g,gi)=>g.items.map((it,ii)=>({it,g:g.title,k:gi+"-"+ii}))).filter(x=>state.issues[x.k]);let ai=Array.isArray(state.aiTests)?state.aiTests:[];let aiHtml=ai.length?'<h2>Visibilité observée sur les assistants IA</h2><p>Présence dans '+ai.filter(t=>t.presence==="yes").length+' test(s) sur '+ai.length+' tests enregistrés. Résultat dépendant des questions, de la date et du contexte.</p><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">IA / Date</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Question</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Résultat</th><th style="text-align:left;border-bottom:1px solid #ccc;padding:6px">Concurrents / source</th></tr></thead><tbody>'+ai.map(t=>'<tr><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.prompt)+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+(t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · position "+esc(t.rank):"")+(t.notes?"<br>"+esc(t.notes):"")+'</td><td style="border-bottom:1px solid #ddd;padding:6px">'+esc(t.competitors||"—")+(t.source?"<br>"+esc(t.source):"")+'</td></tr>').join("")+'</tbody></table>':'<h2>Visibilité sur les assistants IA</h2><p>Aucun test IA enregistré. Effectuer des tests documentés dans chaque assistant pour établir la visibilité observée.</p>';$("report").innerHTML='<div class="eyebrow">AFFIADS · Audit de visibilité et communication</div><h1>Rapport d’audit 360°</h1><h2>'+esc(b.name||"Commerce à renseigner")+'</h2><p class="muted">'+esc(b.type||"Type non renseigné")+' · '+esc(b.city||"Ville non renseignée")+' · '+esc(b.date||"Date non renseignée")+'</p><hr><div class="grid"><div class="card s3"><div class="metric">'+(c.score===null?"—":c.score)+'<small>Score indicatif / 100</small></div></div><div class="card s3"><div class="metric">'+c.n+'<small>Contrôles sur '+keys.length+'</small></div></div><div class="card s3"><div class="metric">'+c.issues+'<small>Points signalés</small></div></div></div><h2>Informations du commerce</h2><ul><li>Site : '+(b.site?'<a href="'+esc(b.site)+'">'+esc(b.site)+'</a>':"Non renseigné")+'</li><li>Fiche Google : '+(b.maps?'<a href="'+esc(b.maps)+'">Ouvrir la fiche</a>':"Non renseignée")+'</li><li>Note Google : '+esc(b.rating||"non relevée")+' / 5 · Avis : '+esc(b.reviews||"non relevé")+'</li></ul><h2>Synthèse</h2><p>Audit manuel : '+c.n+' contrôles vérifiés sur '+keys.length+'. '+c.issues+' point(s) signalé(s). Le score porte uniquement sur les contrôles renseignés et ne représente pas un classement Google.</p>'+(b.context?'<p><b>Première impression :</b> '+esc(b.context)+'</p>':"")+'<h2>Priorités recommandées</h2>'+(issues.length?'<ul>'+issues.map(x=>'<li><b>'+esc(x.it)+'</b> — '+esc(x.g)+'</li>').join("")+'</ul>':"<p>Aucun point signalé dans la checklist.</p>")+groupsHtml+'<h2>Observations complémentaires</h2><p>'+esc(state.notes||"Aucune note complémentaire.")+'</p><div class="notice">Limites : ce rapport repose sur les observations saisies manuellement. Les statistiques privées nécessitent l'autorisation du propriétaire. La présence dans les assistants IA ne garantit aucune recommandation future.</div>'}
-function nav(v){["home","audit","report","tools","webcheck","research"].forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));let titles={research:["Recherche internet","Prépare des recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Vérifications rapides et liens vers les audits techniques."],home:["Vue d'ensemble","Préparez un audit concret et présentable à vos prospects."],audit:["Audit du commerce","Séparez les faits vérifiés des problèmes constatés."],report:["Rapport client","Résumé prêt à imprimer ou enregistrer en PDF."],tools:["Boîte à outils","Liens directs vers les outils de vérification."]};$("pageTitle").textContent=titles[v][0];$("pageSub").textContent=titles[v][1];if(v==="report")renderReport();window.scrollTo({top:0,behavior:"smooth"})}
+function nav(v){["home","audit","report","tools","webcheck","research","campaign"].forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));let titles={campaign:["Campagne de visibilité IA","Lance une série de tests comparables sur les assistants IA."],research:["Recherche internet","Prépare des recherches publiques ciblées pour documenter l’audit."],webcheck:["Tests web","Vérifications rapides et liens vers les audits techniques."],home:["Vue d'ensemble","Préparez un audit concret et présentable à vos prospects."],audit:["Audit du commerce","Séparez les faits vérifiés des problèmes constatés."],report:["Rapport client","Résumé prêt à imprimer ou enregistrer en PDF."],tools:["Boîte à outils","Liens directs vers les outils de vérification."]};$("pageTitle").textContent=titles[v][0];$("pageSub").textContent=titles[v][1];if(v==="report")renderReport();window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.go)));fields.forEach(id=>$(id).addEventListener("input",()=>{read();renderReport()}));$("notes").addEventListener("input",update);$("save").onclick=()=>{read();try{localStorage.setItem("affiads-audit-360",JSON.stringify(state));alert("Audit enregistré dans ce navigateur.")}catch(e){alert("Sauvegarde indisponible. Copiez le rapport.")}};$("pdf").onclick=$("printReport").onclick=()=>{nav("report");window.print()};$("copy").onclick=()=>{read();let c=calc(),txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+"\nPoints à améliorer : "+c.issues+"\n\n"+groups.map((g,gi)=>g.title+"\n"+g.items.map((it,ii)=>{let k=gi+"-"+ii;return(state.checks[k]?"[x] ":"[ ] ")+it+(state.issues[k]?" — À AMÉLIORER":"")}).join("\n")).join("\n\n")+"\n\nNotes : "+(state.notes||"Aucune");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>alert("Résumé copié.")).catch(()=>prompt("Copiez le résumé :",txt));else prompt("Copiez le résumé :",txt)};
 $("links").innerHTML=tools.map(t=>'<a href="'+t[1]+'" target="_blank" rel="noopener"><b>'+esc(t[0])+'</b><br><span class="muted">'+esc(t[2])+' ↗</span></a>').join("");
 
+
+
+const AI_TARGETS=[
+ {name:"ChatGPT",url:"https://chatgpt.com/"},
+ {name:"Claude",url:"https://claude.ai/new"},
+ {name:"Google Gemini",url:"https://gemini.google.com/"},
+ {name:"Perplexity",url:"https://www.perplexity.ai/"},
+ {name:"Microsoft Copilot",url:"https://copilot.microsoft.com/"},
+ {name:"Mistral Le Chat",url:"https://chat.mistral.ai/"}
+];
+function campaignInputFromBiz(){
+ $("campaignBusiness").value=$("name").value||"";
+ $("campaignCity").value=$("city").value||"";
+ $("campaignType").value=$("type").value||"";
+ $("campaignService").value="";
+ $("campaignExtra").value="";
+}
+function getCampaignPrompts(){
+ const name=$("campaignBusiness").value.trim();
+ const city=$("campaignCity").value.trim();
+ const type=$("campaignType").value.trim();
+ const service=$("campaignService").value.trim();
+ const extra=$("campaignExtra").value.trim();
+ if(!city||(!name&&!type&&!service)){alert("Renseigne au minimum la ville et le nom ou l’activité du commerce.");return []}
+ const subject=name||("un "+type);
+ const prompts=[
+  {kind:"Découverte locale",text:"Je cherche "+(type||"un commerce")+" à "+city+". Quels établissements me recommandes-tu ?"},
+  {kind:"Besoin principal",text:"Quel est le meilleur choix à "+city+" pour "+(service||type||"ce type de service")+" ? "+(extra?"Critère important : "+extra+".":"")},
+  {kind:"Recommandation précise",text:"Peux-tu comparer "+subject+" à "+city+" avec d’autres établissements locaux pour "+(service||type||"ce besoin")+" ? Cite tes sources si possible."},
+  {kind:"Marque exacte",text:"Que peux-tu me dire sur "+subject+" à "+city+" ? Donne son site officiel, ses services et les sources qui confirment ces informations."},
+  {kind:"Recherche sans marque",text:"Je suis à "+city+" et je cherche "+(service||type||"un établissement adapté")+(extra?" avec ces critères : "+extra:"")+". Quels sont les meilleurs choix et pourquoi ?"},
+  {kind:"Sources et fiabilité",text:"Quelles sources fiables permettent de vérifier les horaires, les tarifs et les avis de "+subject+" à "+city+" ? Signale les incertitudes."}
+ ];
+ state.campaign={name,city,type,service,extra,createdAt:new Date().toISOString().slice(0,10)};
+ state.campaignPrompts=prompts;
+ persistLocal();
+ renderCampaignPrompts();
+ return prompts;
+}
+function renderCampaignPrompts(){
+ const p=Array.isArray(state.campaignPrompts)?state.campaignPrompts:[];
+ const tests=Array.isArray(state.aiTests)?state.aiTests:[];
+ const done=p.filter((q)=>tests.some(t=>t.campaignId===q.id || (t.prompt===q.text&&t.campaignDate===state.campaign.createdAt))).length;
+ $("campaignProgress").innerHTML='<div class="card s3"><div class="metric">'+p.length+'<small>Questions prévues</small></div></div><div class="card s3"><div class="metric">'+tests.length+'<small>Résultats enregistrés</small></div></div><div class="card s3"><div class="metric">'+(tests.length?Math.round(tests.filter(t=>t.presence==="yes").length/tests.length*100):"—")+'<small>% des tests avec présence</small></div></div>';
+ $("campaignQuestions").innerHTML=p.length?p.map((q,i)=>'<div class="priority"><b>'+(i+1)+'. '+esc(q.kind)+'</b><p>'+esc(q.text)+'</p><div class="actions">'+AI_TARGETS.map(a=>'<button class="btn" data-open-ai="'+esc(a.name)+'" data-ai-prompt="'+i+'">Tester sur '+esc(a.name)+'</button>').join("")+'<button class="btn primary" data-record-campaign="'+i+'">Enregistrer le résultat</button><button class="btn" data-copy-prompt="'+i+'">Copier la question</button></div></div>').join(""):'<p class="muted">Remplis les informations du commerce et génère les questions pour commencer.</p>';
+ $("campaignQuestions").querySelectorAll("[data-open-ai]").forEach(b=>b.onclick=()=>{
+   const ai=AI_TARGETS.find(a=>a.name===b.dataset.openAi);
+   const q=p[Number(b.dataset.aiPrompt)];
+   $("aiPlatform").value=ai.name;
+   $("aiPrompt").value=q.text;
+   $("aiDate").value=new Date().toISOString().slice(0,10);
+   $("aiPresence").value="partial";$("aiRank").value="";$("aiCompetitors").value="";$("aiSource").value="";$("aiNotes").value="";
+   window.open(ai.url,"_blank","noopener");
+   nav("campaign");
+ });
+ $("campaignQuestions").querySelectorAll("[data-record-campaign]").forEach(b=>b.onclick=()=>{
+   const q=p[Number(b.dataset.recordCampaign)];
+   $("aiPrompt").value=q.text;
+   $("aiDate").value=new Date().toISOString().slice(0,10);
+   $("aiPresence").value="partial";$("aiRank").value="";$("aiCompetitors").value="";$("aiSource").value="";
+   $("aiNotes").value="Campagne : "+q.kind;
+   $("aiPlatform").focus();
+   document.getElementById("saveAiTest").scrollIntoView({behavior:"smooth",block:"center"});
+   alert("Question copiée dans le formulaire de suivi IA. Sélectionne l’assistant, fais le test, puis enregistre le résultat.");
+ });
+ $("campaignQuestions").querySelectorAll("[data-copy-prompt]").forEach(b=>b.onclick=()=>{
+   const q=p[Number(b.dataset.copyPrompt)].text;
+   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q).then(()=>alert("Question copiée.")).catch(()=>prompt("Copie la question :",q));
+   else prompt("Copie la question :",q);
+ });
+}
+$("campaignFill").onclick=campaignInputFromBiz;
+$("generateCampaign").onclick=getCampaignPrompts;
+$("clearCampaign").onclick=()=>{state.campaignPrompts=[];persistLocal();renderCampaignPrompts()};
+$("exportAiCsv").onclick=()=>{
+ const tests=Array.isArray(state.aiTests)?state.aiTests:[];
+ if(!tests.length){alert("Aucun résultat enregistré à exporter.");return}
+ const cols=["date","platform","prompt","presence","rank","competitors","source","notes"];
+ const csv=[cols.join(","),...tests.map(t=>cols.map(k=>'"'+String(t[k]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");
+ const blob=new Blob(["\\ufeff",csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="affiads-visibilite-ia.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+};
 
 function drawAiTests(){
  state.aiTests=Array.isArray(state.aiTests)?state.aiTests:[];
@@ -135,7 +244,7 @@ $("saveAiTest").onclick=()=>{
  const source=$("aiSource").value.trim();
  if(source&&!/^https?:\/\//i.test(source)){alert("La source doit être une URL commençant par https:// ou http://.");return}
  state.aiTests=Array.isArray(state.aiTests)?state.aiTests:[];
- state.aiTests.push({platform:$("aiPlatform").value,date:$("aiDate").value||new Date().toISOString().slice(0,10),prompt,presence:$("aiPresence").value,rank:$("aiRank").value.trim(),competitors:$("aiCompetitors").value.trim(),source,notes:$("aiNotes").value.trim()});
+ state.aiTests.push({platform:$("aiPlatform").value,date:$("aiDate").value||new Date().toISOString().slice(0,10),prompt,presence:$("aiPresence").value,rank:$("aiRank").value.trim(),competitors:$("aiCompetitors").value.trim(),source,notes:$("aiNotes").value.trim(),campaignDate:state.campaign?.createdAt||""});
  persistLocal();drawAiTests();renderReport();alert("Test IA enregistré sur cet appareil.");
 };
 $("clearAiForm").onclick=()=>["aiPrompt","aiRank","aiCompetitors","aiSource","aiNotes"].forEach(id=>$(id).value="");
@@ -183,7 +292,7 @@ $("buildResearch").onclick=()=>{
 };
 
 try{let saved=JSON.parse(localStorage.getItem("affiads-audit-360")||"null");if(saved){state=saved;if(!Array.isArray(state.aiTests))state.aiTests=[];fields.forEach(id=>{if(state.biz&&state.biz[id]!==undefined)$(id).value=state.biz[id]});$("notes").value=state.notes||""}}catch(e){}
-renderChecklist();update();drawAiTests();
+renderChecklist();update();drawAiTests();renderCampaignPrompts();
 </script>
 </body>
 </html>
