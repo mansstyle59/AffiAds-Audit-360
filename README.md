@@ -18,6 +18,8 @@ Tapez le **nom du commerce** : des **suggestions** (Google, ou OpenStreetMap san
 
 Le **rapport client** comprend une page de couverture avec jauge de score, une synthèse « ce qui fonctionne / priorités », des graphiques comparatifs avec les concurrents, les horaires et avis Google, l'analyse du site, un plan d'action classé (tout de suite, dans le mois, ensuite) et une page de contact.
 
+**Analyses avancées** : photos publiées par le propriétaire (et vraies photos de la fiche), **carte de visibilité** (position depuis 9 points autour du commerce), **visibilité sur Bing** (résultats Bing France, qui alimentent aussi DuckDuckGo et Copilot), **test IA automatique** avec Gemini et la Recherche Google (API « Generative Language » à activer sur la clé). Rapport PDF professionnel de 9 sections avec en-tête et pied de page sur chaque page.
+
 **Version 2026** : menu regroupé (Prospection, Analyse détaillée, Outils), barre d'onglets flottante effet verre sur téléphone, écran **Clients** avec l'historique des audits, **mode sombre** automatique, transitions entre écrans, **installation sur l'écran d'accueil** et interface disponible hors ligne, **partage natif** du résumé et du message, test du **Mode IA de Google**, checklist mise à jour (fin des questions-réponses Google, vidéos courtes verticales).
 
 Autres fonctions : plusieurs clients enregistrés, export/import des audits (fichier JSON), rapport PDF, export CSV des tests IA, application installable sur l'écran d'accueil du téléphone.
