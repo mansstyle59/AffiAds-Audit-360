@@ -24,6 +24,18 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Check inline JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          match = re.search(r"<script>(.*?)</script>", html, re.S)
+          if not match:
+              raise SystemExit("No inline JavaScript block found")
+          Path("/tmp/affiads-app.js").write_text(match.group(1), encoding="utf-8")
+          PY
+          node --check /tmp/affiads-app.js
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
