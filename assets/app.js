@@ -1071,8 +1071,89 @@ async function shareText(title,text){
 function summaryText(){read();const c=calc(),d=state.data||{};return "Audit de visibilité AffiAds : "+(state.biz.name||"commerce")+(state.biz.city?" ("+state.biz.city+")":"")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+((d.findings||[]).length?"\n\nOpportunités repérées :\n"+d.findings.slice(0,6).map(f=>"• "+f.text).join("\n"):"")+"\n\n"+(settings.senderName?settings.senderName+", ":"")+(settings.senderLine||"AffiAds")}
 if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 
+/* ---------- Écran d'accueil et code d'accès ---------- */
+const LOCK_KEY="affiads-lock",LOCK_SESSION="affiads-unlocked";
+const Lock={cfg:null,mode:"unlock",first:"",entry:"",lastActive:Date.now(),timer:null};
+function lockLoad(){try{Lock.cfg=JSON.parse(localStorage.getItem(LOCK_KEY)||"null")}catch(e){Lock.cfg=null}}
+function lockSave(){try{if(Lock.cfg)localStorage.setItem(LOCK_KEY,JSON.stringify(Lock.cfg));else localStorage.removeItem(LOCK_KEY)}catch(e){}}
+function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+async function pinHash(pin,saltB64){
+ const salt=Uint8Array.from(atob(saltB64),c=>c.charCodeAt(0));
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);
+ return b64(await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},key,256));
+}
+async function pinSet(pin){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));Lock.cfg={salt,hash:await pinHash(pin,salt),len:pin.length,delay:(Lock.cfg&&Lock.cfg.delay)??5,fails:0,until:0};lockSave()}
+function unlockedThisSession(){try{return sessionStorage.getItem(LOCK_SESSION)==="1"}catch(e){return false}}
+function setSession(v){try{if(v)sessionStorage.setItem(LOCK_SESSION,"1");else sessionStorage.removeItem(LOCK_SESSION)}catch(e){}}
+function gateText(title,hint){$("gateTitle").textContent=title;$("gateHint").textContent=hint}
+function renderDots(){const n=Lock.mode==="unlock"?(Lock.cfg&&Lock.cfg.len||4):Math.max(4,Lock.entry.length);$("pinDots").innerHTML=Array.from({length:n},(_,i)=>'<i class="'+(i<Lock.entry.length?"on":"")+'"></i>').join("")}
+function gateMsg(t,bad){const m=$("gateMsg");m.textContent=t||"";m.classList.toggle("bad",!!bad);if(bad){const d=$("pinDots");d.classList.remove("shake");void d.offsetWidth;d.classList.add("shake")}}
+function buildPad(){
+ const keys=["1","2","3","4","5","6","7","8","9","ok","0","del"];
+ $("pinPad").innerHTML=keys.map(k=>k==="del"?'<button type="button" data-k="del" aria-label="Effacer">⌫</button>':k==="ok"?'<button type="button" data-k="ok" class="ok" aria-label="Valider">OK</button>':'<button type="button" data-k="'+k+'">'+k+'</button>').join("");
+ $("pinPad").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>pinKey(b.dataset.k)));
+}
+function showGate(mode){
+ Lock.mode=mode;Lock.entry="";Lock.first="";document.body.classList.add("locked");$("gate").classList.remove("hidden","leaving");$("gateLock").hidden=false;
+ $("gateForgot").hidden=mode!=="unlock";
+ if(mode==="unlock")gateText("Entrez votre code","Votre code protège vos audits et votre clé sur cet appareil.");
+ else if(mode==="create")gateText("Créez votre code","Choisissez un code de 4 à 6 chiffres pour protéger l’appli sur cet appareil.");
+ else if(mode==="change")gateText("Nouveau code","Choisissez un nouveau code de 4 à 6 chiffres.");
+ gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
+}
+function hideGate(){setSession(true);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+async function pinKey(k){
+ if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
+ if(k==="ok"){return pinSubmit()}
+ if(!/^\d$/.test(k)||Lock.entry.length>=6)return;
+ Lock.entry+=k;renderDots();gateMsg("");
+ if(Lock.mode==="unlock"&&Lock.cfg&&Lock.entry.length===Lock.cfg.len)pinSubmit();
+}
+async function pinSubmit(){
+ const v=Lock.entry;
+ if(Lock.mode==="unlock"){
+  const now=Date.now();if(Lock.cfg.until>now){gateMsg("Trop d’essais : réessayez dans "+Math.ceil((Lock.cfg.until-now)/1000)+" s.",true);Lock.entry="";renderDots();return}
+  if(await pinHash(v,Lock.cfg.salt)===Lock.cfg.hash){Lock.cfg.fails=0;Lock.cfg.until=0;lockSave();hideGate();return}
+  Lock.cfg.fails=(Lock.cfg.fails||0)+1;if(Lock.cfg.fails>=5)Lock.cfg.until=now+Math.min(300,30*2**(Lock.cfg.fails-5))*1000;lockSave();
+  Lock.entry="";renderDots();gateMsg(Lock.cfg.fails>=5?"Code incorrect. Patientez "+Math.round((Lock.cfg.until-now)/1000)+" s avant de réessayer.":"Code incorrect ("+(5-Lock.cfg.fails)+" essai"+(5-Lock.cfg.fails>1?"s":"")+" avant attente).",true);return;
+ }
+ if(v.length<4){gateMsg("Le code doit comporter au moins 4 chiffres.",true);return}
+ if(!Lock.first){Lock.first=v;Lock.entry="";gateText("Confirmez le code","Saisissez le même code une deuxième fois.");gateMsg("");renderDots();return}
+ if(v!==Lock.first){Lock.first="";Lock.entry="";gateText(Lock.mode==="create"?"Créez votre code":"Nouveau code","Les deux codes ne correspondent pas : recommencez.");gateMsg("Codes différents.",true);renderDots();return}
+ await pinSet(v);toast("Code enregistré. L’appli est protégée sur cet appareil.");hideGate();
+}
+function renderPinSettings(){
+ if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
+ $("pinStatus").textContent=on?"Code actif : l’appli demande votre code à l’ouverture et après une période d’inactivité.":"Aucun code : n’importe qui utilisant cet appareil peut ouvrir l’appli.";
+ $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
+ $("pinDelay").value=String(on?(Lock.cfg.delay??5):5);$("pinDelay").disabled=!on;
+}
+function lockNow(){if(Lock.cfg&&Lock.cfg.hash){setSession(false);showGate("unlock")}}
+function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=Lock.cfg.delay??5;if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow()}
+function initLock(){
+ lockLoad();buildPad();
+ const pin=$("pinInput");
+ pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
+ document.addEventListener("keydown",e=>{if(!document.body.classList.contains("locked")||$("gateLock").hidden)return;if(/^\d$/.test(e.key)){e.preventDefault();pinKey(e.key)}else if(e.key==="Backspace"){e.preventDefault();pinKey("del")}else if(e.key==="Enter"&&!(e.target&&e.target.closest&&e.target.closest("button"))){e.preventDefault();pinKey("ok")}});
+ $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
+ $("gateForgot").onclick=()=>{if(!confirm("Sans le code, la seule solution est d’effacer toutes les données de l’appli sur cet appareil : audits, clients, clé Google et réglages. Pensez à vos exports. Tout effacer ?"))return;try{localStorage.removeItem(STORE);localStorage.removeItem(OLD);localStorage.removeItem(SETTINGS);localStorage.removeItem(LOCK_KEY)}catch(e){}setSession(false);location.reload()};
+ ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{Lock.lastActive=Date.now()},{passive:true}));
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)Lock.hiddenAt=Date.now();else if(Lock.hiddenAt){const d=Lock.cfg&&(Lock.cfg.delay??5);if(Lock.cfg&&Lock.cfg.hash&&d>0&&Date.now()-Lock.hiddenAt>d*60000)lockNow();Lock.hiddenAt=0}});
+ clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
+ $("pinChange").onclick=()=>showGate(Lock.cfg&&Lock.cfg.hash?"change":"create");
+ $("pinLockNow").onclick=lockNow;
+ $("pinDisable").onclick=()=>{if(!confirm("Désactiver le code ? L’appli s’ouvrira sans protection sur cet appareil."))return;Lock.cfg=null;lockSave();renderPinSettings();toast("Code désactivé.")};
+ $("pinDelay").onchange=()=>{if(Lock.cfg){Lock.cfg.delay=+$("pinDelay").value;lockSave();toast("Verrouillage automatique mis à jour.")}};
+ /* Écran d'accueil : le logo s'affiche, puis le code (ou sa création au premier lancement) */
+ const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+ setTimeout(()=>{
+  if(Lock.cfg&&Lock.cfg.hash){if(unlockedThisSession()){hideGate()}else showGate("unlock")}
+  else showGate("create");
+ },reduce?0:900);
+}
+
 /* ---------- Démarrage ---------- */
-bind();loadAll();applyTheme();initInstallHelp();hydrate();
+bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
