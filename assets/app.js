@@ -946,7 +946,7 @@ function kpiRow(){
  const d=state.data||{},p=d.place,ps=d.psi,vis=d.visibility,rk=d.ranking;
  if(d.fetchedAt&&!p){const H=d.html,ctas=H?[H.tel.length,H.whatsapp,H.booking.length].filter(Boolean).length:null,soc=(d.socials||[]).length,comp=(d.competitors||[]).length,hasSite=!!normalizeUrl(state.biz.site);
   return '<div class="kpis">'+kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(hasSite?"—":"Aucun site"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(hasSite?"":"bad"))+kpiBox(H?ctas+"<small style=font-size:12px> / 3</small>":"—","Boutons d’action (appel, WhatsApp, réservation)",H?(ctas>=2?"good":ctas?"mid":"bad"):"")+kpiBox(soc,"Réseaux sociaux liés",soc>=2?"good":soc?"mid":"bad")+kpiBox(comp,"Commerces similaires à proximité","")+'</div>'}
- return '<div class="kpis">'+kpiBox(p&&p.rating!=null?fr1(p.rating)+"/5":"—","Note Google",p&&p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p&&p.userRatingCount!=null?p.userRatingCount:"—","Avis Google",p&&p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")
+ return '<div class="kpis">'+kpiBox(p?(p.rating!=null?fr1(p.rating)+"/5":"Aucune"):"—","Note Google",p?(p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"bad"):"")+kpiBox(p?(p.userRatingCount||0):"—","Avis Google",p?((p.userRatingCount||0)>=100?"good":(p.userRatingCount||0)>=50?"mid":"bad"):"")
  +(vis&&vis.n>1?kpiBox(vis.top3+'<small style="font-size:12px"> / '+vis.n+'</small>',"Recherches où il est dans le top 3",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):kpiBox(rk?(rk.rank?rk.rank+'<small style="font-size:12px"> / '+rk.total+'</small>':"Absent"):"—","Position « "+esc(rk?rk.query:"recherche locale")+" »",rk?(rk.rank&&rk.rank<=3?"good":rk.rank&&rk.rank<=10?"mid":"bad"):""))
  +kpiBox(ps&&ps.scores.perf!=null?ps.scores.perf+"/100":(d.fetchedAt&&!normalizeUrl(state.biz.site)?"Aucun site":"—"),"Vitesse du site (mobile)",ps?scoreColor(ps.scores.perf):(d.fetchedAt&&!normalizeUrl(state.biz.site)?"bad":""))+'</div>';
 }
@@ -986,7 +986,7 @@ function compBlock(forReport){
 }
 function googleBlock(){
  const d=state.data||{},p=d.place;if(!p)return "";
- return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"—","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"")+kpiBox(p.userRatingCount??"—","Avis",p.userRatingCount!=null?(p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"")+kpiBox((d.ownerPhotos??"—")+(d.photos!=null?'<small style="font-size:13px"> / '+d.photos+'</small>':""),"Photos du propriétaire",d.ownerPhotos==null?"":d.ownerPhotos>=6?"good":d.ownerPhotos>=3?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Âge de l’avis le plus récent parmi les 5 mis en avant","")+'</div>'
+ return '<div class="kpis">'+kpiBox(p.rating!=null?fr1(p.rating)+"/5":"Aucune","Note",p.rating!=null?(p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"bad")+kpiBox(p.userRatingCount||0,"Avis",(p.userRatingCount||0)>=100?"good":(p.userRatingCount||0)>=50?"mid":"bad")+kpiBox((d.ownerPhotos??"—")+(d.photos!=null?'<small style="font-size:13px"> / '+d.photos+'</small>':""),"Photos du propriétaire",d.ownerPhotos==null?"":d.ownerPhotos>=6?"good":d.ownerPhotos>=3?"mid":"bad")+kpiBox(d.daysSinceReview!=null?d.daysSinceReview+" j":"—","Âge de l’avis le plus récent parmi les 5 mis en avant","")+'</div>'
  +'<div class="twocol" style="margin-top:12px"><div class="box"><h3>Informations affichées</h3><ul><li>Catégorie : '+esc((p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text)||p.primaryType||"non communiquée")+'</li><li>Adresse : '+esc(p.formattedAddress||"absente")+'</li><li>Téléphone : '+esc(p.nationalPhoneNumber||"absent")+'</li><li>Site : '+esc(p.websiteUri||"absent")+'</li>'+(state.biz.reg?'<li>Registre SIRENE : '+esc((nafInfo(state.biz.reg.naf)||[state.biz.reg.naf])[0])+(state.biz.reg.date?', ouvert en '+esc(fmtOpen(state.biz.reg.date)):'')+'</li>':'')+''+(d.services?'<li>Services : '+esc(d.services.join(", "))+'</li>':'')+'</ul></div><div class="box"><h3>Horaires</h3>'+((d.hours||[]).length?'<ul class="hours">'+d.hours.map(h=>'<li>'+esc(h)+'</li>').join("")+'</ul>':'<p class="muted">Aucun horaire publié.</p>')+'</div></div>'
  +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
 }
@@ -1376,22 +1376,31 @@ function renderOnePage(){
  const box=$("report1");if(!box)return;
  const b=state.biz,d=state.data||{},c=calc(),[vt,vsub]=verdict(c.score),issues=issuesList(),good=strengths(),p=d.place,ps=d.psi,vis=d.visibility;
  const sender=settings.senderName||"",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"",r=b.reg,ni=r&&nafInfo(r.naf);
- const sub=[ni?ni[0]:b.type,b.city,r&&r.date?"ouvert en "+fmtOpen(r.date):""].filter(Boolean).join(" · ");
- const k=(v,l,cls)=>'<div class="k1 '+(cls||"")+'"><b>'+v+'</b><span>'+esc(l)+'</span></div>';
- const kp=[p&&p.rating!=null?k(fr1(p.rating)+"/5","Note Google",p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"",p&&p.userRatingCount!=null?k(p.userRatingCount,"Avis Google",p.userRatingCount>=100?"good":p.userRatingCount>=50?"mid":"bad"):"",vis?k(vis.top3+"/"+vis.n,"Recherches où il est dans les 3 premiers",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):"",d.grid?k(d.grid.top3+"/"+d.grid.total,"Endroits où il est vu en tête sur Maps",d.grid.top3>=6?"good":d.grid.top3?"mid":"bad"):"",ps&&ps.scores.perf!=null?k(ps.scores.perf+"/100","Vitesse du site sur mobile",scoreColor(ps.scores.perf)):(d.fetchedAt&&!normalizeUrl(b.site)?k("Aucun","Site web à lui","bad"):"")].filter(Boolean).slice(0,4).join("");
- const F=(d.findings||[]).slice(0,4).map(f=>firstSentence(f.text,230));
+ const sub=[ni?ni[0]:b.type,b.address||b.city,r&&r.date?"ouvert en "+fmtOpen(r.date):""].filter(Boolean).join(" · ");
+ const col=v=>v==="good"?"#13915b":v==="mid"?"#c27c0e":v==="bad"?"#d1344b":"#6b6890";
+ const k=(v,l,cls)=>'<div class="k1"><b style="color:'+col(cls)+'">'+v+'</b><span>'+esc(l)+'</span></div>';
+ const hasG=!!p;
+ const kp=[hasG?k(p.rating!=null?fr1(p.rating)+"/5":"Aucune","Note Google",p.rating==null?"bad":p.rating>=4.5?"good":p.rating>=4.2?"mid":"bad"):"",hasG?k(p.userRatingCount||0,"Avis Google",(p.userRatingCount||0)>=100?"good":(p.userRatingCount||0)>=50?"mid":"bad"):"",vis?k(vis.top3+"/"+vis.n,"Recherches où il est dans les 3 premiers",vis.top3===vis.n?"good":vis.top3?"mid":"bad"):"",d.grid?k(d.grid.top3+"/"+d.grid.total,"Endroits où il est vu en tête sur Maps",d.grid.top3>=6?"good":d.grid.top3?"mid":"bad"):"",ps&&ps.scores.perf!=null?k(ps.scores.perf+"/100","Vitesse du site sur mobile",scoreColor(ps.scores.perf)):(d.fetchedAt&&!normalizeUrl(b.site)?k("Aucun","Site web à lui","bad"):""),d.social?k(Object.keys(d.social.found).length+"/5","Réseaux sociaux trouvés",Object.keys(d.social.found).length>=2?"good":Object.keys(d.social.found).length?"mid":"bad"):""].filter(Boolean).slice(0,4).join("");
+ const sc=c.score,R=34,C=2*Math.PI*R,dash=sc==null?0:C*sc/100,scol=sc==null?"#b9b6d3":sc>=85?"#13915b":sc>=60?"#c27c0e":"#d1344b";
+ const ring='<svg viewBox="0 0 84 84" width="104" height="104" aria-hidden="true"><circle cx="42" cy="42" r="'+R+'" fill="none" stroke="#ece9fb" stroke-width="9"/><circle cx="42" cy="42" r="'+R+'" fill="none" stroke="'+scol+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 42 42)"/><text x="42" y="44" text-anchor="middle" font-size="24" font-weight="800" fill="#17134a" font-family="inherit">'+(sc??"—")+'</text><text x="42" y="58" text-anchor="middle" font-size="9" fill="#6b6890" font-family="inherit">sur 100</text></svg>';
+ const gs=groupScores().filter(g=>g.score!=null);
+ const bars=gs.length?'<div class="opbars">'+gs.map(g=>'<div class="opbar"><span>'+esc(({"A":"Fiche Google","B":"Site web","C":"Réseaux sociaux","D":"Réputation","E":"Visibilité IA"})[g.title[0]]||g.title)+'</span><i><em style="width:'+Math.max(3,g.score)+'%;background:'+col(scoreColor(g.score))+'"></em></i><b style="color:'+col(scoreColor(g.score))+'">'+g.score+'</b></div>').join("")+'</div>':'';
+ const F=(d.findings||[]).slice(0,4).map(f=>firstSentence(f.text,200));
  const G=good.slice(0,4).map(g=>g.it);
  const A=issues.slice(0,5);
  const by={};issues.forEach(x=>{if(x.offer)(by[x.offer]=by[x.offer]||0),by[x.offer]+=x.prio});const offers=Object.entries(by).sort((a,b2)=>b2[1]-a[1]).slice(0,3).map(x=>x[0]);
+ const ok='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#13915b"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ const ko='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#d1344b"/><path d="M8 4.2v5M8 11.4v.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg>';
  box.innerHTML='<div class="op">'
-  +'<div class="ophead"><span class="opbrand"><img src="assets/logo-64.png" alt="" width="26" height="26">AffiAds Audit 360°</span><span>Audit de visibilité · '+esc(frDate(b.date||today()))+'</span></div>'
-  +'<h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')
-  +'<div class="oprow"><div class="opscore">'+scoreTile(c.score,true)+'</div><div class="opk">'+kp+'</div></div>'
-  +(d.partial&&d.fetchedAt?'<p class="opnote">Audit partiel : la fiche Google n’a pas été analysée.</p>':'')
-  +'<div class="op2"><div class="opbox good"><h3>Ce qui va bien</h3>'+(G.length?'<ul>'+G.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'<p>À confirmer lors de l’échange.</p>')+'</div><div class="opbox bad"><h3>Ce qui freine les clients</h3>'+(F.length?'<ul>'+F.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'<p>Aucun frein majeur relevé.</p>')+'</div></div>'
-  +'<h3 class="opt">Les '+A.length+' actions prioritaires</h3>'+(A.length?'<ol class="opacts">'+A.map(x=>'<li><b>'+esc(x.it)+'</b><span>'+esc(x.goal?firstSentence(x.goal,190):firstSentence(x.reco,190))+'</span></li>').join("")+'</ol>':'<p>Aucune action urgente.</p>')
-  +'<div class="opoffer"><div><h3>Ce qu’AffiAds vous propose</h3><p>'+(offers.length?offers.map(o=>'<span class="opchip">'+esc(o)+'</span>').join(""):'Un suivi régulier de votre visibilité.')+'</p><p class="opcta">Un échange de 10 minutes pour choisir ensemble les actions. Démo et devis gratuits, sans engagement.</p></div><div class="opsign"><b>'+esc(sender||"AffiAds")+'</b><span>'+esc(line)+'</span>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>'
-  +'<p class="opfoot">Données publiques relevées le '+esc(d.fetchedAt||frDate(today()))+' (Google, Bing, site, réseaux, registre SIRENE). Score indicatif, positions variables selon la personne et le lieu ; aucun résultat n’est garanti. Rapport détaillé disponible sur demande.</p>'
+  +'<div class="ophead"><span class="opbrand"><span class="oplogo"><img src="assets/logo-64.png" alt="" width="26" height="26"></span>AffiAds Audit 360°</span><span class="opdate">Audit de visibilité en ligne<br>'+esc(frDate(b.date||today()))+'</span></div>'
+  +'<div class="optitle"><h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')+'</div>'
+  +'<div class="oprow"><div class="opscore">'+ring+'<div><b>'+esc(vt)+'</b><span>'+esc(vsub)+'</span></div></div><div class="opk">'+kp+'</div></div>'
+  +(d.partial&&d.fetchedAt?'<p class="opnote">Audit partiel : la fiche Google n’a pas été analysée, les chiffres Google ne sont pas inclus.</p>':'')
+  +bars
+  +'<div class="op2"><div class="opbox good"><h3>Ce qui va bien</h3>'+(G.length?'<ul>'+G.map(x=>'<li>'+ok+'<span>'+esc(x)+'</span></li>').join("")+'</ul>':'<p>À confirmer lors de l’échange.</p>')+'</div><div class="opbox bad"><h3>Ce qui freine les clients</h3>'+(F.length?'<ul>'+F.map(x=>'<li>'+ko+'<span>'+esc(x)+'</span></li>').join("")+'</ul>':'<p>Aucun frein majeur relevé.</p>')+'</div></div>'
+  +'<h3 class="opt">Plan d’action : les '+A.length+' priorités</h3>'+(A.length?'<div class="opacts">'+A.map((x,i)=>{const l=prioLabel(x);return '<div class="opact"><span class="opnum">'+(i+1)+'</span><div><b>'+esc(x.it)+'</b><span>'+esc(x.goal?firstSentence(x.goal,170):firstSentence(x.reco,170))+'</span></div><em class="'+l[1]+'">'+esc(l[0])+'</em></div>'}).join("")+'</div>':'<p>Aucune action urgente.</p>')
+  +'<div class="opoffer"><div class="opofl"><h3>Ce qu’AffiAds vous propose</h3><p>'+(offers.length?offers.map(o=>'<span class="opchip">'+esc(o)+'</span>').join(""):'<span class="opchip">Suivi de votre visibilité</span>')+'</p><p class="opcta">Un échange de 10 minutes pour choisir ensemble les actions. Démo et devis gratuits, sans engagement.</p></div><div class="opsign"><b>'+esc(sender||"AffiAds")+'</b><span>'+esc(line)+'</span>'+(contact?'<span class="opcontact">'+esc(contact)+'</span>':'')+'</div></div>'
+  +'<p class="opfoot">Données publiques relevées le '+esc(d.fetchedAt||frDate(today()))+' : Google, Bing, site web, réseaux sociaux'+(r?", registre SIRENE":"")+'. Score indicatif ; les positions varient selon la personne et le lieu ; aucun résultat n’est garanti. Rapport détaillé disponible sur demande.</p>'
   +'</div>';
 }
 function setReportFormat(f){settings.reportFormat=f;saveSettings(true);document.body.classList.toggle("rep-one",f!=="full");document.querySelectorAll("[data-repfmt]").forEach(b=>b.classList.toggle("on",b.dataset.repfmt===f))}
@@ -1399,27 +1408,45 @@ function setReportFormat(f){settings.reportFormat=f;saveSettings(true);document.
 /* ---------- Vrai fichier PDF (fonctionne aussi dans l’appli installée sur iPhone, où « Imprimer » ne marche pas) ---------- */
 const libCache={};
 function loadLib(url,test){if(test())return Promise.resolve();if(libCache[url])return libCache[url];libCache[url]=new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=url;sc.onload=()=>test()?ok():ko(new Error("bibliothèque PDF"));sc.onerror=()=>{delete libCache[url];ko(new Error("Chargement impossible (connexion ?)"))};document.head.appendChild(sc)});return libCache[url]}
-function pdfName(){return ("Audit AffiAds - "+(state.biz.name||"commerce")+(state.biz.city?" - "+state.biz.city:"")).replace(/[\\/:*?"<>|]+/g," ").trim()+".pdf"}
+function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet AffiAds - ":"Audit AffiAds - ")+(state.biz.name||"commerce")+(state.biz.city?" - "+state.biz.city:"")).replace(/[\\/:*?"<>|]+/g," ").trim()+".pdf"}
 let pdfBusy=false;
+async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
 async function makePdf(){
- if(pdfBusy)return;pdfBusy=true;
+ if(pdfBusy)return;pdfBusy=true;const full=settings.reportFormat==="full";
  const btns=[$("pdf"),$("printReport")];btns.forEach(b=>{if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent="Création du PDF…"}});
- let holder=null;
+ let holder=null;const prevTheme=document.documentElement.getAttribute("data-theme");
  try{
   await Promise.all([loadLib("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",()=>!!window.html2canvas),loadLib("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",()=>!!(window.jspdf&&window.jspdf.jsPDF))]);
-  renderOnePage();
-  holder=document.createElement("div");holder.className="pdfhold";
-  const page=$("report1").cloneNode(true);page.removeAttribute("id");page.classList.add("pdfpage");holder.appendChild(page);document.body.appendChild(holder);
-  try{await document.fonts.ready}catch(e){}
-  await sleep(120);
-  const canvas=await html2canvas(page,{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794});
+  document.documentElement.setAttribute("data-theme","light");renderOnePage();renderReport();
+  holder=document.createElement("div");holder.className="pdfhold"+(full?" pdffull":"");document.body.appendChild(holder);
   const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
-  let w=210,h=canvas.height*210/canvas.width;if(h>297){w=w*297/h;h=297}
-  doc.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",(210-w)/2,0,w,h);
+  try{await document.fonts.ready}catch(e){}
+  if(!full){
+   const page=$("report1").cloneNode(true);page.removeAttribute("id");page.classList.add("pdfpage");holder.appendChild(page);await sleep(120);
+   const canvas=await pdfCanvas(page);let w=210,h=canvas.height*210/canvas.width;if(h>297){w=w*297/h;h=297}
+   doc.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",(210-w)/2,0,w,h);
+  }else{
+   const src=$("report").querySelector("table.printwrap>tbody>tr>td")||$("report");
+   const wrap=document.createElement("div");wrap.className="card report pdfpage";wrap.innerHTML=src.innerHTML;holder.appendChild(wrap);await sleep(150);
+   const blocks=[];[...wrap.children].forEach(el=>{if(el.classList.contains("sec")&&el.offsetHeight*0.2645>150){[...el.children].forEach(ch=>blocks.push(ch))}else blocks.push(el)});const M=12,TOP=16,BOT=14,CW=210-2*M,CH=297-TOP-BOT;let y=TOP,first=true;
+   const head=()=>{doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(74,58,255);doc.text("AffiAds Audit 360°",M,9);doc.setFont("helvetica","normal");doc.setTextColor(110,107,145);doc.text(((state.biz.name||"")+(state.biz.city?" · "+state.biz.city:"")).slice(0,80),210-M,9,{align:"right"});doc.setDrawColor(228,226,245);doc.line(M,11.5,210-M,11.5)};
+   head();
+   for(const el of blocks){
+    if(!el.offsetHeight)continue;
+    const cv=await pdfCanvas(el,1.6);const hmm=cv.height*CW/cv.width;
+    if(el.classList.contains("cover")&&!first){doc.addPage();head();y=TOP}
+    const keep=/^H[23]$/.test(el.tagName)?70:0;if((y+hmm+keep>TOP+CH)&&y>TOP+1){doc.addPage();head();y=TOP}
+    if(hmm<=CH){doc.addImage(cv.toDataURL("image/jpeg",0.82),"JPEG",M,y,CW,hmm);y+=hmm+3}
+    else{const pxPerMm=cv.width/CW;let off=0;while(off<cv.height){const room=(TOP+CH-y)*pxPerMm;const hpx=Math.min(room,cv.height-off);const part=document.createElement("canvas");part.width=cv.width;part.height=Math.ceil(hpx);part.getContext("2d").drawImage(cv,0,-off);doc.addImage(part.toDataURL("image/jpeg",0.82),"JPEG",M,y,CW,hpx/pxPerMm);off+=hpx;y+=hpx/pxPerMm+3;if(off<cv.height){doc.addPage();head();y=TOP}}}
+    if(el.classList.contains("cover")){doc.addPage();head();y=TOP}
+    first=false;
+   }
+   const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(138,135,168);doc.text((settings.senderLine||"AffiAds")+(settings.senderContact?" · "+settings.senderContact:""),M,290);doc.text("Page "+i+" / "+n,210-M,290,{align:"right"})}
+  }
   doc.setProperties({title:pdfName().replace(/\.pdf$/,""),author:settings.senderName||"AffiAds",creator:"AffiAds Audit 360°"});
-  const blob=doc.output("blob");showPdfSheet(blob);
+  showPdfSheet(doc.output("blob"));
  }catch(e){toast("PDF impossible pour le moment : "+(e&&e.message||"erreur")+". Réessayez dans un instant.")}
- finally{if(holder)holder.remove();pdfBusy=false;btns.forEach(b=>{if(b){b.disabled=false;b.textContent=b.dataset.t||b.textContent}})}
+ finally{if(prevTheme)document.documentElement.setAttribute("data-theme",prevTheme);else document.documentElement.removeAttribute("data-theme");if(holder)holder.remove();pdfBusy=false;btns.forEach(b=>{if(b){b.disabled=false;b.textContent=b.dataset.t||b.textContent}})}
 }
 function showPdfSheet(blob){
  const old=$("pdfSheet");if(old)old.remove();
@@ -1580,7 +1607,7 @@ function bind(){
  $("runAuto").onclick=runAuto;$("autoToReport").onclick=()=>nav("report");
  $("notes").addEventListener("input",()=>{update();persistLocal()});
  $("pdf").onclick=$("printReport").onclick=()=>{nav("report");makePdf()};
- $("printFull").onclick=()=>{nav("report");setReportFormat("full");setTimeout(()=>window.print(),300)};
+ $("printFull").onclick=()=>{nav("report");setTimeout(()=>window.print(),300)};
  document.querySelectorAll("[data-repfmt]").forEach(b=>b.onclick=()=>setReportFormat(b.dataset.repfmt));
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
  $("clientChip").onclick=()=>nav("clients");
