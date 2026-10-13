@@ -640,3 +640,17 @@ body.locked .botfab,body.locked .botpanel,body.botopen .botfab{display:none}
 .remember[hidden]{display:none}
 .partial{display:flex;flex-direction:column;gap:3px;margin:14px 0 4px;padding:12px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--surface));font-size:14px;line-height:1.45;color:var(--ink)}
 .partial b{font-size:14.5px}
+.socaudit{margin-top:16px;padding-top:6px}
+.socaudit+.socaudit,.socaudit+.box{margin-top:22px}
+.sochead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sochead img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+.sochead div{flex:1;min-width:0}.sochead b{display:block;font-size:17px}.sochead span{font-size:13px;color:var(--ink-3)}
+.socscore{flex:0 0 auto;font-weight:800;font-size:26px;padding:6px 12px;border-radius:14px;background:var(--surface-2,#f1efff);color:var(--ink)}
+.socscore small{font-size:12px;font-weight:600;color:var(--ink-3)}
+.socscore.good{color:#13915b}.socscore.mid{color:#b7791f}.socscore.bad{color:#d1344b}
+.seg.sm{display:inline-flex;gap:4px}.seg.sm button{min-height:34px;padding:5px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font:600 13px var(--font);cursor:pointer}
+.seg.sm button.on{background:var(--royal);border-color:var(--royal);color:#fff}
+.qrow .seg.sm{flex:0 0 auto}
+.socticks li{display:flex;align-items:flex-start;gap:10px}
+.socticks li>div{flex:1;min-width:0}.socticks li b{display:block}.socticks li small{display:block;color:var(--ink-2);line-height:1.45;margin-top:2px}
+@media(max-width:520px){.socscore{font-size:20px;padding:5px 9px}.sochead b{font-size:16px}}

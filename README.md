@@ -72,3 +72,7 @@ Le site est publié automatiquement sur GitHub Pages à chaque mise à jour de l
 - `assets/app.css` — styles
 - `assets/logo-*.png` — logo officiel AffiAds Audit
 - `manifest.webmanifest` — installation sur téléphone
+
+## Audit Instagram et YouTube
+
+Écran « Plus → Instagram et YouTube » : collez le lien d’un compte. YouTube : abonnés, rythme, Shorts, titres et descriptions (SEO), tags, chapitres, engagement (données officielles avec la clé Google et l’API « YouTube Data API v3 », sinon page publique et flux RSS). Instagram : abonnés, publications, nom et bio quand ils sont publics, puis vérification guidée du profil. Avec la clé Google, l’IA propose niche, mots-clés, hashtags et idées de contenus. Le résultat s’ajoute au rapport client.
