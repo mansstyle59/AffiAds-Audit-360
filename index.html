@@ -261,9 +261,10 @@ $("exportAiCsv").onclick=()=>{
 function drawAiTests(){
  state.aiTests=Array.isArray(state.aiTests)?state.aiTests:[];
  const tests=state.aiTests;
- const yes=tests.filter(t=>t.presence==="yes").length;
- const rate=tests.length?Math.round(yes/tests.length*100):null;
- $("aiSummary").innerHTML='<div class="card s3"><div class="metric">'+tests.length+'<small>Tests enregistrés</small></div></div><div class="card s3"><div class="metric">'+(rate===null?"—":rate+"%")+'<small>Tests avec citation</small></div></div><div class="card s3"><div class="metric">'+tests.filter(t=>t.presence==="no").length+'<small>Tests sans présence</small></div></div>';
+ const completed=tests.filter(t=>t.presence==="yes"||t.presence==="no");
+ const yes=completed.filter(t=>t.presence==="yes").length;
+ const rate=completed.length?Math.round(yes/completed.length*100):null;
+ $("aiSummary").innerHTML='<div class="card s3"><div class="metric">'+tests.length+'<small>Tests enregistrés</small></div></div><div class="card s3"><div class="metric">'+(rate===null?"—":rate+"%")+'<small>Taux de présence sur réponses oui/non</small></div></div><div class="card s3"><div class="metric">'+tests.filter(t=>t.presence==="no").length+'<small>Tests sans présence</small></div></div>';
  $("aiTestsList").innerHTML=tests.length?'<h3 style="margin:16px 0 8px">Historique des tests</h3>'+tests.slice().reverse().map((t,idx)=>'<div class="priority"><b>'+esc(t.platform)+' · '+esc(t.date)+'</b><small>'+esc(t.prompt)+'</small><p>'+ (t.presence==="yes"?"Présent":t.presence==="no"?"Absent":"Incertain")+(t.rank?" · Position notée : "+esc(t.rank):"")+(t.competitors?" · Concurrents : "+esc(t.competitors):"")+'</p>'+(t.source?'<a target="_blank" rel="noopener" href="'+esc(t.source)+'">Source citée ↗</a>':"")+(t.notes?'<p>'+esc(t.notes)+'</p>':"")+'<div class="actions"><button class="btn" data-delete-ai="'+(tests.length-1-idx)+'">Supprimer ce test</button></div></div>').join(""):'<p class="muted">Aucun test enregistré. Fais une première recherche dans ChatGPT ou Claude, puis consigne le résultat ici.</p>';
  $("aiTestsList").querySelectorAll("[data-delete-ai]").forEach(b=>b.onclick=()=>{state.aiTests.splice(Number(b.dataset.deleteAi),1);persistLocal();drawAiTests();renderReport()});
 }
