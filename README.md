@@ -9,7 +9,7 @@ Application web (ordinateur, tablette, téléphone) qui réalise **automatiqueme
 Tapez le **nom du commerce** : des **suggestions** (Google, ou OpenStreetMap sans clé) apparaissent et permettent de choisir l'établissement exact ; le type de commerce est détecté automatiquement. Cliquez ensuite sur « Lancer l'audit automatique ». L'application :
 
 1. **Trouve la fiche Google** : adresse, téléphone, horaires, catégorie, statut (ouvert/fermé), photos, note, nombre d'avis, avis récents, doublons éventuels.
-2. **Mesure la position locale** sur jusqu'à **3 recherches clients** (ex. « restaurant Narbonne », « meilleur restaurant Narbonne ») et relève les **concurrents** les plus visibles : note, avis, photos, et **vitesse de leur site** comparée à celle du commerce.
+2. **Mesure la position locale** sur jusqu'à **3 recherches clients** (ex. « plombier Narbonne », « meilleure boulangerie Narbonne »), avec plus de 40 métiers reconnus automatiquement et relève les **concurrents** les plus visibles : note, avis, photos, et **vitesse de leur site** comparée à celle du commerce.
 3. **Analyse le site sur mobile** avec Google PageSpeed Insights : performance, SEO, accessibilité, bonnes pratiques, Core Web Vitals réels, HTTPS, titre et description, capture d'écran, outils de suivi détectés (Pixel Meta, Google Analytics…).
 4. **Interroge OpenStreetMap** (sans clé) : présence du commerce, réseaux sociaux déclarés, commerces similaires à proximité.
 5. **Remplit la checklist** avec une preuve pour chaque point (badge AUTO), calcule un score par catégorie et un **plan d'action priorisé** (impact / effort / offre AffiAds liée).

@@ -7,18 +7,61 @@
 "use strict";
 
 /* ---------- Référentiels ---------- */
+/* Familles d'activité : vocabulaire, photos, vidéos et annuaires adaptés à chaque métier */
+const FAMS={
+ food:{offer:"la carte ou les produits avec les prix",photos:"façade, salle, plats ou produits, équipe",video:"la préparation d’un plat ou d’un produit phare",dirs:"TripAdvisor, TheFork, PagesJaunes"},
+ beauty:{offer:"les prestations avec les tarifs",photos:"salon, réalisations avant/après, équipe",video:"une transformation avant/après",dirs:"Planity, Treatwell, PagesJaunes"},
+ health:{offer:"les spécialités, les actes et les modalités de rendez-vous",photos:"façade, accueil, cabinet, équipe",video:"la présentation de l’équipe et des conseils pratiques",dirs:"Doctolib, PagesJaunes",regulated:true},
+ build:{offer:"les services, la zone d’intervention et des réalisations en photos",photos:"chantiers avant/après, équipe, véhicule",video:"un chantier avant/après en accéléré",dirs:"PagesJaunes, Houzz, Habitatpresto, StarOfService"},
+ shop:{offer:"les produits phares avec les prix",photos:"vitrine, intérieur, produits, équipe",video:"les nouveautés ou un produit en situation",dirs:"PagesJaunes, Facebook"},
+ service:{offer:"les services avec les tarifs ou une demande de devis",photos:"locaux, équipe, réalisations",video:"la présentation de l’équipe et d’un service",dirs:"PagesJaunes et les annuaires du métier"},
+ legal:{offer:"les domaines d’intervention et les modalités de rendez-vous",photos:"locaux, équipe",video:"des conseils pratiques en 30 secondes",dirs:"PagesJaunes et les annuaires de la profession",regulated:true},
+ auto:{offer:"les prestations avec les tarifs",photos:"atelier, véhicules, équipe",video:"une intervention en atelier",dirs:"PagesJaunes, iDGarages, Vroomly"},
+ stay:{offer:"les chambres ou activités avec les tarifs et la réservation",photos:"façade, chambres ou espaces, environs",video:"une visite des lieux",dirs:"Booking, TripAdvisor, PagesJaunes"}};
 const BIZ_TYPES=[
- {label:"Restaurant",kw:"restaurant",g:["restaurant"],osm:'["amenity"~"^(restaurant|fast_food)$"]'},
- {label:"Café / bar",kw:"bar",g:["cafe","bar"],osm:'["amenity"~"^(cafe|bar|pub)$"]'},
- {label:"Boulangerie",kw:"boulangerie",f:1,g:["bakery"],osm:'["shop"~"^(bakery|pastry)$"]'},
- {label:"Commerce de proximité",kw:"épicerie",f:1,g:["convenience_store","grocery_store","supermarket"],osm:'["shop"~"^(convenience|supermarket|greengrocer|butcher|deli)$"]'},
- {label:"Salon / beauté",kw:"coiffeur",g:["hair_salon","beauty_salon"],osm:'["shop"~"^(hairdresser|beauty)$"]'},
- {label:"Hôtel / hébergement",kw:"hôtel",g:["lodging"],osm:'["tourism"~"^(hotel|guest_house|motel)$"]'},
- {label:"Artisan / dépannage",kw:"artisan",g:["plumber","electrician","painter","general_contractor"],osm:'["craft"]'},
- {label:"Boutique / mode",kw:"boutique",f:1,g:["clothing_store","store"],osm:'["shop"~"^(clothes|shoes|boutique|gift)$"]'},
- {label:"Garage / auto",kw:"garage automobile",g:["car_repair"],osm:'["shop"~"^(car_repair|car|tyres)$"]'},
- {label:"Santé / bien-être",kw:"institut de bien-être",g:["spa","physiotherapist"],osm:'["leisure"~"^(spa|sauna)$"]'},
- {label:"Autre commerce",kw:"commerce",g:[],osm:""}
+ {grp:"Restauration et alimentation",label:"Restaurant",kw:"restaurant",fam:"food",osm:'["amenity"~"^(restaurant)$"]'},
+ {grp:"Restauration et alimentation",label:"Pizzeria / restauration rapide",kw:"pizzeria",f:1,fam:"food",osm:'["amenity"~"^(fast_food)$"]'},
+ {grp:"Restauration et alimentation",label:"Café / bar",kw:"bar",fam:"food",osm:'["amenity"~"^(cafe|bar|pub)$"]'},
+ {grp:"Restauration et alimentation",label:"Boulangerie",kw:"boulangerie",f:1,fam:"food",osm:'["shop"~"^(bakery|pastry)$"]'},
+ {grp:"Restauration et alimentation",label:"Boucherie / charcuterie",kw:"boucherie",f:1,fam:"food",osm:'["shop"~"^(butcher|deli)$"]'},
+ {grp:"Restauration et alimentation",label:"Traiteur",kw:"traiteur",fam:"food",osm:'["craft"="caterer"]'},
+ {grp:"Restauration et alimentation",label:"Caviste",kw:"caviste",fam:"shop",osm:'["shop"~"^(wine|alcohol)$"]'},
+ {grp:"Restauration et alimentation",label:"Commerce de proximité",kw:"épicerie",f:1,fam:"shop",osm:'["shop"~"^(convenience|supermarket|greengrocer)$"]'},
+ {grp:"Beauté et bien-être",label:"Salon / beauté",kw:"coiffeur",fam:"beauty",osm:'["shop"~"^(hairdresser)$"]'},
+ {grp:"Beauté et bien-être",label:"Barbier",kw:"barbier",fam:"beauty",osm:'["shop"~"^(hairdresser)$"]'},
+ {grp:"Beauté et bien-être",label:"Institut de beauté / ongles",kw:"institut de beauté",fam:"beauty",osm:'["shop"~"^(beauty|cosmetics)$"]'},
+ {grp:"Beauté et bien-être",label:"Santé / bien-être",kw:"spa",fam:"beauty",osm:'["leisure"~"^(spa|sauna)$"]'},
+ {grp:"Beauté et bien-être",label:"Tatoueur",kw:"tatoueur",fam:"beauty",osm:'["shop"~"^(tattoo)$"]'},
+ {grp:"Beauté et bien-être",label:"Salle de sport / coach",kw:"salle de sport",f:1,fam:"service",osm:'["leisure"~"^(fitness_centre|sports_centre)$"]'},
+ {grp:"Santé (profession réglementée)",label:"Médecin",kw:"médecin",fam:"health",osm:'["amenity"~"^(doctors|clinic)$"]'},
+ {grp:"Santé (profession réglementée)",label:"Kinésithérapeute / ostéopathe",kw:"kinésithérapeute",fam:"health",osm:'["healthcare"~"^(physiotherapist|osteopath)$"]'},
+ {grp:"Santé (profession réglementée)",label:"Dentiste",kw:"dentiste",fam:"health",osm:'["amenity"~"^(dentist)$"]'},
+ {grp:"Santé (profession réglementée)",label:"Pharmacie",kw:"pharmacie",f:1,fam:"health",osm:'["amenity"~"^(pharmacy)$"]'},
+ {grp:"Santé (profession réglementée)",label:"Vétérinaire",kw:"vétérinaire",fam:"health",osm:'["amenity"~"^(veterinary)$"]'},
+ {grp:"Commerces",label:"Opticien",kw:"opticien",fam:"shop",osm:'["shop"~"^(optician)$"]'},
+ {grp:"Commerces",label:"Boutique / mode",kw:"boutique",f:1,fam:"shop",osm:'["shop"~"^(clothes|shoes|boutique|gift|jewelry)$"]'},
+ {grp:"Commerces",label:"Fleuriste",kw:"fleuriste",fam:"shop",osm:'["shop"~"^(florist)$"]'},
+ {grp:"Commerces",label:"Animalerie / toiletteur",kw:"toiletteur",fam:"shop",osm:'["shop"~"^(pet|pet_grooming)$"]'},
+ {grp:"Commerces",label:"Magasin de meubles / déco",kw:"magasin de décoration",fam:"shop",osm:'["shop"~"^(furniture|interior_decoration)$"]'},
+ {grp:"Artisans et bâtiment",label:"Artisan / dépannage",kw:"artisan",fam:"build",osm:'["craft"]'},
+ {grp:"Artisans et bâtiment",label:"Plombier / chauffagiste",kw:"plombier",fam:"build",osm:'["craft"~"^(plumber|hvac)$"]'},
+ {grp:"Artisans et bâtiment",label:"Électricien",kw:"électricien",fam:"build",osm:'["craft"~"^(electrician)$"]'},
+ {grp:"Artisans et bâtiment",label:"Peintre / façadier",kw:"peintre en bâtiment",fam:"build",osm:'["craft"~"^(painter)$"]'},
+ {grp:"Artisans et bâtiment",label:"Maçon / rénovation",kw:"entreprise de rénovation",f:1,fam:"build",osm:'["craft"~"^(builder|carpenter|roofer|tiler|stonemason)$"]'},
+ {grp:"Artisans et bâtiment",label:"Serrurier",kw:"serrurier",fam:"build",osm:'["shop"~"^(locksmith)$"]'},
+ {grp:"Artisans et bâtiment",label:"Paysagiste",kw:"paysagiste",fam:"build",osm:'["craft"~"^(gardener)$"]'},
+ {grp:"Artisans et bâtiment",label:"Déménageur",kw:"déménageur",fam:"service",osm:""},
+ {grp:"Services",label:"Agence immobilière",kw:"agence immobilière",f:1,fam:"service",osm:'["office"~"^(estate_agent)$"]'},
+ {grp:"Services",label:"Auto-école",kw:"auto-école",f:1,fam:"service",osm:'["amenity"~"^(driving_school)$"]'},
+ {grp:"Services",label:"Photographe",kw:"photographe",fam:"service",osm:'["craft"~"^(photographer)$"]'},
+ {grp:"Services",label:"Pressing / cordonnerie",kw:"pressing",fam:"service",osm:'["shop"~"^(dry_cleaning|laundry|shoe_repair)$"]'},
+ {grp:"Services",label:"Avocat / notaire / comptable",kw:"avocat",fam:"legal",osm:'["office"~"^(lawyer|notary|accountant)$"]'},
+ {grp:"Auto et transport",label:"Garage / auto",kw:"garage automobile",fam:"auto",osm:'["shop"~"^(car_repair|car|tyres)$"]'},
+ {grp:"Auto et transport",label:"Taxi / VTC",kw:"taxi",fam:"auto",osm:'["amenity"~"^(taxi)$"]'},
+ {grp:"Hébergement et loisirs",label:"Hôtel / hébergement",kw:"hôtel",fam:"stay",osm:'["tourism"~"^(hotel|motel)$"]'},
+ {grp:"Hébergement et loisirs",label:"Gîte / chambre d’hôtes",kw:"chambre d’hôtes",f:1,fam:"stay",osm:'["tourism"~"^(guest_house|chalet|apartment)$"]'},
+ {grp:"Hébergement et loisirs",label:"Loisirs / activités",kw:"activité de loisirs",f:1,fam:"stay",osm:'["leisure"~"^(escape_game|bowling_alley|amusement_arcade|miniature_golf|water_park)$"]'},
+ {grp:"Autre",label:"Autre commerce",kw:"",fam:"service",osm:""}
 ];
 /* Les nouveaux points sont TOUJOURS ajoutés en fin de groupe pour garder la compatibilité des sauvegardes. */
 const groups=[
@@ -96,6 +139,7 @@ const fr1=n=>Number(n).toLocaleString("fr-FR",{maximumFractionDigits:1});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function typeInfo(label){return BIZ_TYPES.find(t=>t.label===label)||BIZ_TYPES[BIZ_TYPES.length-1]}
+function famOf(label){return FAMS[typeInfo(label).fam]||FAMS.service}
 function distKm(a,b){if(!a||!b)return null;const R=6371,toR=x=>x*Math.PI/180;const dLa=toR(b.lat-a.lat),dLo=toR(b.lng-a.lng);const h=Math.sin(dLa/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim()}
 const STOP=new Set(["le","la","les","l","de","du","des","d","et","chez","au","aux","a","the","restaurant","sarl","sas"]);
@@ -170,24 +214,29 @@ function issuesList(){
 /* Conseil adapté aux chiffres réels de l'audit, avec un objectif mesurable */
 function tailor(k){
  const d=state.data||{},p=d.place,m=d.median||{},R=d.rankings||[],H=d.html,P=d.psi,F=(d.social&&d.social.found)||{};
- const myC=p&&p.userRatingCount,myR=p&&p.rating,o={};
+ const myC=p&&p.userRatingCount,myR=p&&p.rating,o={},fa=famOf(state.biz.type);
  switch(k){
+  case "0-3":o.reco="Mettre en ligne "+fa.offer+", sur la fiche Google et sur le site.";break;
+  case "0-2":o.reco="Rédiger une description claire avec l’activité ("+kwOf(state.biz.type)+") et la ville, lister "+fa.offer+" et ajouter le lien de "+(fa===FAMS.build||fa===FAMS.service?"demande de devis ou de contact":"réservation, de rendez-vous ou de commande")+".";break;
+  case "4-3":o.reco="Vérifier et harmoniser les fiches sur les annuaires du secteur ("+fa.dirs+"), ainsi qu’Apple Plans, Bing Places et Facebook : mêmes nom, adresse, téléphone et horaires partout.";break;
+  case "2-5":if(fa.regulated){o.reco="Profession réglementée : la publicité commerciale est encadrée par la déontologie. Privilégier une communication informative (fiche Google complète, site, photos, informations pratiques) plutôt qu’une campagne publicitaire.";}else o.reco="Lancer une campagne locale test (rayon de quelques kilomètres, vidéo verticale de 15 secondes montrant "+fa.video+") pour toucher de nouveaux clients.";break;
   case "0-0":{const a=state.auto[k];if(a&&/Manquant/.test(a.evidence))o.reco="Ajouter sur la fiche Google ce qui manque ("+a.evidence.replace(/^Manquant sur la fiche : /,"").replace(/\.$/,"")+"), puis vérifier que les horaires exceptionnels (jours fériés, vacances) sont publiés.";o.goal="Fiche complète à 100 % : adresse, téléphone, horaires, site.";break}
-  case "0-4":o.goal="Au moins 10 photos récentes, puis 2 à 4 nouvelles photos par mois.";break;
-  case "0-10":o.goal="Au moins 10 photos publiées par le propriétaire"+(m.ownerPhotos!=null?" (médiane des concurrents : "+m.ownerPhotos+")":"")+", renouvelées chaque mois.";break;
-  case "0-5":{const parts=[];if(myC!=null&&m.count!=null&&myC<m.count){const step=Math.min(m.count,myC+50);parts.push(step<m.count?"atteindre "+step+" avis dans les 6 mois, puis se rapprocher de la médiane des concurrents ("+m.count+" avis)":"atteindre "+m.count+" avis, la médiane des concurrents, dans les 6 mois")}else if(myC!=null&&myC<50)parts.push("atteindre au moins 50 avis");if(myR!=null&&myR<4.2)parts.push("remonter la note au-dessus de 4,2/5 en traitant les critiques récurrentes");o.goal=parts.length?parts.join(", et ").replace(/^./,c=>c.toUpperCase())+". Rythme réaliste avec une collecte en caisse : 6 à 10 nouveaux avis par mois.":"Rythme réaliste avec une collecte en caisse : 6 à 10 nouveaux avis par mois.";break}
+  case "0-4":o.reco="Publier régulièrement des photos récentes et professionnelles ("+fa.photos+") et une vidéo courte.";o.goal="Au moins 10 photos récentes, puis 2 à 4 nouvelles photos par mois.";break;
+  case "0-10":o.reco="Publier depuis la fiche Google des photos professionnelles récentes ("+fa.photos+") : Google met en avant les photos du propriétaire quand elles sont nombreuses et de qualité.";o.goal="Au moins 10 photos publiées par le propriétaire"+(m.ownerPhotos!=null?" (médiane des concurrents : "+m.ownerPhotos+")":"")+", renouvelées chaque mois.";break;
+  case "0-5":{const parts=[];if(myC!=null&&m.count!=null&&myC<m.count){const step=Math.min(m.count,myC+50);parts.push(step<m.count?"atteindre "+step+" avis dans les 6 mois, puis se rapprocher de la médiane des concurrents ("+m.count+" avis)":"atteindre "+m.count+" avis, la médiane des concurrents, dans les 6 mois")}else if(myC!=null&&myC<50)parts.push("atteindre au moins 50 avis");if(myR!=null&&myR<4.2)parts.push("remonter la note au-dessus de 4,2/5 en traitant les critiques récurrentes");o.reco="Mettre en place une collecte d’avis régulière ("+(fa===FAMS.build||fa===FAMS.service||fa===FAMS.auto?"lien d’avis envoyé par SMS ou WhatsApp après chaque intervention, carte avec QR code laissée au client":fa===FAMS.health||fa===FAMS.legal?"QR code discret à l’accueil, sans jamais offrir de contrepartie":"QR code en caisse ou sur la table, message après la visite")+") pour augmenter le volume et la fraîcheur des avis, et répondre à chacun.";
+   const rhythm=" Rythme réaliste avec une demande systématique : 6 à 10 nouveaux avis par mois.";o.goal=parts.length?parts.join(", et ").replace(/^./,c=>c.toUpperCase())+"."+rhythm:rhythm.trim();break}
   case "0-9":o.reco="Vérifier immédiatement le statut dans Google Business Profile : la fiche apparaît fermée, ce qui fait perdre la quasi-totalité des clients venant de Google.";o.goal="Fiche affichée « Ouvert » dès cette semaine.";break;
   case "0-8":o.reco="Vérifier si la fiche au nom proche est un doublon. Si oui, demander sa fusion ou sa suppression à Google depuis Google Business Profile ; sinon, rien à faire.";break;
-  case "1-0":o.reco=normalizeUrl(state.biz.site)?"Rendre le site lisible sur téléphone (balise viewport, mise en page adaptée), car la majorité des visites locales se font sur mobile.":"Créer un site mobile simple d’une à trois pages : infos pratiques, "+(/Restaurant|Café|Boulangerie/.test(state.biz.type||"")?"carte et prix":"prestations et tarifs")+", photos, bouton d’appel, itinéraire et liens vers les réseaux. Puis l’indiquer sur la fiche Google.";o.goal=normalizeUrl(state.biz.site)?"Site validé « adapté aux mobiles ».":"Site en ligne et relié à la fiche Google.";break;
+  case "1-0":o.reco=normalizeUrl(state.biz.site)?"Rendre le site lisible sur téléphone (balise viewport, mise en page adaptée), car la majorité des visites locales se font sur mobile.":"Créer un site mobile simple d’une à trois pages : infos pratiques, "+ fa.offer+", photos, bouton d’appel, itinéraire et liens vers les réseaux. Puis l’indiquer sur la fiche Google.";o.goal=normalizeUrl(state.biz.site)?"Site validé « adapté aux mobiles ».":"Site en ligne et relié à la fiche Google.";break;
   case "1-1":if(P)o.goal="Passer de "+(P.scores.perf??"—")+"/100 à 70/100 ou plus en performance mobile, avec un contenu principal affiché en moins de 2,5 s (actuellement "+(P.lab.lcp||"—")+").";break;
-  case "1-3":if(H){const miss=[!H.tel.length&&"bouton d’appel cliquable",!H.whatsapp&&"WhatsApp",!H.booking.length&&"réservation ou commande en ligne"].filter(Boolean);o.reco="Ajouter en haut de la page d’accueil, visible sur téléphone : "+miss.join(", ")+".";}o.goal="Un client peut appeler ou réserver en un seul geste depuis la page d’accueil.";break;
+  case "1-3":if(H){const miss=[!H.tel.length&&"bouton d’appel cliquable",!H.whatsapp&&"WhatsApp",!H.booking.length&&(fa===FAMS.build||fa===FAMS.service||fa===FAMS.legal?"demande de devis ou de rendez-vous en ligne":fa===FAMS.health||fa===FAMS.beauty?"prise de rendez-vous en ligne":"réservation ou commande en ligne")].filter(Boolean);o.reco="Ajouter en haut de la page d’accueil, visible sur téléphone : "+miss.join(", ")+".";}o.goal="Un client peut appeler ou réserver en un seul geste depuis la page d’accueil.";break;
   case "1-4":{const a=state.auto[k];if(a&&/à corriger : /.test(a.evidence))o.reco="À corriger sur la page d’accueil : "+a.evidence.split("à corriger : ")[1].replace(/\.$/,"")+". Formule conseillée pour le titre : « "+(state.biz.name||"Nom")+" – "+kwOf(state.biz.type)+" à "+(state.biz.city||"Ville")+" ».";break}
   case "1-8":o.goal="Pixel Meta et Google Analytics actifs, avec bannière de consentement, avant la première campagne.";break;
   case "2-0":{const miss=["Instagram","Facebook"].filter(n=>!F[n]);if(miss.length&&d.social)o.reco=(miss.length===2?"Aucun compte Facebook ni Instagram n’a été trouvé : ":"Compte "+miss[0]+" non trouvé : ")+"créer ou relier "+(miss.length===2?"les comptes":"le compte")+" avec le même nom, le même logo, l’adresse, les horaires et le lien vers le site, puis les relier depuis le site et la fiche Google.";o.goal="Comptes actifs, reliés depuis le site et la fiche Google.";break}
-  case "2-2":case "2-6":o.goal="2 à 3 publications par semaine, dont au moins une vidéo verticale.";break;
+  case "2-2":case "2-6":o.reco=k==="2-6"?"Publier chaque semaine une vidéo verticale courte (Reels, TikTok, YouTube Shorts), par exemple "+fa.video+" : c’est le format le plus vu en 2026.":"Planifier deux à trois publications par semaine : coulisses, "+fa.video+", avis clients, nouveautés.";o.goal="2 à 3 publications par semaine, dont au moins une vidéo verticale.";break;
   case "3-3":if(m.count!=null||m.rating!=null)o.goal="Rattraper la médiane des concurrents visibles : "+(m.rating!=null?fr1(m.rating)+"/5":"")+(m.count!=null?" et "+m.count+" avis":"")+".";break;
   case "3-5":{const miss=R.filter(r=>!r.rank||r.rank>3);if(miss.length)o.reco="Travailler la pertinence de la fiche sur "+miss.map(r=>"« "+r.query+" » ("+(r.rank?"n° "+r.rank:"absent")+")").join(", ")+" : catégories exactes, description avec l’activité et la ville, photos et avis récents qui citent l’activité.";o.goal="Entrer dans le top 3 sur ces recherches"+(d.grid?" et depuis au moins 6 des 9 points de la carte (actuellement "+d.grid.top3+")":"")+". Résultat à mesurer à 3 mois, sans garantie de position.";break}
-  case "3-6":o.goal="Fiche Bing Places active et commerce visible en recherchant son nom sur Bing.";break;
+  case "3-6":o.reco="Créer et compléter la fiche Bing Places (import possible depuis Google), et soigner les annuaires que Bing met en avant pour ce métier ("+fa.dirs+") : Bing alimente aussi DuckDuckGo et Copilot.";o.goal="Fiche Bing Places active et commerce visible en recherchant son nom sur Bing.";break;
  }
  return o;
 }
@@ -317,7 +366,7 @@ async function fetchHtml(url){
  throw last||new Error("page illisible");
 }
 const SOCIAL_RX=[["Facebook",/(^|\.)facebook\.com$|(^|\.)fb\.com$/],["Instagram",/(^|\.)instagram\.com$/],["TikTok",/(^|\.)tiktok\.com$/],["YouTube",/(^|\.)youtube\.com$|(^|\.)youtu\.be$/],["LinkedIn",/(^|\.)linkedin\.com$/],["X / Twitter",/(^|\.)(twitter|x)\.com$/],["Pinterest",/(^|\.)pinterest\.[a-z]+$/],["Snapchat",/(^|\.)snapchat\.com$/]];
-const BOOKING_RX=/thefork|lafourchette|zenchef|resy\.com|sevenrooms|guestonline|planity|treatwell|calendly|doctolib|booking\.com|airbnb|ubereats|deliveroo|just-?eat|bookingpage|tablebooker|mybusinessplanner|kalendes|simplybook|resengo|covermanager|opentable/i;
+const BOOKING_RX=/booksy|kiute|maiia|keldoc|rdvmedicaux|resalib|setmore|acuityscheduling|squareup\.com\/appointments|wecasa|habitatpresto|vroomly|idgarages|ornikar|thefork|lafourchette|zenchef|resy\.com|sevenrooms|guestonline|planity|treatwell|calendly|doctolib|booking\.com|airbnb|ubereats|deliveroo|just-?eat|bookingpage|tablebooker|mybusinessplanner|kalendes|simplybook|resengo|covermanager|opentable/i;
 const TRACK_RX=[["Pixel Meta",/connect\.facebook\.net|fbq\(/],["Google Tag Manager",/googletagmanager\.com\/gtm|GTM-[A-Z0-9]{4,}/],["Google Analytics",/googletagmanager\.com\/gtag|google-analytics\.com|gtag\(/],["Pixel TikTok",/analytics\.tiktok\.com|ttq\.load/],["Microsoft Clarity",/clarity\.ms/],["Hotjar",/hotjar\.com/],["Google Ads",/googleadservices|AW-[0-9]{6,}/]];
 const CMS_RX=[["Wix",/wix\.com|_wixCssImports|wixstatic/i],["WordPress",/wp-content|wp-includes/i],["Shopify",/cdn\.shopify|Shopify\.theme/i],["Squarespace",/squarespace/i],["Webflow",/webflow/i],["Jimdo",/jimdo/i],["PrestaShop",/prestashop/i],["Google Sites",/sites\.google/i],["Site.pro / SitW",/site123|sitew/i]];
 function analyzeHtml(html,pageUrl,ctx){
@@ -337,7 +386,7 @@ function analyzeHtml(html,pageUrl,ctx){
  links.forEach(l=>{let u;try{u=new URL(l.href,base||undefined)}catch(e){return}if(/sharer|share\?|intent\/tweet|\/share$/i.test(u.href))return;const s=SOCIAL_RX.find(([,rx])=>rx.test(u.hostname));if(s&&!seen.has(s[0])&&u.pathname.length>1){seen.add(s[0]);socials.push({net:s[0],url:u.href})}});
  const tel=links.filter(l=>/^tel:/i.test(l.href)).map(l=>l.href.slice(4));
  const whatsapp=links.some(l=>/wa\.me|whatsapp/i.test(l.href));
- const booking=[...new Set(links.filter(l=>BOOKING_RX.test(l.href)||/r[ée]serv|commander|prendre rendez|book now|order/i.test(l.text)).map(l=>{try{return new URL(l.href,base||undefined).hostname.replace(/^www\./,"")}catch(e){return l.text}}))].slice(0,4);
+ const booking=[...new Set(links.filter(l=>BOOKING_RX.test(l.href)||/r[ée]serv|commander|prendre rendez|rendez-vous en ligne|devis|book now|order/i.test(l.text)).map(l=>{try{return new URL(l.href,base||undefined).hostname.replace(/^www\./,"")}catch(e){return l.text}}))].slice(0,4);
  const tracking=TRACK_RX.filter(([,rx])=>rx.test(html)).map(([n])=>n);
  const cms=generator||((CMS_RX.find(([,rx])=>rx.test(html))||[])[0]||"");
  const imgs=[...doc.querySelectorAll("img")];const noAlt=imgs.filter(i=>!i.hasAttribute("alt")||!i.getAttribute("alt").trim()).length;
@@ -359,20 +408,52 @@ const LOCAL_TYPES=/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffe
 /* ---------- Recherche assistée : suggestions et choix exact du commerce ---------- */
 const DETAIL_FIELDS=PLACE_FIELDS.split(",").map(f=>f.replace(/^places\./,"")).join(",");
 const G_TYPE_MAP=[
- [/(^|_)restaurant$|meal_takeaway|meal_delivery|pizza|sandwich_shop|brunch|diner|steak_house|food_court/,"Restaurant"],
+ [/^(pizza_restaurant|fast_food_restaurant|sandwich_shop|hamburger_restaurant|kebab_shop|meal_takeaway)$/,"Pizzeria / restauration rapide"],
+ [/^(catering_service|caterer)$/,"Traiteur"],
+ [/(^|_)restaurant$|meal_delivery|brunch|diner|steak_house|food_court/,"Restaurant"],
  [/^(cafe|bar|pub|wine_bar|coffee_shop|cocktail_bar|tea_house|night_club|cafeteria|juice_shop)$/,"Café / bar"],
  [/^(bakery|pastry_shop|confectionery|dessert_shop|chocolate_shop)$/,"Boulangerie"],
- [/^(convenience_store|grocery_store|supermarket|butcher_shop|food_store|market|liquor_store|health_food_store|asian_grocery_store)$/,"Commerce de proximité"],
- [/^(hair_salon|beauty_salon|nail_salon|barber_shop|hair_care|beautician|makeup_artist|tanning_studio)$/,"Salon / beauté"],
- [/^(lodging|hotel|bed_and_breakfast|guest_house|motel|hostel|inn|resort_hotel|campground|cottage)$/,"Hôtel / hébergement"],
- [/^(plumber|electrician|painter|roofing_contractor|general_contractor|locksmith|moving_company|carpenter|hvac_contractor)$/,"Artisan / dépannage"],
- [/^(clothing_store|shoe_store|jewelry_store|gift_shop|book_store|furniture_store|home_goods_store|florist|store|shopping_mall|sporting_goods_store|electronics_store)$/,"Boutique / mode"],
+ [/^(butcher_shop|deli)$/,"Boucherie / charcuterie"],
+ [/^(liquor_store|wine_store)$/,"Caviste"],
+ [/^(convenience_store|grocery_store|supermarket|food_store|market|health_food_store|asian_grocery_store)$/,"Commerce de proximité"],
+ [/^barber_shop$/,"Barbier"],
+ [/^(hair_salon|hair_care)$/,"Salon / beauté"],
+ [/^(beauty_salon|nail_salon|beautician|makeup_artist|tanning_studio|skin_care_clinic)$/,"Institut de beauté / ongles"],
+ [/^(spa|massage|wellness_center|sauna)$/,"Santé / bien-être"],
+ [/^(gym|fitness_center|yoga_studio|pilates_studio|sports_coaching)$/,"Salle de sport / coach"],
+ [/^(dentist|dental_clinic)$/,"Dentiste"],
+ [/^(pharmacy|drugstore)$/,"Pharmacie"],
+ [/^(physiotherapist|chiropractor)$/,"Kinésithérapeute / ostéopathe"],
+ [/^(doctor|medical_clinic|medical_center|general_practitioner|medical_lab)$/,"Médecin"],
+ [/^veterinary_care$/,"Vétérinaire"],
+ [/^(optician|eye_care_center)$/,"Opticien"],
+ [/^(plumber|hvac_contractor)$/,"Plombier / chauffagiste"],
+ [/^electrician$/,"Électricien"],
+ [/^painter$/,"Peintre / façadier"],
+ [/^(roofing_contractor|general_contractor|carpenter)$/,"Maçon / rénovation"],
+ [/^locksmith$/,"Serrurier"],
+ [/^(landscaper|gardener)$/,"Paysagiste"],
+ [/^moving_company$/,"Déménageur"],
+ [/^florist$/,"Fleuriste"],
+ [/^(pet_store|pet_care|pet_groomer)$/,"Animalerie / toiletteur"],
+ [/^(furniture_store|home_goods_store)$/,"Magasin de meubles / déco"],
+ [/^real_estate_agency$/,"Agence immobilière"],
+ [/^driving_school$/,"Auto-école"],
+ [/^(photographer|photography_studio)$/,"Photographe"],
+ [/^(laundry|dry_cleaner|shoe_repair)$/,"Pressing / cordonnerie"],
+ [/^(lawyer|accounting|notary_public)$/,"Avocat / notaire / comptable"],
+ [/^tattoo/,"Tatoueur"],
  [/^(car_repair|car_dealer|car_wash|auto_parts_store|car_rental|tire_shop)$/,"Garage / auto"],
- [/^(spa|physiotherapist|massage|wellness_center|gym|fitness_center|yoga_studio|sauna|dentist|doctor|chiropractor)$/,"Santé / bien-être"]];
+ [/^taxi_service$/,"Taxi / VTC"],
+ [/^(bed_and_breakfast|guest_house|cottage|farmstay|campground|private_guest_room)$/,"Gîte / chambre d’hôtes"],
+ [/^(lodging|hotel|motel|hostel|inn|resort_hotel)$/,"Hôtel / hébergement"],
+ [/^(amusement_center|bowling_alley|tourist_attraction|adventure_sports_center|water_park|amusement_park)$/,"Loisirs / activités"],
+ [/^(clothing_store|shoe_store|jewelry_store|gift_shop|book_store|sporting_goods_store|electronics_store|store|shopping_mall)$/,"Boutique / mode"]];
 function typeFromGoogle(types){for(const t of types||[])for(const [rx,label] of G_TYPE_MAP)if(rx.test(t))return label;return null}
-function typeFromOsm(key,val){const v=String(val||"");if(key==="amenity"&&/^(restaurant|fast_food|food_court)$/.test(v))return "Restaurant";if(key==="amenity"&&/^(cafe|bar|pub|biergarten)$/.test(v))return "Café / bar";if(key==="shop"&&/^(bakery|pastry|confectionery)$/.test(v))return "Boulangerie";if(key==="shop"&&/^(convenience|supermarket|greengrocer|butcher|deli|cheese|wine|alcohol|farm)$/.test(v))return "Commerce de proximité";if(key==="shop"&&/^(hairdresser|beauty|cosmetics)$/.test(v))return "Salon / beauté";if(key==="tourism"&&/^(hotel|guest_house|motel|hostel|apartment|chalet|camp_site)$/.test(v))return "Hôtel / hébergement";if(key==="craft")return "Artisan / dépannage";if(key==="shop"&&/^(car_repair|car|tyres|car_parts)$/.test(v))return "Garage / auto";if(key==="shop")return "Boutique / mode";if(/^(leisure|healthcare)$/.test(key))return "Santé / bien-être";return null}
-function kwOf(label){return typeInfo(label).kw||String(label||"commerce").toLowerCase()}
-function artOf(label){return typeInfo(label).f?"une ":(/^[aeiouyhéè]/i.test(kwOf(label))?"un ":"un ")}
+const OSM_MAP=[["amenity",/^(restaurant|food_court)$/,"Restaurant"],["amenity",/^(fast_food)$/,"Pizzeria / restauration rapide"],["amenity",/^(cafe|bar|pub|biergarten)$/,"Café / bar"],["shop",/^(bakery|pastry|confectionery)$/,"Boulangerie"],["shop",/^(butcher|deli)$/,"Boucherie / charcuterie"],["craft",/^caterer$/,"Traiteur"],["shop",/^(wine|alcohol)$/,"Caviste"],["shop",/^(convenience|supermarket|greengrocer|cheese|farm)$/,"Commerce de proximité"],["shop",/^hairdresser$/,"Salon / beauté"],["shop",/^(beauty|cosmetics)$/,"Institut de beauté / ongles"],["shop",/^tattoo$/,"Tatoueur"],["leisure",/^(spa|sauna)$/,"Santé / bien-être"],["leisure",/^(fitness_centre|sports_centre)$/,"Salle de sport / coach"],["amenity",/^(doctors|clinic)$/,"Médecin"],["healthcare",/^(physiotherapist|osteopath)$/,"Kinésithérapeute / ostéopathe"],["amenity",/^dentist$/,"Dentiste"],["amenity",/^pharmacy$/,"Pharmacie"],["amenity",/^veterinary$/,"Vétérinaire"],["shop",/^optician$/,"Opticien"],["shop",/^florist$/,"Fleuriste"],["shop",/^(pet|pet_grooming)$/,"Animalerie / toiletteur"],["shop",/^(furniture|interior_decoration)$/,"Magasin de meubles / déco"],["craft",/^(plumber|hvac)$/,"Plombier / chauffagiste"],["craft",/^electrician$/,"Électricien"],["craft",/^painter$/,"Peintre / façadier"],["craft",/^(builder|carpenter|roofer|tiler|stonemason)$/,"Maçon / rénovation"],["shop",/^locksmith$/,"Serrurier"],["craft",/^gardener$/,"Paysagiste"],["office",/^estate_agent$/,"Agence immobilière"],["amenity",/^driving_school$/,"Auto-école"],["craft",/^photographer$/,"Photographe"],["shop",/^(dry_cleaning|laundry|shoe_repair)$/,"Pressing / cordonnerie"],["office",/^(lawyer|notary|accountant)$/,"Avocat / notaire / comptable"],["shop",/^(car_repair|car|tyres|car_parts)$/,"Garage / auto"],["amenity",/^taxi$/,"Taxi / VTC"],["tourism",/^(hotel|motel|hostel)$/,"Hôtel / hébergement"],["tourism",/^(guest_house|chalet|apartment|camp_site)$/,"Gîte / chambre d’hôtes"],["craft",/./,"Artisan / dépannage"],["shop",/./,"Boutique / mode"]];
+function typeFromOsm(key,val){const v=String(val||"");const m=OSM_MAP.find(([k,rx])=>k===key&&rx.test(v));return m?m[2]:null}
+function kwOf(label){const t=typeInfo(label);if(t.kw)return t.kw;const c=state&&state.biz&&state.biz.activity;return c?String(c).toLowerCase():"commerce"}
+function artOf(label){return typeInfo(label).f?"une ":"un "}
 function bestOf(label){return typeInfo(label).f?"meilleure ":"meilleur "}
 function defaultKeywords(label){const k=typeInfo(label).kw;return k?k+", "+bestOf(label)+k:""}
 function applyDetectedType(label){if(!label||$("autoType").dataset.touched)return;$("autoType").value=label;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(label)}
@@ -419,7 +500,7 @@ async function placeDetails(id){
 }
 function renderPlaceChoice(){
  const box=$("placeChoice"),d=state.data||{},c=(d.placeCandidates||[]);
- if(c.length<2||!d.place){box.classList.add("hidden");box.innerHTML="";return}
+ if(c.length<2||!d.place||(d.exactPick&&d.place.id===state.biz.placeId)){box.classList.add("hidden");box.innerHTML="";return}
  box.classList.remove("hidden");
  box.innerHTML='<h2>Est-ce le bon établissement ?</h2><p class="muted">Google a trouvé plusieurs fiches proches. Si l\'analyse ne porte pas sur le bon commerce, choisissez-le et relancez.</p>'+c.map(x=>'<div class="choice'+(x.id===d.place.id?" cur":"")+'"><span><b>'+esc(x.name)+'</b><br><span class="muted">'+esc(x.address||"")+(x.rating!=null?" · "+fr1(x.rating)+"/5 ("+(x.count||0)+" avis)":"")+'</span></span>'+(x.id===d.place.id?'<span class="badge b-ok">Analysé</span>':'<button class="btn" data-repick="'+esc(x.id)+'">Analyser celui-ci</button>')+'</div>').join("");
  box.querySelectorAll("[data-repick]").forEach(b=>b.onclick=()=>{const x=c.find(y=>y.id===b.dataset.repick);state.biz.placeId=x.id;state.biz.pickLabel=x.name+" — "+(x.address||"");setPickInfo();runAuto()});
@@ -427,7 +508,7 @@ function renderPlaceChoice(){
 function keywordList(type,city){
  let raw=$("autoKeyword").value.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
  const base=kwOf(type);
- if(!raw.length)raw=[base,bestOf(type)+base];
+ if(!raw.length)raw=typeInfo(type).kw?[base,bestOf(type)+base]:[base];
  const cityN=norm(city);
  return [...new Set(raw.map(k=>norm(k).includes(cityN)&&cityN?k:k+" "+city))].slice(0,3);
 }
@@ -546,13 +627,14 @@ async function runAuto(){
     let list=[];try{list=await placesSearch(name+" "+city,PLACE_FIELDS,5,center)}catch(e){if(!state.biz.placeId)throw e}
     if(state.biz.placeId){place=list.find(p=>p.id===state.biz.placeId)||await placeDetails(state.biz.placeId)}
     else place=pickPlace(list,name,city);
-    data.place=place;
+    data.place=place;data.exactPick=!!(state.biz.placeId&&place&&place.id===state.biz.placeId);
     const cands=list.filter(p=>p.id);if(place&&!cands.some(p=>p.id===place.id))cands.unshift(place);
     data.placeCandidates=cands.slice(0,5).map(p=>({id:p.id,name:p.displayName&&p.displayName.text,address:p.formattedAddress,rating:p.rating,count:p.userRatingCount}));
     if(place){
      setStep("place","ok","Fiche Google trouvée : "+(place.displayName&&place.displayName.text),(place.formattedAddress||"")+(state.biz.placeId?" · sélection exacte":" · meilleure correspondance"));
      const pl=place.location&&{lat:place.location.latitude,lng:place.location.longitude};
      const dup=list.filter(p=>p.id!==place.id&&similar(p.displayName&&p.displayName.text,place.displayName&&place.displayName.text||name)&&distKm(pl,p.location&&{lat:p.location.latitude,lng:p.location.longitude})<1);data.duplicates=dup.map(p=>({name:p.displayName&&p.displayName.text,address:p.formattedAddress,url:p.googleMapsUri}));
+     state.biz.activity=(place.primaryTypeDisplayName&&place.primaryTypeDisplayName.text)||"";
      const det=typeFromGoogle([place.primaryType,...(place.types||[])]);if(det&&!$("autoType").dataset.touched&&det!==type){type=det;$("autoType").value=det;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(det)}
     }else setStep("place","warn","Aucune fiche Google trouvée","Vérifiez l'orthographe ou choisissez le commerce dans les suggestions en tapant son nom.");
    }catch(e){const f=frErr(e);googleBlocked=f.code;setStep("place","err",f.code==="disabled"?"Fiche Google : API à activer":f.code==="badkey"||f.code==="referer"?"Fiche Google : clé à corriger":"Fiche Google non disponible",f.text,f.link)}
@@ -647,7 +729,7 @@ async function runAuto(){
    const mk=(r,q)=>{if(r.status!=="fulfilled")return null;const rows=r.value.rows.slice(0,10).map((x,i)=>({...x,pos:i+1,match:matchBiz(x,name,siteHost)}));const hit=rows.find(x=>x.match);return {query:q,engine:r.value.engine,rows,pos:hit?hit.pos:null,hitType:hit?hit.match:null}};
    const K=mk(rk,kq),B=mk(rb,bq);data.bing={keyword:K,brand:B,fetchedAt:nowLabel()};
    if(K||B){
-    const dirs=[...new Set(((K&&K.rows)||[]).map(x=>x.host).filter(h=>/tripadvisor|pagesjaunes|restaurantguru|yelp|thefork|lafourchette|facebook|instagram|petitfute|google|booking|mappy|justacote|118712|ville-data|lacarte/i.test(h)))].slice(0,6);data.bing.directories=dirs;
+    const dirs=[...new Set(((K&&K.rows)||[]).map(x=>x.host).filter(h=>/tripadvisor|pagesjaunes|restaurantguru|yelp|thefork|lafourchette|planity|treatwell|doctolib|houzz|habitatpresto|starofservice|travaux\.com|quotatis|allovoisins|seloger|logic-immo|bienici|leboncoin|vroomly|idgarages|annuaire|kelest|societe\.com|infobel|cylex|hoodspot|facebook|instagram|petitfute|google|booking|mappy|justacote|118712|ville-data|lacarte/i.test(h)))].slice(0,6);data.bing.directories=dirs;
     const brandOk=B&&B.pos&&B.pos<=3;const kwOk=K&&K.pos&&K.pos<=5;
     setAuto("3-6",brandOk&&kwOk?"ok":"issue",(K?"« "+kq+" » : "+(K.pos?"n° "+K.pos+(K.hitType==="site"?" (site officiel)":" (mention)"):"absent des 10 premiers")+". ":"")+(B?"Recherche du nom : "+(B.pos?"n° "+B.pos:"absent des 10 premiers")+".":""),(K||B).engine+", "+data.bing.fetchedAt);
     if(K&&!K.pos)findings.push({sev:2,text:"Sur Bing (qui alimente aussi DuckDuckGo et Copilot), le commerce n’apparaît pas dans les 10 premiers résultats pour « "+kq+" »"+(dirs.length?" ; Bing y met en avant "+dirs.slice(0,3).join(", "):"")+"."});
@@ -705,9 +787,9 @@ async function runAuto(){
      setAuto("4-2",miss.length?"issue":"ok",miss.length?"Infos pratiques incomplètes sur le site : "+miss.join(", ")+".":"Infos pratiques claires sur la page d'accueil.",srcH);
      if(H.phoneOnSite===false)findings.push({sev:2,text:"Le numéro de téléphone public du commerce ("+(place?"fiche Google":"OpenStreetMap")+") n'apparaît pas sur la page d'accueil du site."})}
     /* Boutons d'action */
-    const ctas=[H.tel.length&&"appel",H.whatsapp&&"WhatsApp",H.booking.length&&"réservation/commande ("+H.booking.join(", ")+")"].filter(Boolean);
-    setAuto("1-3",ctas.length?"ok":"issue",ctas.length?"Boutons d'action présents : "+ctas.join(", ")+".":"Aucun bouton d'appel cliquable, WhatsApp ou lien de réservation sur la page d'accueil.",srcH);
-    if(!ctas.length)findings.push({sev:2,text:"Le site n'a ni bouton d'appel cliquable, ni WhatsApp, ni lien de réservation : les visiteurs mobiles doivent chercher comment vous contacter."});
+    const ctas=[H.tel.length&&"appel",H.whatsapp&&"WhatsApp",H.booking.length&&"réservation, rendez-vous ou devis ("+H.booking.join(", ")+")"].filter(Boolean);
+    setAuto("1-3",ctas.length?"ok":"issue",ctas.length?"Boutons d'action présents : "+ctas.join(", ")+".":"Aucun bouton d'appel cliquable, WhatsApp, ni lien de réservation, de rendez-vous ou de devis sur la page d'accueil.",srcH);
+    if(!ctas.length)findings.push({sev:2,text:"Le site n'a ni bouton d'appel cliquable, ni WhatsApp, ni lien de réservation, de rendez-vous ou de devis : les visiteurs mobiles doivent chercher comment vous contacter."});
     /* Données structurées */
     const local=H.ldTypes.filter(t=>LOCAL_TYPES.test(t));
     setAuto("1-5",local.length?"ok":"issue",local.length?"Données structurées présentes : "+local.join(", ")+".":"Aucune donnée structurée LocalBusiness (adresse, horaires) pour Google et les IA"+(H.ldTypes.length?" (types présents : "+H.ldTypes.slice(0,4).join(", ")+")":"")+".",srcH);
@@ -745,7 +827,7 @@ async function runAuto(){
   if(!state.campaignPrompts.length||state.campaign.name!==name)getCampaignPrompts(true);
   if(hasKey()){
    const kw=kwOf(type),fem=!!typeInfo(type).f;
-   const QS=[["Découverte locale","Je cherche "+artOf(type)+kw+" à "+city+". Quels établissements me recommandes-tu ? Réponds avec une liste numérotée."],["Meilleur choix",(fem?"Quelle est la ":"Quel est le ")+bestOf(type)+kw+" à "+city+" et dans les environs ? Donne une liste numérotée de 5 établissements maximum avec la raison."],["Marque exacte","Que sais-tu de « "+name+" » à "+city+" ? Adresse, horaires, avis, site officiel et réseaux sociaux."]];
+   const known=!!typeInfo(type).kw;const QS=[["Découverte locale",(known?"Je cherche "+artOf(type)+kw+" à "+city:"Je cherche à "+city+" un établissement de ce type : « "+kw+" »")+". Quels établissements me recommandes-tu ? Réponds avec une liste numérotée."],["Meilleur choix",(known?(fem?"Quelle est la ":"Quel est le ")+bestOf(type)+kw+" à "+city:"Quels sont les meilleurs établissements de ce type à "+city+" : « "+kw+" »")+" et dans les environs ? Donne une liste numérotée de 5 établissements maximum avec la raison."],["Marque exacte","Que sais-tu de « "+name+" » à "+city+" ? Adresse, horaires, avis, site officiel et réseaux sociaux."]];
    setStep("ai","run","Test IA : Gemini avec Recherche Google","3 questions de clients");
    state.aiTests=state.aiTests.filter(t=>!t.auto);const out=[];let aiErr=null;
    for(const [kind,q] of QS){try{const r=await geminiAsk(q);const neg=/(pas (pu )?trouv|aucune information|pas d.information|ne (dispose|trouve) pas|introuvable)/i.test(r.text);const present=aiMentions(r.text,name)&&!(kind==="Marque exacte"&&neg);const rank=kind!=="Marque exacte"?aiRank(r.text,name):null;const comps=(data.competitors||[]).filter(c=>c.name&&aiMentions(r.text,c.name)).map(c=>c.name);
@@ -754,7 +836,7 @@ async function runAuto(){
     }catch(e){aiErr=e;break}}
    data.aiAuto=out;
    if(out.length){const yes=out.filter(o=>o.present).length;setStep("ai",yes?"ok":"warn","Gemini cite le commerce dans "+yes+" réponse(s) sur "+out.length,"Les 6 questions pour ChatGPT, Claude, Perplexity… sont prêtes dans « Visibilité IA ».");
-    const disc=out.filter(o=>o.kind!=="Marque exacte");if(disc.length&&!disc.some(o=>o.present))findings.push({sev:3,text:"Quand on demande à l’IA de Google (Gemini, avec recherche web) "+"de recommander "+artOf(type)+kwOf(type)+" à "+city+", elle "+(disc.flatMap(o=>o.competitors).length?"cite "+[...new Set(disc.flatMap(o=>o.competitors))].slice(0,3).join(", ")+", mais pas le commerce.":"ne cite pas le commerce.")});
+    const disc=out.filter(o=>o.kind!=="Marque exacte");if(disc.length&&!disc.some(o=>o.present))findings.push({sev:3,text:"Quand on demande à l’IA de Google (Gemini, avec recherche web) "+"de recommander "+(typeInfo(type).kw?artOf(type)+kwOf(type):"un établissement « "+kwOf(type)+" »")+" à "+city+", elle "+(disc.flatMap(o=>o.competitors).length?"cite "+[...new Set(disc.flatMap(o=>o.competitors))].slice(0,3).join(", ")+", mais pas le commerce.":"ne cite pas le commerce.")});
    }else{const f=frErr(aiErr);setStep("ai","warn",f.code==="disabled"||f.code==="blocked"?"Test IA : Gemini à activer sur votre clé":"Test IA automatique non réalisé",f.text+" Les 6 questions pour les assistants sont prêtes dans « Visibilité IA ».",f.link)}
    drawAiTests();
   }else setStep("ai","ok","6 questions IA prêtes","Ajoutez une clé Google pour tester Gemini automatiquement ; les autres assistants s’ouvrent avec la question déjà remplie.");
@@ -882,13 +964,13 @@ function scopeBlock(issues){
  const d=state.data||{},has=k=>issues.some(p=>p.k===k);
  const can=[
   ["Fiche Google optimisée",(has("0-0")||has("0-1")||has("0-2")||has("0-7")||has("0-8")||has("0-9")?"Corriger et compléter les points relevés : ":"Compléter et tenir à jour : ")+"catégories, description, services, horaires, liens et doublons."],
-  ["Photos et vidéos sur mesure","Photos professionnelles et pubs vidéo verticales (15 s et plus, format Reels) au goût du commerce, pour la fiche Google, le site et les réseaux"+(d.ownerPhotos!=null&&d.ownerPhotos<3?", là où l’audit montre peu de photos du propriétaire.":".")],
+  ["Photos et vidéos sur mesure","Photos professionnelles ("+famOf(state.biz.type).photos+") et vidéos verticales"+(famOf(state.biz.type).regulated?" informatives":" (15 s et plus, format Reels)")+" pour la fiche Google, le site et les réseaux"+(d.ownerPhotos!=null&&d.ownerPhotos<3?", là où l’audit montre peu de photos du propriétaire.":".")],
   ["Réseaux sociaux","Contenus réguliers pour Instagram, Facebook, TikTok et YouTube, avec une identité cohérente partout."],
-  ["Site web mobile",normalizeUrl(state.biz.site)?"Améliorer le site existant : vitesse, boutons d’appel et de réservation, infos pratiques et données pour Google et les IA.":"Créer un site mobile simple : infos pratiques, carte, bouton d’appel, liens vers les réseaux."],
-  ["Collecte d’avis","Outils simples pour obtenir plus d’avis récents (QR code, message après la visite) et réponses aux avis."],
-  ["Présence sur Bing et les assistants IA","Fiches et annuaires cohérents (Bing Places, PagesJaunes, TripAdvisor…) pour être mieux cité par Bing, Gemini, ChatGPT et Copilot."],
+  ["Site web mobile",normalizeUrl(state.biz.site)?"Améliorer le site existant : vitesse, boutons d’appel et de "+(famOf(state.biz.type)===FAMS.build||famOf(state.biz.type)===FAMS.service?"demande de devis":"réservation ou de rendez-vous")+", infos pratiques et données pour Google et les IA.":"Créer un site mobile simple : infos pratiques, "+famOf(state.biz.type).offer+", bouton d’appel, liens vers les réseaux."],
+  ["Collecte d’avis","Outils simples pour obtenir plus d’avis récents (QR code, message après la visite ou l’intervention) et réponses aux avis."],
+  ["Présence sur Bing et les assistants IA","Fiches et annuaires cohérents (Bing Places, "+famOf(state.biz.type).dirs+"…) pour être mieux cité par Bing, Gemini, ChatGPT et Copilot."],
   ["Suivi des progrès","Nouvel audit après les actions pour mesurer l’évolution, avec les mêmes indicateurs datés."]];
- const cannot=[
+ const cannot=[...(famOf(state.biz.type).regulated?["Faire de la publicité commerciale pour une profession réglementée : la communication reste informative et conforme à la déontologie de la profession."]:[]),
   "Garantir une position précise sur Google, Bing ou dans les réponses des IA : leurs classements dépendent de leurs propres algorithmes.",
   "Promettre une hausse de chiffre d’affaires : AffiAds améliore la visibilité et l’image, les résultats commerciaux dépendent aussi de l’offre, des prix et de l’accueil.",
   "Supprimer des avis négatifs authentiques, ni publier de faux avis : seuls les avis contraires aux règles de Google peuvent être signalés.",
@@ -924,7 +1006,7 @@ function renderReport(){
  const completed=ai.filter(t=>!t.auto&&(t.presence==="yes"||t.presence==="no"));
  const aiHtml=(aiAutoBlock(true)||'<p class="muted">Test automatique non réalisé : ajoutez une clé Google avec Gemini activé.</p>')
   +(completed.length?'<h3 style="margin-top:16px">Tests manuels dans les autres assistants</h3><div class="tablewrap"><table class="t"><thead><tr><th>IA / date</th><th>Question</th><th>Résultat</th></tr></thead><tbody>'+ai.filter(t=>!t.auto).map(t=>'<tr><td>'+esc(t.platform)+'<br>'+esc(t.date)+'</td><td>'+esc(t.prompt)+'</td><td>'+(t.presence==="yes"?"Cité":t.presence==="no"?"Non cité":"Incertain")+(t.rank?" · n° "+esc(t.rank):"")+(t.competitors?"<br><small>Concurrents : "+esc(t.competitors)+"</small>":"")+'</td></tr>').join("")+'</tbody></table></div>':'');
- const siteHtml=(d.psi||d.html||d.shotUrl)?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' : analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce. Un site mobile simple (infos pratiques, carte, bouton d’appel) aide Google, Bing et les assistants IA à le recommander.')+'</p>';
+ const siteHtml=(d.psi||d.html||d.shotUrl)?siteBlock():'<p>'+(safeUrl(b.site)?'Site : '+esc(b.site)+' : analyse non réalisée.':'Aucun site web n’a été trouvé pour ce commerce. Un site mobile simple (infos pratiques, plan d’accès, bouton d’appel) aide Google, Bing et les assistants IA à le recommander.')+'</p>';
  const toCheck=keys.filter(k=>!state.checks[k]||(state.auto[k]&&state.auto[k].status==="info")).map(k=>{const [gi,ii]=k.split("-").map(Number);return {it:groups[gi].items[ii],ev:state.auto[k]&&state.auto[k].status==="info"?state.auto[k].evidence:""}});
  const checkHtml=toCheck.length?'<h3 style="margin-top:20px">À vérifier avec le commerçant</h3><p class="muted">Ces points ne peuvent pas être mesurés de façon fiable depuis l’extérieur, ou demandent l’accès aux comptes : ils sont à confirmer lors de l’échange avant d’être chiffrés.</p><ul class="detail">'+toCheck.slice(0,12).map(x=>'<li>'+esc(x.it)+(x.ev?' <span class="muted">('+esc(x.ev)+')</span>':'')+'</li>').join("")+'</ul>'+(toCheck.length>12?'<p class="muted">+ '+(toCheck.length-12)+' autre(s) point(s) dans la checklist.</p>':''):'';
  const buckets=[["Gain rapide","À faire tout de suite"],["Priorité haute","Dans le mois"],["Priorité moyenne","Ensuite"],["À planifier","À planifier"]];
@@ -998,13 +1080,14 @@ function campaignInputFromBiz(){$("campaignBusiness").value=$("name").value||"";
 function getCampaignPrompts(silent){
  const name=$("campaignBusiness").value.trim(),city=$("campaignCity").value.trim(),type=$("campaignType").value.trim(),service=$("campaignService").value.trim(),extra=$("campaignExtra").value.trim();
  if(!city||(!name&&!type&&!service)){if(!silent)toast("Renseignez au minimum la ville et le nom ou l’activité.");return []}
- const subject=name||("un "+type),campaignId=String(Date.now());
+ const kt=BIZ_TYPES.find(t=>t.kw&&norm(t.kw)===norm(type));const typeP=type?(kt?artOf(kt.label)+type:"un établissement « "+type+" »"):"";
+ const subject=name||typeP,campaignId=String(Date.now());
  const prompts=[
-  {id:campaignId+"-1",kind:"Découverte locale",text:"Je cherche "+(type||"un commerce")+" à "+city+". Quels établissements me recommandes-tu ?"},
-  {id:campaignId+"-2",kind:"Besoin principal",text:"Quel est le meilleur choix à "+city+" pour "+(service||type||"ce type de service")+" ?"+(extra?" Critère important : "+extra+".":"")},
-  {id:campaignId+"-3",kind:"Recommandation précise",text:"Peux-tu comparer "+subject+" à "+city+" avec d’autres établissements locaux pour "+(service||type||"ce besoin")+" ? Cite tes sources si possible."},
+  {id:campaignId+"-1",kind:"Découverte locale",text:"Je cherche "+(typeP||"un commerce")+" à "+city+". Quels établissements me recommandes-tu ?"},
+  {id:campaignId+"-2",kind:"Besoin principal",text:"Quel est le meilleur choix à "+city+" pour "+(service||(typeP?"trouver "+typeP:"ce type de service"))+" ?"+(extra?" Critère important : "+extra+".":"")},
+  {id:campaignId+"-3",kind:"Recommandation précise",text:"Peux-tu comparer "+subject+" à "+city+" avec d’autres établissements locaux pour "+(service||(typeP?"trouver "+typeP:"ce besoin"))+" ? Cite tes sources si possible."},
   {id:campaignId+"-4",kind:"Marque exacte",text:"Que peux-tu me dire sur "+subject+" à "+city+" ? Donne son site officiel, ses services et les sources qui confirment ces informations."},
-  {id:campaignId+"-5",kind:"Recherche sans marque",text:"Je suis à "+city+" et je cherche "+(service||type||"un établissement adapté")+(extra?" avec ces critères : "+extra:"")+". Quels sont les meilleurs choix et pourquoi ?"},
+  {id:campaignId+"-5",kind:"Recherche sans marque",text:"Je suis à "+city+" et je cherche "+(service||typeP||"un établissement adapté")+(extra?" avec ces critères : "+extra:"")+". Quels sont les meilleurs choix et pourquoi ?"},
   {id:campaignId+"-6",kind:"Sources et fiabilité",text:"Quelles sources fiables permettent de vérifier les horaires, les tarifs et les avis de "+subject+" à "+city+" ? Signale les incertitudes."}];
  state.campaign={id:campaignId,name,city,type,service,extra,createdAt:today()};state.campaignPrompts=prompts;persistLocal();renderCampaignPrompts();return prompts;
 }
@@ -1070,7 +1153,7 @@ function buildResearch(){
 
 /* ---------- Événements ---------- */
 function bind(){
- const opts=BIZ_TYPES.map(t=>'<option>'+esc(t.label)+'</option>').join("");$("type").innerHTML=opts;$("autoType").innerHTML=opts;
+ const opts=[...new Set(BIZ_TYPES.map(t=>t.grp))].map(g=>'<optgroup label="'+esc(g)+'">'+BIZ_TYPES.filter(t=>t.grp===g).map(t=>'<option>'+esc(t.label)+'</option>').join("")+'</optgroup>').join("");$("type").innerHTML=opts;$("autoType").innerHTML=opts;
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));
  $("navMore").addEventListener("click",e=>{e.stopPropagation();const n=document.querySelector(".nav"),o=!n.classList.contains("open");n.classList.toggle("open",o);$("navMore").setAttribute("aria-expanded",String(o))});
  document.addEventListener("click",e=>{if(!e.target.closest(".nav"))closeMore()});
