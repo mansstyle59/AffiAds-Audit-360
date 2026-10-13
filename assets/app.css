@@ -744,3 +744,14 @@ body:not(.rep-one) #report1{display:none}
  .op2{grid-template-columns:1fr 1.4fr}.opsign{text-align:right}
  .op *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* PDF : rendu hors écran et fenêtre « PDF prêt » */
+.pdfhold{position:fixed;left:-12000px;top:0;width:794px;background:#fff;z-index:-1}
+.pdfhold .pdfpage{display:block!important;width:794px;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;padding:40px 46px!important;background:#fff;color:#17134a}
+.pdfsheet{position:fixed;inset:0;z-index:320;display:grid;place-items:end center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b082a8c;animation:botIn .18s ease-out}
+.pdfcard{width:min(440px,100%);background:var(--surface);color:var(--ink);border-radius:24px;padding:22px 20px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;box-shadow:0 30px 60px -20px #0008}
+.pdfcard b{font-size:19px}.pdfcard>span{font-size:13px;color:var(--ink-3);overflow-wrap:anywhere}
+.pdfcard small{font-size:12px;color:var(--ink-3);margin-top:6px}
+.pdfico{width:56px;height:64px;border-radius:12px;background:linear-gradient(140deg,#ff5a5f,#d1344b);color:#fff;font:800 15px var(--font);display:grid;place-items:center;margin-bottom:6px;box-shadow:0 12px 24px -12px #d1344b}
+.pdfacts{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:10px}.pdfacts .btn{width:100%;justify-content:center;text-align:center;min-height:48px}
+@media(min-width:700px){.pdfsheet{place-items:center}}
+@media print{.pdfsheet,.pdfhold{display:none!important}}
