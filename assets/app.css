@@ -429,3 +429,24 @@ input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.85}
  @media(max-width:900px){.nav,.navmore,.side::before{background:var(--surface)}}
 }
 @media print{.chip{display:none!important}.card.report{color:#17134a}}
+
+/* ===== Adaptation à tous les écrans : aucun texte ne dépasse ===== */
+.main,.card,section,.grid>*{min-width:0;max-width:100%}
+.step>div,.priority,.reco,.review,.choice>span,.qrow>span,.who,.verdict,.box li,ul.findings li,ul.ticks li,.kpi,.hbar .lab,.notice,.muted,.pickinfo,.evid{min-width:0;overflow-wrap:anywhere;word-break:normal}
+.step>div{flex:1 1 auto}
+.step small a,.step .steplink{display:inline-flex;margin-top:8px}
+.steplink{align-items:center;gap:6px;min-height:36px;padding:7px 12px;border-radius:12px;background:var(--royal);color:#fff!important;font-weight:650;font-size:13.5px;text-decoration:none}
+img,svg,video{max-width:100%}
+table.t{table-layout:auto}
+@media(max-width:420px){
+ .main{padding-left:12px;padding-right:12px}
+ .card{padding:16px}
+ .ask h2{font-size:clamp(28px,9vw,36px)}
+ .bigfield input,.cityfield input{height:56px}
+ .scoretile{gap:14px}
+ .tile{width:96px;height:96px}.tile .n{font-size:40px}.tile .sig{width:17px;height:17px;top:11px;right:11px}.tile .d{bottom:11px;font-size:10px}
+ .verdict b{font-size:17px}.verdict span{font-size:13px}
+ .kpi b{font-size:22px}
+ .topacts .btn{padding:7px 12px}
+ .chip{max-width:130px}
+}

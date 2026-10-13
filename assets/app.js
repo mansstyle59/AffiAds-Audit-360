@@ -100,7 +100,7 @@ const STOP=new Set(["le","la","les","l","de","du","des","d","et","chez","au","au
 function toks(s){return norm(s).split(" ").filter(w=>w&&!STOP.has(w))}
 function similar(a,b){const A=norm(a),B=norm(b);if(!A||!B)return false;if(A===B||A.includes(B)||B.includes(A))return true;const x=toks(a),y=toks(b);if(!x.length||!y.length)return false;const common=x.filter(w=>y.includes(w)).length;return common/Math.min(x.length,y.length)>=0.75}
 async function copyText(t,msg){try{await navigator.clipboard.writeText(t);if(msg)toast(msg)}catch(e){prompt("Copiez le texte :",t)}}
-function toast(msg){let el=$("toast");if(!el){el=document.createElement("div");el.id="toast";el.setAttribute("role","status");el.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#17171c;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:99;box-shadow:0 6px 24px #0004;max-width:90vw;text-align:center";document.body.appendChild(el)}el.textContent=msg;el.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display="none",2600)}
+function toast(msg){let el=$("toast");if(!el){el=document.createElement("div");el.id="toast";el.setAttribute("role","status");el.style.cssText="position:fixed;left:50%;bottom:calc(98px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#17171c;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:99;box-shadow:0 6px 24px #0004;max-width:90vw;text-align:center";document.body.appendChild(el)}el.textContent=msg;el.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display="none",2600)}
 async function fetchJson(url,opts={},timeout=90000){const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),timeout);try{const r=await fetch(url,{...opts,signal:ctl.signal});let body=null;try{body=await r.json()}catch(e){}if(!r.ok){const m=body&&body.error&&(body.error.message||body.error.status)||("HTTP "+r.status);const err=new Error(m);err.status=r.status;throw err}return body}catch(e){if(e.name==="AbortError"){const err=new Error("Délai dépassé");err.status=408;throw err}throw e}finally{clearTimeout(t)}}
 
 /* ---------- Stockage : plusieurs clients ---------- */
@@ -202,22 +202,39 @@ async function nominatimCity(city){
  return r&&r[0]?{lat:+r[0].lat,lng:+r[0].lon,label:r[0].display_name}:null;
 }
 const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
-async function overpass(q){let last;for(const u of OVERPASS){try{return await fetchJson(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)},40000)}catch(e){last=e}}throw last}
+async function overpass(q){
+ const jobs=OVERPASS.map(u=>fetchJson(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)},22000));
+ try{return await Promise.any(jobs)}catch(e){const err=new Error("serveurs OpenStreetMap saturés");err.status=408;throw err}
+}
+/* Fiche OpenStreetMap du commerce : rapide via Nominatim (par identifiant, sinon par nom + ville) */
+async function osmMe(name,city){
+ const pick=state.biz.osmPick;let r=null;
+ if(pick&&pick.osmType&&pick.osmId){r=await fetchJson("https://nominatim.openstreetmap.org/lookup?format=jsonv2&extratags=1&addressdetails=1&accept-language=fr&osm_ids="+encodeURIComponent(String(pick.osmType).charAt(0).toUpperCase()+pick.osmId),{},15000);r=r&&r[0]}
+ if(!r){const l=await fetchJson("https://nominatim.openstreetmap.org/search?format=jsonv2&extratags=1&addressdetails=1&limit=5&accept-language=fr&countrycodes=fr,be,ch,lu,mc&q="+encodeURIComponent(name+", "+city),{},15000);r=(l||[]).find(x=>similar(x.name||x.display_name,name))||null}
+ if(!r)return null;
+ const a=r.address||{},t={...(r.extratags||{})};
+ t["addr:housenumber"]=t["addr:housenumber"]||a.house_number;t["addr:street"]=t["addr:street"]||a.road;t["addr:postcode"]=t["addr:postcode"]||a.postcode;t["addr:city"]=t["addr:city"]||a.city||a.town||a.village;
+ return {name:r.name||name,tags:t,loc:{lat:+r.lat,lng:+r.lon},url:"https://www.openstreetmap.org/"+(r.osm_type||"node")+"/"+r.osm_id};
+}
 function rxEscape(s){return s.replace(/[.*+?^${}()|[\]\\"]/g,"\\$&")}
 const ACC={a:"[aàâä]",e:"[eéèêë]",i:"[iîï]",o:"[oôö]",u:"[uùûü]",c:"[cç]",y:"[yÿ]"};
 function rxWord(w){return w.split("").map(ch=>ACC[ch]||rxEscape(ch)).join("")}
 async function osmLookup(name,center,type){
+ let meN=null;try{meN=await osmMe(name,state.biz.city||"")}catch(e){}
+ if(meN&&meN.loc&&meN.loc.lat)center=meN.loc;
  const words=norm(name).split(" ").filter(w=>w.length>2).slice(0,4);
  const pat=words.length?words.map(rxWord).join(".*"):rxEscape(name);
  const filt=typeInfo(type).osm;
  const q='[out:json][timeout:25];(nwr["name"~"'+pat+'",i](around:10000,'+center.lat+','+center.lng+'););out center tags 10;'+(filt?'(nwr'+filt+'["name"](around:2500,'+center.lat+','+center.lng+'););out center tags 40;':'');
- const r=await overpass(q);const els=(r&&r.elements)||[];
+ let r;try{r=await overpass(q)}catch(e){if(meN)return {me:meN,competitors:[],compError:e.message};throw e}
+ const els=(r&&r.elements)||[];
  const pos=e=>({lat:e.lat??(e.center&&e.center.lat),lng:e.lon??(e.center&&e.center.lon)});
  const matches=els.filter(e=>e.tags&&e.tags.name&&similar(e.tags.name,name));
- const me=matches[0]||null;
+ const meO=matches[0]||null;const me=meO;
  const comp=filt?els.filter(e=>e!==me&&e.tags&&e.tags.name&&!similar(e.tags.name,name)):[];
  const seen=new Set();const competitors=comp.filter(e=>{const k=norm(e.tags.name);if(seen.has(k))return false;seen.add(k);return true}).map(e=>({name:e.tags.name,website:e.tags.website||e.tags["contact:website"]||"",loc:pos(e),src:"OSM"}));
- return {me:me?{name:me.tags.name,tags:me.tags,loc:pos(me),url:"https://www.openstreetmap.org/"+me.type+"/"+me.id}:null,competitors};
+ const meOut=meO?{name:meO.tags.name,tags:{...(meN&&meN.tags||{}),...meO.tags},loc:pos(meO),url:"https://www.openstreetmap.org/"+meO.type+"/"+meO.id}:meN;
+ return {me:meOut,competitors};
 }
 function parseLhr(lh,loadingExperience,url,via){
  lh=lh||{};const cat=lh.categories||{},au=lh.audits||{};
@@ -266,7 +283,7 @@ async function domainInfo(host){
 async function fetchText(url,opts,timeout){const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),timeout||40000);try{const r=await fetch(url,{...(opts||{}),signal:ctl.signal});if(!r.ok){const e=new Error("HTTP "+r.status);e.status=r.status;throw e}return await r.text()}finally{clearTimeout(t)}}
 async function fetchHtml(url){
  const tries=[()=>fetchText("https://r.jina.ai/"+url,{headers:{"X-Return-Format":"html","X-Timeout":"25"}},45000),()=>fetchText("https://api.allorigins.win/raw?url="+encodeURIComponent(url),{},30000)];
- let last;for(const f of tries){try{const t=await f();if(t&&t.length>400&&/<(html|head|body)[\s>]/i.test(t))return t;last=new Error("page vide")}catch(e){last=e}}
+ let last;for(const f of tries){try{const t=await f();if(t&&t.length>200&&/<(html|head|body)[\s>]/i.test(t))return t;last=new Error("page vide ou illisible")}catch(e){last=e}}
  throw last||new Error("page illisible");
 }
 const SOCIAL_RX=[["Facebook",/(^|\.)facebook\.com$|(^|\.)fb\.com$/],["Instagram",/(^|\.)instagram\.com$/],["TikTok",/(^|\.)tiktok\.com$/],["YouTube",/(^|\.)youtube\.com$|(^|\.)youtu\.be$/],["LinkedIn",/(^|\.)linkedin\.com$/],["X / Twitter",/(^|\.)(twitter|x)\.com$/],["Pinterest",/(^|\.)pinterest\.[a-z]+$/]];
@@ -334,7 +351,7 @@ async function googleSuggest(input){
 }
 async function photonSuggest(input){
  const r=await fetchJson("https://photon.komoot.io/api/?lang=fr&limit=8&q="+encodeURIComponent(input),{},12000);
- return (r.features||[]).filter(f=>f.properties&&f.properties.name&&["FR","BE","CH","LU","MC"].includes(String(f.properties.countrycode).toUpperCase())&&f.properties.osm_key!=="place"&&f.properties.osm_key!=="highway"&&f.properties.osm_key!=="boundary").slice(0,6).map(f=>{const p=f.properties;return {src:"osm",main:p.name,secondary:[[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.town||p.village].filter(Boolean).join(" ")].filter(Boolean).join(", "),city:p.city||p.town||p.village||"",lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],key:p.osm_key,value:p.osm_value}});
+ return (r.features||[]).filter(f=>f.properties&&f.properties.name&&["FR","BE","CH","LU","MC"].includes(String(f.properties.countrycode).toUpperCase())&&f.properties.osm_key!=="place"&&f.properties.osm_key!=="highway"&&f.properties.osm_key!=="boundary").slice(0,6).map(f=>{const p=f.properties;return {src:"osm",main:p.name,secondary:[[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.town||p.village].filter(Boolean).join(" ")].filter(Boolean).join(", "),city:p.city||p.town||p.village||"",lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],key:p.osm_key,value:p.osm_value,osmType:p.osm_type,osmId:p.osm_id}});
 }
 function cityFromSecondary(sec){const parts=String(sec||"").split(",").map(x=>x.trim()).filter(Boolean);if(parts.length>=2&&/france|belgique|suisse|luxembourg|monaco/i.test(parts[parts.length-1]))parts.pop();const last=parts[parts.length-1]||"";return last.replace(/^\d{4,5}\s*/,"").trim()}
 function closeSuggest(){$("suggest").classList.add("hidden");$("autoName").setAttribute("aria-expanded","false");suggestIdx=-1}
@@ -359,7 +376,7 @@ function pickSuggestion(s){
  const city=s.city||cityFromSecondary(s.secondary);if(city)$("autoCity").value=city;
  state.biz.pickLabel=s.main+(s.secondary?" — "+s.secondary:"");
  if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types))}
- else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value};applyDetectedType(typeFromOsm(s.key,s.value))}
+ else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType(typeFromOsm(s.key,s.value))}
  setPickInfo();persistLocal();
  if($("autoCity").value.trim())setTimeout(runAuto,60);else $("autoCity").focus();
 }
@@ -384,13 +401,25 @@ function keywordList(type,city){
 
 /* ---------- Audit automatique ---------- */
 let steps=[];
-function setStep(id,status,title,detail){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||""});renderAutoSteps(steps)}
+function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||"",link:link||null});renderAutoSteps(steps)}
+/* Erreurs Google et réseau traduites en consignes claires */
+function frErr(e){
+ const m=String(e&&e.message||e||"");const url=(m.match(/https:\/\/console\.(?:developers|cloud)\.google\.com\/[^\s"']+/)||[])[0]||"";
+ if(/has not been used|is disabled|SERVICE_DISABLED|API_NOT_ACTIVATED|not been enabled/i.test(m)){const api=/pagespeed/i.test(m+url)?"PageSpeed Insights API":"Places API (New)";return {code:"disabled",text:"« "+api+" » n’est pas encore activée dans votre projet Google. Touchez « Activer l’API », puis « Activer », attendez 2 minutes et relancez l’audit.",link:{href:url||(api.startsWith("Places")?"https://console.cloud.google.com/apis/library/places.googleapis.com":"https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com"),label:"Activer l’API"}}}
+ if(/API key not valid|API_KEY_INVALID/i.test(m))return {code:"badkey",text:"La clé Google n’est pas valide : copiez-la à nouveau dans Réglages.",link:{href:"#settings",label:"Ouvrir les réglages"}};
+ if(/referer|referrer|API_KEY_HTTP_REFERRER_BLOCKED/i.test(m))return {code:"referer",text:"La clé n’autorise pas ce site : dans Google Cloud, ajoutez https://mansstyle59.github.io/* aux sites web autorisés.",link:{href:"https://console.cloud.google.com/apis/credentials",label:"Modifier la clé"}};
+ if(/billing|BILLING/i.test(m))return {code:"billing",text:"Google demande d’associer un compte de facturation au projet (le volume gratuit reste gratuit).",link:{href:"https://console.cloud.google.com/billing",label:"Ouvrir la facturation"}};
+ if((e&&e.status===429)||/quota|RESOURCE_EXHAUSTED/i.test(m))return {code:"quota",text:"Quota du service atteint pour le moment : réessayez plus tard."};
+ if((e&&e.status===408)||/Délai dépassé|saturés|timeout/i.test(m))return {code:"timeout",text:"Le service a mis trop de temps à répondre (réseau mobile lent ou serveur saturé). Réessayez dans un instant."};
+ if(/Failed to fetch|NetworkError|Load failed/i.test(m))return {code:"network",text:"Connexion impossible au service : vérifiez la connexion internet."};
+ return {code:"other",text:m.length>160?m.slice(0,160)+"…":m};
+}
 function renderAutoSteps(list){
  $("progCard").classList.toggle("hidden",!(list&&list.length)&&!running);
  if(!running){$("progTitle").textContent=list&&list.length?"Analyse terminée : voir les "+list.length+" étapes":"Progression";$("progDetails").open=!(list&&list.length)}
  if(!list||!list.length){$("autoSteps").innerHTML='<p class="muted">Aucune analyse lancée pour ce client.</p>';return}
  const ico={run:'<span class="spin">◌</span>',ok:"✓",warn:"!",err:"✕",skip:"–"};
- $("autoSteps").innerHTML=list.map(s=>'<div class="step '+s.status+'"><span class="ico">'+(ico[s.status]||"•")+'</span><div><b>'+esc(s.title)+'</b>'+(s.detail?'<small>'+esc(s.detail)+'</small>':'')+'</div></div>').join("");
+ $("autoSteps").innerHTML=list.map(s=>'<div class="step '+s.status+'"><span class="ico">'+(ico[s.status]||"•")+'</span><div><b>'+esc(s.title)+'</b>'+(s.detail?'<small>'+esc(s.detail)+'</small>':'')+(s.link?'<a class="steplink" href="'+esc(s.link.href)+'"'+(String(s.link.href).startsWith("#")?'':' target="_blank" rel="noopener"')+'>'+esc(s.link.label)+'</a>':'')+'</div></div>').join("");
 }
 function setAuto(k,status,evidence,source){state.auto[k]={status,evidence,source:source||"",at:today()};if(status==="ok"||status==="issue"){state.checks[k]=true;state.issues[k]=status==="issue"}}
 let running=false;
@@ -399,7 +428,7 @@ async function runAuto(){
  const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
  running=true;document.body.classList.add("scanning");closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
- steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];
+ steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];let googleBlocked=null;
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
  state.biz.name=name;state.biz.city=city;state.biz.date=today();
  let site=$("autoSite").value.trim();
@@ -427,7 +456,7 @@ async function runAuto(){
      const dup=list.filter(p=>p.id!==place.id&&similar(p.displayName&&p.displayName.text,place.displayName&&place.displayName.text||name)&&distKm(pl,p.location&&{lat:p.location.latitude,lng:p.location.longitude})<1);data.duplicates=dup.map(p=>({name:p.displayName&&p.displayName.text,address:p.formattedAddress,url:p.googleMapsUri}));
      const det=typeFromGoogle([place.primaryType,...(place.types||[])]);if(det&&!$("autoType").dataset.touched&&det!==type){type=det;$("autoType").value=det;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(det)}
     }else setStep("place","warn","Aucune fiche Google trouvée","Vérifiez l'orthographe ou choisissez le commerce dans les suggestions en tapant son nom.");
-   }catch(e){setStep("place","err","Fiche Google : erreur",e.status===403?"Clé refusée : vérifiez que « Places API (New) » est activée et que l'adresse du site est autorisée.":e.message)}
+   }catch(e){const f=frErr(e);googleBlocked=f.code;setStep("place","err",f.code==="disabled"?"Fiche Google : API à activer":f.code==="badkey"||f.code==="referer"?"Fiche Google : clé à corriger":"Fiche Google non disponible",f.text,f.link)}
   }else setStep("place","skip","Fiche Google non analysée","Ajoutez une clé Google dans Réglages pour obtenir note, avis, photos et concurrents.");
   state.biz.type=type;
   if(place){
@@ -466,20 +495,21 @@ async function runAuto(){
     const socials=[["Facebook",t["contact:facebook"]||t.facebook],["Instagram",t["contact:instagram"]||t.instagram],["TikTok",t["contact:tiktok"]]].filter(x=>x[1]);data.socials=socials.map(s=>({net:s[0],url:s[1]}));
     if(!place&&o.me){state.biz.phone=state.biz.phone||t.phone||t["contact:phone"]||"";state.biz.address=state.biz.address||[t["addr:housenumber"],t["addr:street"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" ");if(t.opening_hours){data.hours=[t.opening_hours];setAuto("0-0","info","Horaires OpenStreetMap : "+t.opening_hours+". À comparer avec la fiche Google.","OpenStreetMap")}}
     if(socials.length)setAuto("2-0","info","Réseaux déclarés sur OpenStreetMap : "+socials.map(s=>s[0]).join(", ")+". Activité à vérifier.","OpenStreetMap");
-    setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?"":"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+o.competitors.length+" commerce(s) similaire(s) à proximité.");
-   }catch(e){setStep("osm","warn","OpenStreetMap indisponible",e.message)}}
+    setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?(o.me.tags&&(o.me.tags.website||o.me.tags["contact:website"])?"Site web trouvé. ":""):"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+(o.compError?"Commerces voisins non chargés : serveur saturé, réessayez plus tard.":o.competitors.length+" commerce(s) similaire(s) à proximité."));
+   }catch(e){setStep("osm","warn","OpenStreetMap indisponible",frErr(e).text)}}
   /* 4. Visibilité locale sur plusieurs recherches + concurrents */
   const queries=keywordList(type,city);state.biz.keyword=$("autoKeyword").value.trim()||queries.map(q=>q.replace(new RegExp("\\s*"+rxEscape(city)+"$","i"),"")).join(", ");
   if(hasKey()){
    data.rankings=[];const myId=place&&place.id;const agg={};
-   for(const [qi,q] of queries.entries()){
+   if(googleBlocked&&["disabled","badkey","referer","billing"].includes(googleBlocked))setStep("rank","skip","Positions et concurrents Google non mesurés","Ils seront analysés dès que la clé Google fonctionnera.");
+   else for(const [qi,q] of queries.entries()){
     setStep("rank"+qi,"run","Position sur « "+q+" »");
     try{const list=await placesSearch(q,RANK_FIELDS,20,data.loc||center);
      const rows=list.map((p,i)=>({rank:i+1,id:p.id,name:p.displayName&&p.displayName.text,rating:p.rating,count:p.userRatingCount,photos:(p.photos||[]).length,url:p.googleMapsUri,website:p.websiteUri||"",address:p.formattedAddress,dist:distKm(data.loc||center,p.location&&{lat:p.location.latitude,lng:p.location.longitude}),me:myId?p.id===myId:similar(p.displayName&&p.displayName.text,name)}));
      const mine=rows.find(r=>r.me);data.rankings.push({query:q,rank:mine?mine.rank:null,total:rows.length,rows,fetchedAt:data.fetchedAt});
      rows.filter(r=>!r.me).forEach(r=>{const a=agg[r.id]||(agg[r.id]={...r,bestRank:r.rank,hits:0,ranks:{}});a.hits++;a.ranks[qi]=r.rank;if(r.rank<a.bestRank)a.bestRank=r.rank});
      setStep("rank"+qi,mine?(mine.rank<=3?"ok":"warn"):"warn",mine?"Position "+mine.rank+" / "+rows.length+" sur « "+q+" »":"Absent des "+rows.length+" premiers sur « "+q+" »","Recherche Google Places, indicative.");
-    }catch(e){setStep("rank"+qi,"err","Recherche « "+q+" » : erreur",e.message)}
+    }catch(e){const f=frErr(e);setStep("rank"+qi,"err","Recherche « "+q+" » non mesurée",f.text,f.link);if(["disabled","badkey","referer","billing"].includes(f.code))break}
    }
    const R=data.rankings;data.ranking=R[0]||null;
    if(R.length){
@@ -520,7 +550,7 @@ async function runAuto(){
     if(slow)findings.push({sev:3,text:"Sur mobile, le site obtient "+(s.perf??"—")+"/100 en performance et affiche son contenu principal en "+(P.lab.lcp||"plusieurs secondes")+"."});
     setAuto("1-7",s.a11y!=null&&s.a11y<80?"issue":"ok","Accessibilité "+(s.a11y??"—")+"/100"+(P.audits.alt===false?" · images sans texte alternatif":""),srcP);
     setStep("psi","ok","Site mesuré : performance "+(s.perf??"—")+" · SEO "+(s.seo??"—")+" · accessibilité "+(s.a11y??"—")+" · bonnes pratiques "+(s.bp??"—"),P.via);
-   }else setStep("psi","warn","Vitesse non mesurée",(rPsi.reason&&rPsi.reason.message||"")+" — les autres contrôles du site restent faits. Réessayez plus tard ou ajoutez une clé Google.");
+   }else setStep("psi","warn","Vitesse non mesurée",frErr(rPsi.reason).text+" Les autres contrôles du site sont faits.");
    /* Mobile */
    const mobileOk=H?H.viewport:(P?P.audits.viewport!==false:null);
    if(mobileOk!=null)setAuto("1-0",mobileOk?"ok":"issue",mobileOk?"Site présent et configuré pour mobile.":"Le site n'est pas configuré pour mobile (balise viewport absente).",H?srcH:srcP);
@@ -564,7 +594,7 @@ async function runAuto(){
     setAuto("2-4",allSoc.length?"info":"issue",allSoc.length?"Liens réseaux trouvés : "+allSoc.map(s=>s.net).join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau lié : identité en ligne dispersée.",srcH);
     if(H.menuOnSite)setAuto("0-3","info","Le site présente une carte, des tarifs ou des prestations.",srcH);
     if(H.copyrightYear&&H.copyrightYear<new Date().getFullYear()-1)findings.push({sev:1,text:"La mention © du site indique "+H.copyrightYear+" : le site semble ne pas avoir été mis à jour depuis."});
-   }else setStep("html","warn","Contenu du site non lu",(rHtml.reason&&rHtml.reason.message||"")+" — le site bloque peut-être la lecture automatique.");
+   }else setStep("html","warn","Contenu du site non lu","Le site bloque peut-être la lecture automatique. "+frErr(rHtml.reason).text);
    const cmsName=(H&&H.cms)||(data.tech.find(t=>/CMS|Ecommerce|Website builder/i.test(t.cat))||{}).name||"";data.cms=cmsName;
    setStep("shot",M?"ok":"warn",M?"Capture mobile réalisée"+(data.tech.length?" · technologies : "+data.tech.slice(0,5).map(t=>t.name).join(", "):""):"Capture non disponible",M?(D&&D.created?"Nom de domaine enregistré en "+new Date(D.created).getFullYear():""):"Service de capture saturé : réessayez plus tard.");
    if(!M&&D&&D.created)setStep("dom","ok","Nom de domaine enregistré en "+new Date(D.created).getFullYear(),D.domain);
@@ -586,7 +616,7 @@ async function runAuto(){
   $("progDetails").open=false;$("progTitle").textContent="Analyse terminée : voir les "+steps.length+" étapes";
   $("autoSummaryCard").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
   toast("Audit terminé : résultats ci-dessous.");
- }catch(e){setStep("fatal","err","Erreur inattendue",e.message)}
+ }catch(e){setStep("fatal","err","Erreur inattendue",frErr(e).text)}
  finally{running=false;document.body.classList.remove("scanning");$("runAuto").disabled=false;$("runAuto").textContent="Relancer l'audit";state.data.steps=steps;persistLocal()}
 }
 function hydrateBizFields(){fields.forEach(id=>{if(state.biz[id]!==undefined&&state.biz[id]!==null)$(id).value=state.biz[id]});$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||""}
@@ -875,8 +905,8 @@ function bind(){
  $("saveKey").onclick=()=>{settings.googleKey=$("googleKey").value.trim();saveSettings();renderKeyNotice();toast(settings.googleKey?"Clé enregistrée.":"Clé retirée.")};
  $("removeKey").onclick=()=>{settings.googleKey="";saveSettings();renderKeyNotice();toast("Clé retirée de ce navigateur.")};
  $("testKey").onclick=async()=>{settings.googleKey=$("googleKey").value.trim();saveSettings();if(!hasKey()){$("keyStatus").innerHTML='<span class="keybad">Collez d’abord une clé.</span>';return}$("keyStatus").textContent="Test en cours…";
-  const res=[];try{const l=await placesSearch("Tour Eiffel Paris","places.id,places.displayName",1);res.push(l.length?'<span class="keyok">✓ Places API (New) fonctionne.</span>':'<span class="keybad">Places API : réponse vide.</span>')}catch(e){res.push('<span class="keybad">✕ Places API : '+esc(e.message)+'</span>')}
-  try{await fetchJson("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&category=seo&url="+encodeURIComponent("https://example.com")+"&key="+encodeURIComponent(settings.googleKey),{},90000);res.push('<span class="keyok">✓ PageSpeed Insights API fonctionne.</span>')}catch(e){res.push('<span class="keybad">✕ PageSpeed : '+esc(e.message)+'</span>')}
+  const res=[];try{const l=await placesSearch("Tour Eiffel Paris","places.id,places.displayName",1);res.push(l.length?'<span class="keyok">✓ Places API (New) fonctionne.</span>':'<span class="keybad">Places API : réponse vide.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ Places API (New) : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
+  try{await fetchJson("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&category=seo&url="+encodeURIComponent("https://example.com")+"&key="+encodeURIComponent(settings.googleKey),{},90000);res.push('<span class="keyok">✓ PageSpeed Insights API fonctionne.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ PageSpeed Insights API : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
   $("keyStatus").innerHTML=res.join("<br>");renderKeyNotice2()};
  function renderKeyNotice2(){const s=$("keyStatus").innerHTML;renderKeyNotice();$("keyStatus").innerHTML=s}
  $("senderName").value=settings.senderName;$("senderLine").value=settings.senderLine;$("senderContact").value=settings.senderContact;
