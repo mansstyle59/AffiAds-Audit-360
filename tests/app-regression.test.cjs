@@ -130,3 +130,14 @@ test("mobile navigation matches the reference order and all primary actions are 
   assert.match(html, /data-view="pitch"/);
   assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{\$\("newClient"\)\.click\(\)\}\)/);
 });
+
+
+test("2026-77 compact iPhone access screen stays within small viewports", () => {
+  assert.ok(html.includes("assets/app.css?v=2026-77"));
+  assert.ok(html.includes("assets/app.js?v=2026-77"));
+  assert.ok(css.includes("2026-77 • Compact, safe-area-aware access screen for iPhone"));
+  assert.ok(css.includes("min-height:100dvh"));
+  assert.ok(css.includes("overflow-y:auto"));
+  assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
+  assert.ok(sw.includes("affiads-audit-2026-77"));
+});
