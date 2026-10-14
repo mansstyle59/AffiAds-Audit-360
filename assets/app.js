@@ -1607,7 +1607,7 @@ async function makePdf(){
   if(!full){
    const page=$("report1").cloneNode(true);page.removeAttribute("id");page.classList.add("pdfpage");holder.appendChild(page);await sleep(120);
    const canvas=await pdfCanvas(page,2.5);
-   const maxW=194,maxH=277,scale=Math.min(maxW/canvas.width,maxH/canvas.height);
+   const maxW=194,maxH=268,scale=Math.min(maxW/canvas.width,maxH/canvas.height);
    const w=canvas.width*scale,h=canvas.height*scale,x=(210-w)/2,y=(297-h)/2;
    doc.setFillColor(255,255,255);doc.rect(0,0,210,297,"F");
    doc.addImage(canvas.toDataURL("image/jpeg",0.94),"JPEG",x,y,w,h,undefined,"FAST");
