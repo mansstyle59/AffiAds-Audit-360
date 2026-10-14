@@ -325,13 +325,13 @@ test("2026-95 report preview has a helpful empty state and avoids floating assis
 });
 
 
-test("2026-95 home quick actions prioritize client lookup, new audit and audit history", () => {
-  assert.match(html, /id="quickFindClient"[\s\S]*?<b>Trouver un client<\/b><small>Recherche instantanée<\/small>/);
-  assert.match(html, /id="quickNewAudit"[\s\S]*?<b>Nouvel audit<\/b><small>Analyser un commerce<\/small>/);
-  assert.match(html, /id="quickAudits"[\s\S]*?<b>Mes audits<\/b><small>Rapports et historique<\/small>/);
-  assert.match(js, /const quickFindClient=\$\("quickFindClient"\);if\(quickFindClient\)quickFindClient\.onclick=\(\)=>\{nav\("clients"\);requestAnimationFrame\(\(\)=>\{\$\("clientSearch"\)\.focus\(\{preventScroll:true\}\)\}\)\}/);
-  assert.match(js, /const quickNewAudit=\$\("quickNewAudit"\);if\(quickNewAudit\)quickNewAudit\.onclick=\(\)=>\{nav\("auto"\);\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}/);
-  assert.doesNotMatch(html, /id="quickPosition"/);
+test("home screen removes redundant quick-action cards and keeps the audit form", () => {
+  assert.doesNotMatch(html, /class="quick-actions"/);
+  assert.doesNotMatch(html, /id="quickFindClient"|id="quickNewAudit"|id="quickAudits"/);
+  assert.match(html, /class="audit-form-card"/);
+  assert.match(html, /id="autoName"/);
+  assert.match(html, /id="autoCity"/);
+  assert.match(html, /id="runAuto"/);
   assert.match(html, /assets\/app\.js\?v=2026-95/);
   assert.match(sw, /affiads-audit-2026-95/);
 });
