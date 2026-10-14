@@ -1532,3 +1532,88 @@ details.adv summary{color:#c7ccef}
   #view-clients .listhead{align-items:center!important;gap:10px!important}
   #view-clients .listhead .btn{white-space:nowrap!important}
 }
+
+
+/* ===== AffiAds 360 · harmonisation iPhone fidèle au modèle validé ===== */
+@media(max-width:900px){
+  :root{--tabbar:78px}
+  .side{
+    background:#fff!important;color:#171b4f!important;
+    border-bottom:1px solid #e7eaf7!important;
+    padding:14px 20px!important;min-height:88px!important;
+  }
+  .brand,.brand>div,.brand span{color:#171b4f!important}
+  .brand img{width:58px!important;height:58px!important;border-radius:16px!important}
+  .brand>div{font-size:22px!important;font-weight:850!important;letter-spacing:-.04em}
+  .brand span{display:block!important;margin:1px 0 0 2px!important;font-size:10px!important;letter-spacing:.17em!important;font-weight:850!important;color:#4542e8!important;text-transform:uppercase}
+  .main{
+    background:#080d2d!important;color:#f4f5ff!important;
+    padding:22px 18px calc(var(--tabbar) + 35px + env(safe-area-inset-bottom))!important;
+  }
+  .top{display:flex!important;align-items:center!important;gap:10px!important;margin:0 0 18px!important}
+  .top h1{font-size:clamp(30px,8vw,42px)!important;letter-spacing:-.055em!important;color:#f7f7ff!important}
+  #pageSub{display:block!important;color:#c7ccef!important;font-size:15px!important;line-height:1.45!important;margin-top:7px!important}
+  .topacts{gap:7px!important}
+  .topacts .saved{display:none!important}
+  .topacts .chip{max-width:150px!important;min-height:42px!important;padding:8px 11px!important;background:#171d43!important;border:1px solid #343d70!important;color:#fff!important}
+  .topacts #pdf{min-height:42px!important;background:#fff!important;color:#24245b!important;border:1px solid #e0e4ff!important;border-radius:14px!important;font-weight:850!important}
+  #view-auto .grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px!important}
+  #view-auto .ask{padding:0!important;min-width:0!important}
+  #view-auto .hero-kicker{background:#2348ff!important;border:0!important;color:#fff!important;font-size:10px!important;letter-spacing:.14em!important;padding:7px 11px!important}
+  #view-auto .ask h2{font-size:clamp(38px,10vw,52px)!important;line-height:.98!important;max-width:12ch!important;color:#fff!important;margin:8px 0 12px!important}
+  #view-auto .hero-accent{background:linear-gradient(90deg,#8fb3ff,#b4a0ff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important}
+  #view-auto .hero-intro{font-size:15px!important;line-height:1.55!important;color:#d0d6f5!important;max-width:38ch!important}
+  #view-auto .hero-points{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin:15px 0!important}
+  #view-auto .hero-points span{min-width:0!important;justify-content:center!important;text-align:center!important;flex-wrap:wrap!important;gap:4px!important;padding:10px 5px!important;border-radius:15px!important;background:#151c43!important;border:1px solid #303966!important;color:#f0f2ff!important;font-size:10px!important;line-height:1.25!important}
+  #view-auto .hero-points b{font-size:14px!important;color:#ffd04a!important}
+  .audit-form-card{padding:20px!important;border-radius:24px!important;box-shadow:0 18px 44px -26px #000c!important}
+  .audit-form-card .field label{font-size:13px!important}
+  .audit-form-card .field input,.audit-form-card .field select,.audit-form-card .field textarea{min-height:52px!important;font-size:15px!important}
+  .audit-form-card .askactions{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+  .audit-form-card #runAuto{min-height:54px!important;font-size:16px!important}
+  .ready-card{padding:19px!important;border-radius:23px!important}
+  .nav{
+    left:12px!important;right:12px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;
+    display:flex!important;gap:4px!important;padding:7px!important;
+    border:1px solid #e0e5fb!important;border-radius:28px!important;
+    background:#fffffff5!important;box-shadow:0 14px 42px -18px #000a!important;
+    backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important;
+  }
+  .nav>button{min-width:0!important;min-height:62px!important;padding:7px 1px!important;gap:4px!important;border-radius:20px!important;color:#505777!important;font-size:10px!important;font-weight:800!important}
+  .nav>button svg{width:22px!important;height:22px!important;stroke:#505777!important}
+  .nav>button.active{background:linear-gradient(135deg,#3157ff,#5140ed)!important;color:#fff!important;box-shadow:0 8px 18px -10px #3157ff!important}
+  .nav>button.active svg{stroke:#fff!important}
+  .navmore{bottom:calc(var(--tabbar) + 18px + env(safe-area-inset-bottom))!important;max-height:65dvh!important;overflow-y:auto!important;background:#fff!important;border:1px solid #e2e7fb!important}
+  .navmore .navgroup{color:#747b9e!important}
+  .navmore button{background:#f5f7ff!important;border:1px solid #e5e9fa!important;color:#202653!important;border-radius:14px!important}
+  .navmore button .t,.navmore button .s{color:#202653!important}
+  .botfab{right:17px!important;bottom:calc(var(--tabbar) + 26px + env(safe-area-inset-bottom))!important;width:58px!important;height:58px!important;border-radius:18px!important;overflow:visible!important}
+  .botfab img{width:58px!important;height:58px!important;border-radius:18px!important;display:block!important}
+  .botpanel{left:12px!important;right:12px!important;bottom:calc(var(--tabbar) + 20px + env(safe-area-inset-bottom))!important;max-height:min(72dvh,680px)!important;border-radius:24px!important;overflow:hidden!important}
+  /* Les aperçus des rapports restent des feuilles blanches, même si l'appli est en mode nuit. */
+  .onepage,.report{background:#fff!important;color:#202653!important;border:1px solid #e2e7fb!important;box-shadow:0 14px 34px -25px #000!important}
+  .onepage *,.report *{color:#202653}
+  .onepage .ophead,.onepage .ophead *,.onepage .opoffer,.onepage .opoffer *,.onepage .opnum,.onepage .opnum *{color:#fff!important}
+  .onepage .ophead{background:linear-gradient(110deg,#3157ff,#7839f4)!important}
+  #view-report .repfmt{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  #view-report .repfmt button{min-width:0!important;padding:12px 8px!important;border-radius:999px!important;background:#fff!important;color:#373c83!important;border:1px solid #dfe4fb!important;font-weight:800!important}
+  #view-report .repfmt button[aria-pressed="true"],#view-report .repfmt button.active{background:#3157ff!important;color:#fff!important;border-color:#3157ff!important}
+  #view-report .repfmt span{grid-column:1/-1!important;color:#c8cdef!important;font-size:12px!important}
+  #view-report .card{overflow:visible!important}
+  #view-clients .card,#view-home .card,#view-audit .card,#view-pitch .card{border-radius:22px!important}
+  #view-clients .listhead{flex-wrap:wrap!important}
+  #view-clients .listhead h2{font-size:23px!important}
+  #view-clients .clientrow{display:flex!important;align-items:center!important;gap:10px!important;padding:12px!important}
+  #view-clients .clientrow .who{min-width:0!important;overflow-wrap:anywhere!important}
+  #view-clients .clientrow .del{flex:0 0 auto!important}
+}
+@media(max-width:390px){
+  .side{padding:12px 14px!important}
+  .brand img{width:50px!important;height:50px!important}
+  .brand>div{font-size:19px!important}
+  .main{padding-left:14px!important;padding-right:14px!important}
+  .topacts .chip{max-width:116px!important}
+  #view-auto .hero-points span{font-size:9px!important}
+  .nav{left:7px!important;right:7px!important;padding:5px!important}
+  .nav>button{font-size:9px!important}
+}
