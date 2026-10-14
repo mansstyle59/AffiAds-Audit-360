@@ -112,13 +112,13 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
 });
 
 
-test("2026-80 keeps dark-theme cards, report preview and compact access screen readable", () => {
+test("2026-81 keeps dark-theme cards, report preview and compact access screen readable", () => {
   assert.match(css, /2026-75 • Contrast and coherence|2026-76 • Contrast and coherence/);
   assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#202653!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-80/);
-  assert.match(html, /assets\/app\.js\?v=2026-80/);
-  assert.match(sw, /affiads-audit-2026-80/);
+  assert.match(html, /assets\/app\.css\?v=2026-81/);
+  assert.match(html, /assets\/app\.js\?v=2026-81/);
+  assert.match(sw, /affiads-audit-2026-81/);
 });
 
 test("mobile navigation matches the reference order and all primary actions are reachable", () => {
@@ -132,38 +132,53 @@ test("mobile navigation matches the reference order and all primary actions are 
 });
 
 
-test("2026-80 compact iPhone access screen stays within small viewports", () => {
-  assert.ok(html.includes("assets/app.css?v=2026-80"));
-  assert.ok(html.includes("assets/app.js?v=2026-80"));
-  assert.ok(css.includes("2026-80 • Compact, safe-area-aware access screen for iPhone"));
+test("2026-81 compact iPhone access screen stays within small viewports", () => {
+  assert.ok(html.includes("assets/app.css?v=2026-81"));
+  assert.ok(html.includes("assets/app.js?v=2026-81"));
+  assert.ok(css.includes("2026-81 • Compact, safe-area-aware access screen for iPhone"));
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
-  assert.ok(sw.includes("affiads-audit-2026-80"));
+  assert.ok(sw.includes("affiads-audit-2026-81"));
 });
 
 
-test("2026-80 remembers trusted access in Safari and installed PWA without prompting on every open", () => {
+test("2026-81 remembers trusted access in Safari and installed PWA without prompting on every open", () => {
   assert.match(js, /const unlockedPwaSession=previous\.pwaTrusted===true/);
   assert.match(js, /if\(Lock\.mode==="unlock"\)\{Lock\.cfg\.pwaTrusted=true/);
   assert.doesNotMatch(js, /if\(!standalone&&Lock\.cfg&&Lock\.cfg\.hash&&!document\.body\.classList\.contains\("locked"\)\)lockNow\(false\)/);
   assert.match(js, /Code propriétaire actif : demandé lors du premier déverrouillage/);
-  assert.match(html, /assets\/app\.js\?v=2026-80/);
-  assert.match(sw, /affiads-audit-2026-80/);
+  assert.match(html, /assets\/app\.js\?v=2026-81/);
+  assert.match(sw, /affiads-audit-2026-81/);
 });
 
 
-test("2026-80 keeps optional Google Fonts from blocking the first render", () => {
+test("2026-81 keeps optional Google Fonts from blocking the first render", () => {
   assert.match(html, /fonts\.googleapis\.com[^"]+display=swap" media="print" onload="this\.media='all'"/);
   assert.match(html, /<noscript><link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com/);
-  assert.match(html, /assets\/app\.css\?v=2026-80/);
-  assert.match(html, /assets\/app\.js\?v=2026-80/);
-  assert.match(sw, /affiads-audit-2026-80/);
+  assert.match(html, /assets\/app\.css\?v=2026-81/);
+  assert.match(html, /assets\/app\.js\?v=2026-81/);
+  assert.match(sw, /affiads-audit-2026-81/);
 });
 
-test("2026-80 keeps dark-mode audit form and readiness copy high contrast", () => {
+test("2026-81 keeps dark-mode audit form and readiness copy high contrast", () => {
   assert.match(css, /:root\[data-theme="dark"\] #view-auto \.audit-form-card \.field label/);
   assert.match(css, /:root\[data-theme="dark"\] #view-auto \.ready-card li/);
   assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#c7d1ee!important/);
+});
+
+
+test("2026-81 enforces readable contrast for body copy, secondary text, forms and links in both themes", () => {
+  assert.match(css, /:root\[data-theme="dark"\] \.main \.card:not\(\.onepage\):not\(\.report\) :is\([\s\S]*?color:#f1f4ff!important/);
+  assert.match(css, /color:#c8d2ef!important/);
+  assert.match(css, /:root\[data-theme="light"\] \.main \.card:not\(\.onepage\):not\(\.report\) :is\([\s\S]*?color:#20294a!important/);
+  assert.match(css, /color:#56617c!important/);
+  assert.match(css, /:root\[data-theme="dark"\] \.main :is\(input,textarea,select\)/);
+  assert.match(css, /:root\[data-theme="light"\] \.main :is\(input,textarea,select\)/);
+  assert.match(css, /:root\[data-theme="dark"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#b7c3ff!important/);
+  assert.match(css, /:root\[data-theme="light"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#4335c9!important/);
+  assert.match(html, /assets\/app\.css\?v=2026-81/);
+  assert.match(html, /assets\/app\.js\?v=2026-81/);
+  assert.match(sw, /affiads-audit-2026-81/);
 });

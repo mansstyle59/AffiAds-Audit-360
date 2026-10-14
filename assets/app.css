@@ -2084,7 +2084,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-80 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-81 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2134,7 +2134,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-80 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-81 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
@@ -2182,3 +2182,69 @@ details.adv summary{color:#c7ccef}
     overflow-wrap:anywhere!important;
   }
 }
+
+
+/* 2026-81 • Accessibility pass: explicit readable text pairs in both themes.
+   Deliberately excludes the printable report, whose paper surface stays white. */
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
+  h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
+  .muted,.sidenote,.hint,.help,.description,.subtitle,.field-note,.empty-state,
+  .status-text,.client-meta,.audit-meta,.setting-description
+),
+:root[data-theme="dark"] .main .side :is(
+  h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,
+  .muted,.sidenote,.hint,.help,.description,.subtitle
+),
+:root[data-theme="dark"] .main :is(#pageTitle,.top .toptitle h1,#pageSub,.foot,.empty-state,.field label){
+  color:#f1f4ff!important;
+}
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
+  .muted,small,.sidenote,.hint,.help,.description,.subtitle,.field-note,
+  .empty-state,.client-meta,.audit-meta,.setting-description
+),
+:root[data-theme="dark"] .main .side :is(.muted,small,.sidenote,.hint,.help,.description,.subtitle),
+:root[data-theme="dark"] .main #pageSub,
+:root[data-theme="dark"] .main .foot{
+  color:#c8d2ef!important;
+}
+:root[data-theme="light"] .main .card:not(.onepage):not(.report) :is(
+  h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
+  .muted,.sidenote,.hint,.help,.description,.subtitle,.field-note,.empty-state,
+  .status-text,.client-meta,.audit-meta,.setting-description
+),
+:root[data-theme="light"] .main .side :is(
+  h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,
+  .muted,.sidenote,.hint,.help,.description,.subtitle
+),
+:root[data-theme="light"] .main :is(#pageTitle,.top .toptitle h1,#pageSub,.foot,.empty-state,.field label){
+  color:#20294a!important;
+}
+:root[data-theme="light"] .main .card:not(.onepage):not(.report) :is(
+  .muted,small,.sidenote,.hint,.help,.description,.subtitle,.field-note,
+  .empty-state,.client-meta,.audit-meta,.setting-description
+),
+:root[data-theme="light"] .main .side :is(.muted,small,.sidenote,.hint,.help,.description,.subtitle),
+:root[data-theme="light"] .main #pageSub,
+:root[data-theme="light"] .main .foot{
+  color:#56617c!important;
+}
+/* Explicit form readability, including disabled fields and placeholders. */
+:root[data-theme="dark"] .main :is(input,textarea,select){
+  color:#f5f7ff!important;background:#0c1433!important;border-color:#52618f!important;
+}
+:root[data-theme="dark"] .main :is(input,textarea)::placeholder{color:#c0cbea!important;opacity:1!important}
+:root[data-theme="light"] .main :is(input,textarea,select){
+  color:#20294a!important;background:#fff!important;border-color:#c7d0e5!important;
+}
+:root[data-theme="light"] .main :is(input,textarea)::placeholder{color:#65708a!important;opacity:1!important}
+:root[data-theme="dark"] .main a:not(.btn):not(.button){color:#b7c3ff!important;text-decoration-thickness:1.5px}
+:root[data-theme="light"] .main a:not(.btn):not(.button){color:#4335c9!important;text-decoration-thickness:1.5px}
+/* Selected navigation, primary actions and PDF paper colors retain their own designed contrast. */
+:root[data-theme="dark"] .main .onepage,
+:root[data-theme="dark"] .main .report,
+:root[data-theme="light"] .main .onepage,
+:root[data-theme="light"] .main .report{background:#fff!important;color:#202653!important}
+:root[data-theme="dark"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
+:root[data-theme="dark"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
+:root[data-theme="light"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
+:root[data-theme="light"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small){color:#202653!important}
