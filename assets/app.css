@@ -852,3 +852,29 @@ body:not(.rep-one) #report1{display:none}
 /* Sauvegarde : information claire et lisible sur mobile */
 #view-settings .card h2{letter-spacing:-.025em}
 #view-settings .card p.muted b{color:var(--ink);font-weight:750}
+
+
+/* En-tête iPhone : plus compact, net et sans bandeau flou */
+@media(max-width:900px){
+  body::before{
+    background:#5141ed!important;
+    background-image:none!important;
+    opacity:1;
+  }
+  .side{
+    padding:calc(env(safe-area-inset-top) + 3px) 18px 9px!important;
+    min-height:0;
+    background:#fff!important;
+    border-bottom:1px solid #e7e4f3;
+    box-shadow:0 3px 10px rgba(28,20,78,.045);
+  }
+  .side .brand{gap:10px;font-size:17px;letter-spacing:-.025em}
+  .side .brand img{width:36px;height:36px;filter:none}
+  .side .brand span{margin-left:5px;font-size:12px;font-weight:650;color:#77728f}
+  .main{padding-top:12px!important}
+  .top{align-items:center;margin-bottom:8px}
+  .top h1{font-size:21px;letter-spacing:-.035em}
+  .topacts{gap:7px}
+  .chip{max-width:150px;min-height:38px;padding:7px 12px}
+  .topacts .btn{min-height:38px;padding:7px 13px}
+}
