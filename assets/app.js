@@ -1886,7 +1886,7 @@ function download(content,name,type){const blob=new Blob([content],{type});const
 
 
 /* ---------- 2026 : thème, installation, hors ligne, partage ---------- */
-function applyTheme(){const t=settings.theme||"auto";if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",t==="dark"?"#080d2d":t==="light"?"#f6f7ff":"#0754f5");document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.themeSet===t)));document.documentElement.style.colorScheme=t==="dark"?"dark":t==="light"?"light":"light dark"}
+function applyTheme(){const t=settings.theme||"auto";const effective=t==="auto"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.dataset.theme=effective;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",effective==="dark"?"#080d2d":"#f5f7ff");document.querySelectorAll("[data-theme-set]").forEach(b=>{b.setAttribute("aria-checked",String(b.dataset.themeSet===t));b.setAttribute("aria-pressed",String(b.dataset.themeSet===t))});document.documentElement.style.colorScheme=effective}
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const b=$("installApp");if(b)b.classList.remove("hidden")});
 window.addEventListener("appinstalled",()=>{installEvt=null;const b=$("installApp");if(b)b.classList.add("hidden");toast("Appli installée sur l’écran d’accueil.")});
@@ -2269,3 +2269,4 @@ bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSe
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+\n/* Keep automatic appearance synchronized with iOS/macOS without overriding a manual choice. */\nif(window.matchMedia){const appearanceQuery=window.matchMedia("(prefers-color-scheme: dark)");const onAppearanceChange=()=>{if((settings.theme||"auto")==="auto")applyTheme()};if(appearanceQuery.addEventListener)appearanceQuery.addEventListener("change",onAppearanceChange);else if(appearanceQuery.addListener)appearanceQuery.addListener(onAppearanceChange)}\n
