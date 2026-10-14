@@ -2004,11 +2004,15 @@ async function pinSubmit(){
  if(v!==Lock.first){Lock.first="";Lock.entry="";gateText(Lock.mode==="create"?"Créez votre code":"Nouveau code","Les deux codes ne correspondent pas : recommencez.");gateMsg("Codes différents.",true);renderDots();return}
  await pinSet(v);toast("Code enregistré. L’appli est protégée sur cet appareil.");hideGate();
 }
+function pinDelayDescription(value){
+ const descriptions={"-1":"Le code ne sera pas redemandé automatiquement. Vous pouvez toujours verrouiller l’application manuellement.","0":"Le code sera demandé à chaque nouvelle ouverture de l’application.","5":"Le code sera redemandé après 5 minutes sans activité.","60":"Le code sera redemandé après 1 heure sans activité.","1440":"Le code sera redemandé après 1 jour sans activité.","10080":"Le code sera redemandé après 1 semaine sans activité."};
+ return descriptions[String(value)]||"Choisissez quand l’application doit redemander le code.";
+}
 function renderPinSettings(){
  if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
- $("pinStatus").textContent="Code propriétaire actif : demandé lors du premier déverrouillage, puis mémorisé sur cet appareil. Il ne sera redemandé que si vous verrouillez manuellement ou effacez les données du navigateur.";
+ $("pinStatus").textContent="Choisissez quand le code doit être redemandé. Votre préférence est enregistrée sur cet appareil.";
  $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
- $("pinDelay").value="-1";$("pinDelay").disabled=true;
+ const delay=$("pinDelay");if(delay){delay.value=String(lockDelay());delay.disabled=!on;const help=$("pinDelayHelp");if(help)help.textContent=pinDelayDescription(delay.value)}
  const pb=$("pinBio");if(pb){pb.hidden=!(on&&Lock.bioOk);pb.textContent=(Lock.cfg&&Lock.cfg.bio?"Désactiver ":"Activer ")+bioLabel()}
 }
 async function bioAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
@@ -2035,8 +2039,9 @@ function initLock(){
  lockLoad();
  const previous=Lock.cfg||{};
  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
- const unlockedPwaSession=previous.pwaTrusted===true;
- Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:-1,forceLock:!unlockedPwaSession,v:6,pwaTrusted:unlockedPwaSession,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
+ const unlockedPwaSession=previous.pwaTrusted===true&&stillTrusted();
+ const savedDelay=Number(previous.delay);
+ Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:Number.isFinite(savedDelay)?savedDelay:-1,forceLock:!unlockedPwaSession,v:7,pwaTrusted:previous.pwaTrusted===true,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:previous.bio||null};
  lockSave();buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
@@ -2053,7 +2058,7 @@ function initLock(){
  $("pinBio").onclick=async()=>{if(!Lock.cfg||!Lock.cfg.hash){toast("Créez d’abord un code.");return}if(Lock.cfg.bio){Lock.cfg.bio=null;lockSave();renderPinSettings();toast(bioLabel()+" désactivé.");return}try{await bioEnable();renderPinSettings();toast(bioLabel()+" activé : plus besoin de taper le code.")}catch(e){toast(e&&e.name==="NotAllowedError"?"Activation annulée.":"Cet appareil ne permet pas la reconnaissance ici.")}};
  bioAvailable().then(ok=>{Lock.bioOk=ok;renderPinSettings()});
  $("pinDisable").hidden=true;
- $("pinDelay").disabled=true;
+ $("pinDelay").addEventListener("change",()=>{if(!Lock.cfg||!Lock.cfg.hash)return;const chosen=Number($("pinDelay").value);if(![-1,0,5,60,1440,10080].includes(chosen))return;Lock.cfg.delay=chosen;Lock.cfg.forceLock=false;Lock.cfg.pwaTrusted=true;lockSave();markSeen();const help=$("pinDelayHelp");if(help)help.textContent=pinDelayDescription(chosen);toast("Préférence de code enregistrée.");});
  /* Écran d'accueil : le logo s'affiche, puis le code (ou sa création au premier lancement) */
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  setTimeout(()=>{
