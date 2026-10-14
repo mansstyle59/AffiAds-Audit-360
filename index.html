@@ -187,7 +187,17 @@
 <p class="muted"><small>Instagram ne propose pas d’accès public à ses statistiques : vues des Reels et taux d’engagement ne sont visibles que par le propriétaire du compte.</small></p></div>
 </div></section>
 
-<section id="view-tools" class="hidden"><div class="card"><h2>Boîte à outils</h2><p class="muted">Liens directs vers les outils publics, préremplis avec le commerce actif quand c'est possible.</p><div class="links" id="links"></div><div class="notice" style="margin-top:15px">Certaines données (statistiques de la fiche, Search Console, résultats publicitaires) nécessitent l'accès du propriétaire. Ne présentez jamais une estimation comme une donnée vérifiée.</div></div></section>
+<section id="view-tools" class="hidden"><div class="card"><h2>Boîte à outils</h2><p class="muted">Liens directs vers les outils publics, préremplis avec le commerce actif quand c'est possible.</p><div class="links" id="links"></div>
+<div class="card" style="margin-top:16px;background:var(--surface-2,#f8f7ff)">
+<h3 style="margin-top:0">Confirmer un compte social trouvé</h3>
+<p class="muted">Vous avez retrouvé un profil que l’audit a manqué ? Collez son lien public ici. Il sera ajouté au rapport du client avec la mention « vérifié manuellement ».</p>
+<div class="fields">
+<div class="field"><label for="socialVerifiedNet">Réseau</label><select id="socialVerifiedNet"><option>TikTok</option><option>Instagram</option><option>Facebook</option><option>YouTube</option><option>Snapchat</option></select></div>
+<div class="field full"><label for="socialVerifiedUrl">Lien du profil public ou @identifiant</label><input id="socialVerifiedUrl" placeholder="https://www.tiktok.com/@papaours_narbonne" autocomplete="url" inputmode="url"></div>
+</div>
+<div class="actions" style="margin-top:10px"><button type="button" class="btn primary" id="saveSocialVerified">Ajouter au rapport</button></div>
+</div>
+<div class="notice" style="margin-top:15px">Certaines données (statistiques de la fiche, Search Console, résultats publicitaires) nécessitent l'accès du propriétaire. Ne présentez jamais une estimation comme une donnée vérifiée.</div></div></section>
 
 <section id="view-settings" class="hidden"><div class="grid">
 <div class="card s7"><h2>Apparence</h2><p class="muted">Le mode automatique suit le réglage clair ou sombre du téléphone.</p><div class="seg" role="radiogroup" aria-label="Thème"><button type="button" role="radio" data-theme-set="auto">Automatique</button><button type="button" role="radio" data-theme-set="light">Clair</button><button type="button" role="radio" data-theme-set="dark">Sombre</button></div></div>
