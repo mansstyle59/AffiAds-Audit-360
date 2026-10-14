@@ -35,7 +35,7 @@ jobs:
 
       - name: Check bundle identifier
         env:
-          IOS_BUNDLE_ID: ${{ inputs.bundle_id }}
+          IOS_BUNDLE_ID: ${{ inputs.bundle_id || 'fr.affiads.audit360' }}
         run: |
           set -euo pipefail
           if ! [[ "$IOS_BUNDLE_ID" =~ ^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$ ]]; then
