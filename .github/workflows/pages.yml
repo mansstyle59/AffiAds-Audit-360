@@ -24,12 +24,6 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Check JavaScript syntax
-        run: node --check assets/app.js
-      - name: Test social search regressions
-        run: node --test tests/social-regression.test.cjs
-      - name: Test app, PWA, themes and asset consistency
-        run: node --test tests/app-regression.test.cjs
       - name: Install SVG rasterizer
         run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
       - name: Generate crisp app icons
@@ -40,6 +34,12 @@ jobs:
           rsvg-convert -w 180 -h 180 assets/app-icon.svg -o assets/apple-touch-icon.png
           rsvg-convert -w 64 -h 64 assets/assistant-icon.svg -o assets/assistant-64.png
           rsvg-convert -w 192 -h 192 assets/assistant-icon.svg -o assets/assistant-192.png
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Test social search regressions
+        run: node --test tests/social-regression.test.cjs
+      - name: Test app, PWA, themes and asset consistency
+        run: node --test tests/app-regression.test.cjs
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
