@@ -615,7 +615,7 @@ async function socialScan(name,city,known){
  const found={}, candidates={};
  const previous=(state.data&&state.data.social)||{};
  const rejected=(previous.rejected||[]).filter(x=>x&&x.net&&x.url);
- const canonicalSocialUrl=url=>{try{const u=new URL(url);u.hash="";u.hostname=u.hostname.toLowerCase().replace(/^www\\./,"");u.pathname=u.pathname.replace(/\\/+$/,"")||"/";return u.href}catch(e){return String(url||"")}};
+ const canonicalSocialUrl=url=>{try{const u=new URL(url);u.hash="";u.hostname=u.hostname.toLowerCase();if(u.hostname.startsWith("www."))u.hostname=u.hostname.slice(4);while(u.pathname.length>1&&u.pathname.endsWith("/"))u.pathname=u.pathname.slice(0,-1);return u.href}catch(e){return String(url||"")}};
  const isRejected=(net,url)=>rejected.some(x=>x.net===net&&canonicalSocialUrl(x.url)===canonicalSocialUrl(url));
  /* Conserver les profils déjà choisis ou confirmés lors d’un audit précédent ; un profil signalé incorrect reste exclu. */
  Object.entries(previous.found||{}).forEach(([net,f])=>{
