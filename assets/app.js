@@ -1713,7 +1713,7 @@ function closeMore(){const n=document.querySelector(".nav");n.classList.remove("
 let curView="auto";
 function nav(v){
  closeMore();if(!TITLES[v])v="auto";
- const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report","pitch"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
+ const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  if(document.startViewTransition&&!reduce&&v!==curView)document.startViewTransition(swap);else swap();
  if(v==="social")renderSocial();
@@ -1859,6 +1859,7 @@ function bind(){
  $("runSocial").onclick=runSocial;$("socUrl").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();runSocial()}});
  const opts=[...new Set(BIZ_TYPES.map(t=>t.grp))].map(g=>'<optgroup label="'+esc(g)+'">'+BIZ_TYPES.filter(t=>t.grp===g).map(t=>'<option>'+esc(t.label)+'</option>').join("")+'</optgroup>').join("");$("type").innerHTML=opts;$("autoType").innerHTML=opts;
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.view)));
+ $("navNewClient").addEventListener("click",()=>{$("newClient").click()});
  $("navMore").addEventListener("click",e=>{e.stopPropagation();const n=document.querySelector(".nav"),o=!n.classList.contains("open");n.classList.toggle("open",o);$("navMore").setAttribute("aria-expanded",String(o))});
  document.addEventListener("click",e=>{if(!e.target.closest(".nav"))closeMore()});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMore()});
