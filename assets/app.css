@@ -1328,7 +1328,7 @@ details.adv summary{color:#c7ccef}
 @media(max-width:600px){.hero-kicker{margin-bottom:14px}.ask h2{font-size:clamp(36px,10vw,48px);max-width:12ch}.ask>p.hero-intro{font-size:15px}.hero-points{gap:6px}.hero-points span{font-size:11px;padding:7px 8px}.askfields{grid-template-columns:1fr}.bigfield input,.cityfield input{height:58px}.bigcta{width:100%;min-height:54px!important}.askactions{display:grid;grid-template-columns:1fr}}
 
 /* ===== Thème jour/nuit explicite et lisible ===== */
-:root[data-theme="light"] body{background:#f6f7ff!important;color:#171b4f}
+:root[data-theme="light"] body{background:#f6f7ff!important;color:#171b4f!important}
 :root[data-theme="light"] .layout{background:#f6f7ff}
 :root[data-theme="light"] .side{background:#fff!important;border-color:#e1e5f5!important}
 :root[data-theme="light"] .main{color:#171b4f}
@@ -1341,7 +1341,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="light"] details.adv summary{color:#454b76}
 :root[data-theme="light"] #autoToReport{background:#fff!important;border-color:#cbd2ee!important;color:#242a59!important}
 :root[data-theme="light"] .nav{background:#fff!important}
-:root[data-theme="dark"] body{background:#080d2d!important;color:#f3f4ff}
+:root[data-theme="dark"] body{background:#080d2d!important;color:#f3f4ff!important}
 :root[data-theme="dark"] .layout{background:#080d2d}
 :root[data-theme="dark"] .side{background:#101638!important;border-color:#272e5a!important}
 :root[data-theme="dark"] .brand,:root[data-theme="dark"] .brand span{color:#f3f4ff!important}
