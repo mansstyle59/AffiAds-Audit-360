@@ -81,3 +81,19 @@ Le site est publié automatiquement sur GitHub Pages à chaque mise à jour de l
 ## Cohérence de l’interface
 
 L’interface utilise un système visuel commun : mêmes couleurs, typographie, rayons, états de boutons, champs de formulaire et espacements sur Audit, Clients, Rapport, Message, Analyse détaillée et Réglages. La navigation mobile garde les actions principales visibles ; les sections secondaires sont regroupées dans « Plus ». Les indicateurs automatiques doivent être distingués des vérifications manuelles et des correspondances de comptes sociaux qui restent à confirmer.
+
+
+## Build iOS IPA (installation sur iPhone)
+
+Le workflow `.github/workflows/ios-ipa.yml` prépare une application iOS native à partir des fichiers web et produit un fichier IPA signé pour installation personnelle. Pour l’exécuter :
+
+1. Dans GitHub, ouvrir **Settings → Secrets and variables → Actions → New repository secret**.
+2. Ajouter les secrets suivants : `APPLE_CERTIFICATE_BASE64` (certificat Apple Distribution au format .p12 encodé en Base64), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64` (profil Ad Hoc encodé en Base64), `APPLE_TEAM_ID` et `IOS_BUNDLE_ID`.
+3. Le certificat et le profil doivent correspondre au même compte Apple Developer, à l’identifiant de bundle et aux appareils autorisés dans le profil.
+4. Ouvrir **Actions → Build iOS IPA → Run workflow**. Une fois terminé, récupérer `AffiAds-Audit-360-IPA` dans les artefacts du run (conservé 7 jours).
+
+**Important :** ce workflow ne crée pas un certificat Apple et ne contourne pas la signature iOS. Un compte Apple Developer et un profil de provisionnement valides sont nécessaires pour un IPA Ad Hoc installable. Pour une publication officielle sur l’App Store, il faut une procédure de distribution App Store distincte.
+
+### Code d’accès et confidentialité
+
+Le code PIN est configuré dans l’application et son empreinte est stockée localement ; il n’est pas intégré comme texte en clair au dépôt public. Après l’installation, créer le code **1606** sur l’appareil si aucun code n’est déjà configuré, puis confirmer ce même code. Une réinstallation peut effacer ce réglage local : le code devra alors être configuré de nouveau. Ne pas considérer ce PIN local comme une authentification serveur : les données et les clés sensibles ne doivent pas être publiées dans le code client. La véritable restriction à une seule personne nécessite une authentification côté serveur.
