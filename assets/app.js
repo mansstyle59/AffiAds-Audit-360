@@ -612,30 +612,67 @@ const NETS=[["Facebook","facebook.com"],["Instagram","instagram.com"],["TikTok",
 function netOf(host){host=String(host||"").replace(/^(www|m|fr-fr|fr)\./,"");const n=NETS.find(([,d])=>host===d||host.endsWith("."+d)||(d==="youtube.com"&&host==="youtu.be")||(d==="facebook.com"&&host==="fb.com"));return n?n[0]:null}
 function profileOk(u){try{const x=new URL(u);return !/\/(sharer|share|intent|dialog|plugins|login|hashtag|explore|search|watch\?)/i.test(x.pathname+x.search)&&x.pathname.length>1}catch(e){return false}}
 async function socialScan(name,city,known){
- const found={};(known||[]).forEach(s=>{const n=netOf(hostOf(s.url))||s.net;if(n&&NETS.some(x=>x[0]===n)&&!found[n])found[n]={url:s.url,src:s.src||"site"}});
- /* Une recherche séparée par réseau évite qu'un réseau très visible masque TikTok ou Snapchat. */
+ const found={}, candidates={};
+ /* Les liens déjà présents sur le site sont conservés comme sources, mais jamais présentés comme vérifiés automatiquement. */
+ (known||[]).forEach(s=>{
+  const n=netOf(hostOf(s.url))||s.net;
+  if(n&&NETS.some(x=>x[0]===n)&&!found[n]&&profileOk(s.url)){
+   found[n]={url:s.url,src:s.src||"site officiel",confidence:"lien trouvé sur le site — identité à confirmer",verified:false};
+  }
+ });
+ /* Recherche séparée par réseau, avec classement strict : le nom seul ou un seul mot commun ne suffit plus. */
  const searches=await Promise.all(NETS.map(async ([net,domain])=>{
-  const queries=[(name+" "+city+" site:"+domain),(name+" site:"+domain)];
+  const queries=[
+   '"'+name+'" "'+city+'" site:'+domain,
+   '"'+name+'" site:'+domain,
+   '"'+name+'" '+city+' '+domain
+  ];
   const all=[];let engine="";
-  for(const query of queries){try{const r=await bingSearch(query);all.push(...(r.rows||[]));engine=engine||r.engine||""}catch(e){}}
+  for(const query of queries){
+   try{const r=await bingSearch(query);all.push(...(r.rows||[]));engine=engine||r.engine||""}catch(e){}
+  }
   return {net,rows:all,engine};
  }));
  const engines=searches.map(x=>x.engine).filter(Boolean);
  const compact=v=>norm(String(v||"")).replace(/[^a-z0-9]/g,"");
- const brand=compact(name),tk=toks(name).filter(w=>w.length>1);
- searches.forEach(({net,rows})=>rows.forEach(r=>{
-  if(found[net]||netOf(r.host)!==net||!profileOk(r.url))return;
+ const brand=compact(name),tokens=[...new Set(toks(name).filter(w=>w.length>=3))];
+ const cityTokens=[...new Set(toks(city).filter(w=>w.length>=3))];
+ const scoreCandidate=(r)=>{
   let decoded="";try{decoded=decodeURIComponent(r.url)}catch(e){decoded=r.url}
-  const text=norm((r.title||"")+" "+decoded.replace(/[-_./@]/g," "));
-  const compactText=compact((r.title||"")+" "+decoded);
-  const hit=tk.filter(w=>text.includes(w)).length;
-  /* Les handles sont souvent concaténés, par exemple @papaours_narbonne. */
-  const brandMatch=brand.length>=5&&compactText.includes(brand);
-  if(brandMatch||(tk.length&&hit>=Math.max(1,Math.ceil(tk.length*0.5)))){
-   found[net]={url:r.url,src:"recherche Bing ciblée",title:r.title||"",confidence:brandMatch?"nom ou identifiant correspondant":"correspondance partielle"};
+  const title=String(r.title||"");
+  const text=norm(title+" "+decoded.replace(/[-_./@]/g," "));
+  const packed=compact(title+" "+decoded);
+  const matched=tokens.filter(w=>text.split(" ").includes(w)).length;
+  const packedMatch=brand.length>=6&&packed.includes(brand);
+  const cityHits=cityTokens.filter(w=>text.split(" ").includes(w)).length;
+  const hasName=tokens.length>0&&(packedMatch||matched>=Math.max(2,Math.ceil(tokens.length*.75)));
+  const score=(packedMatch?8:matched*2)+(cityHits?Math.min(2,cityHits):0)+(title?1:0);
+  return {score,hasName,packedMatch,matched,cityHits,title};
+ };
+ searches.forEach(({net,rows})=>{
+  const unique=new Map();
+  rows.forEach(r=>{
+   if(netOf(r.host)!==net||!profileOk(r.url))return;
+   let u;try{u=new URL(r.url);u.hash="";}catch(e){return}
+   const url=u.href;
+   const rank=scoreCandidate({...r,url});
+   if(!rank.hasName)return;
+   const old=unique.get(url);
+   if(!old||rank.score>old.rank.score)unique.set(url,{url,title:rank.title,rank});
+  });
+  const ranked=[...unique.values()].sort((a,b)=>b.rank.score-a.rank.score);
+  candidates[net]=ranked.slice(0,5).map(x=>({url:x.url,title:x.title,score:x.rank.score,cityMatch:x.rank.cityHits>0}));
+  /* En cas de plusieurs candidats proches, ne pas choisir arbitrairement un profil. */
+  if(!found[net]&&ranked.length){
+   const best=ranked[0],second=ranked[1];
+   const decisive=best.rank.packedMatch||(best.rank.matched>=2&&best.rank.cityHits>0);
+   const separated=!second||best.rank.score-second.rank.score>=3;
+   if(decisive&&separated){
+    found[net]={url:best.url,src:"recherche web ciblée",title:best.title,confidence:"correspondance probable — validation manuelle conseillée",verified:false};
+   }
   }
- }));
- return {found,engine:engines.join(", "),checked:NETS.map(n=>n[0]),queries:searches.length*2};
+ });
+ return {found,candidates,engine:engines.join(", "),checked:NETS.map(n=>n[0]),queries:searches.length*3,verificationRequired:true};
 }
 /* ---------- Audit automatique ---------- */
 let steps=[];
