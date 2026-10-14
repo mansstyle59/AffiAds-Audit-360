@@ -75,6 +75,14 @@ test("AI visibility compares platforms using only explicit yes/no results", () =
 });
 
 
+test("premium PDF export includes branded A4 pagination and professional report styles", () => {
+  assert.match(js, /PDF polish 2026-74/);
+  assert.match(js, /Page \+i\+ " \/ "\+n/);
+  assert.match(js, /setDrawColor\(225,229,243\)/);
+  assert.match(css, /\.ophead\{padding:18px 28px;background:linear-gradient/);
+  assert.match(css, /\.opoffer\{margin-top:15px;padding:15px 16px/);
+});
+
 test("premium PDF export fits the one-page summary inside printable A4 margins", () => {
   assert.match(js, /const maxW=194,maxH=268/);
   assert.match(js, /AFFIADS AUDIT 360°  ·  DOCUMENT DE TRAVAIL CONFIDENTIEL/);
