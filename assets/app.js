@@ -1965,9 +1965,9 @@ async function pinSubmit(){
 }
 function renderPinSettings(){
  if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
- $("pinStatus").textContent="Code propriétaire fixe actif : 6 chiffres demandés à chaque ouverture et reprise. Il ne peut pas être modifié ou désactivé depuis l’application.";
+ $("pinStatus").textContent="Code propriétaire actif : demandé une seule fois dans la PWA sur cet appareil. La session reste mémorisée jusqu’à la suppression des données de l’application.";
  $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
- $("pinDelay").value="0";$("pinDelay").disabled=true;
+ $("pinDelay").value="-1";$("pinDelay").disabled=true;
  const pb=$("pinBio");if(pb){pb.hidden=!(on&&Lock.bioOk);pb.textContent=(Lock.cfg&&Lock.cfg.bio?"Désactiver ":"Activer ")+bioLabel()}
 }
 async function bioAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
@@ -1995,7 +1995,7 @@ function initLock(){
  const previous=Lock.cfg||{};
  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
  const unlockedPwaSession=standalone&&previous.pwaTrusted===true;
- Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:!unlockedPwaSession,v:5,pwaTrusted:unlockedPwaSession,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
+ Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:-1,forceLock:!unlockedPwaSession,v:6,pwaTrusted:unlockedPwaSession,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
  lockSave();buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
