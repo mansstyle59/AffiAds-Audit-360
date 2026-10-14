@@ -953,10 +953,10 @@ async function runAuto(){
    const searched=!!sc.engine;const searchUnavailable=!searched;
    setAuto("2-0",F.Facebook&&F.Instagram?"ok":(F.Facebook||F.Instagram)?(searched?"issue":"info"):searched?"issue":"info",(F.Facebook&&F.Instagram)?"Comptes Facebook et Instagram trouvés. Fréquence des publications à vérifier.":(F.Facebook||F.Instagram)?(F.Facebook?"Facebook":"Instagram")+" trouvé, mais "+(F.Facebook?"Instagram":"Facebook")+" non trouvé (ni relié depuis le site, ni par recherche).":(searchUnavailable?"Recherche web indisponible : impossible de conclure sur la présence des comptes. Les liens connus sont conservés ; relancez la recherche ou vérifiez manuellement.":"Aucun compte Facebook ni Instagram détecté par les sources consultées ; vérifier manuellement avant de conclure."),"Recherche des réseaux, "+data.fetchedAt);
    setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok détecté : "+F.TikTok.url+" (ouvrir le lien et confirmer qu’il s’agit du bon commerce).":"TikTok non détecté par les sources consultées. Cela ne prouve pas que le compte est absent : vérification manuelle recommandée.",F.TikTok?(F.TikTok.src||"Recherche web"):"Recherche web ciblée · "+data.fetchedAt);
-   setAuto("2-4",list.length||!searched?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
+   setAuto("2-4",list.length?"info":searchUnavailable?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":searchUnavailable?"Recherche web indisponible : la présence des réseaux reste indéterminée.":"Aucun réseau détecté par les sources consultées ; vérifier manuellement avant de conclure.","Recherche des réseaux, "+data.fetchedAt);
    if(!F.Facebook&&!F.Instagram){if(searched)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce (ni sur son site, ni par recherche) : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."})}
    else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux détectés : "+list.join(", ")+". Comptes non détectés par les sources consultées : "+miss.join(", ")+". Cela ne prouve pas leur absence ; vérifier chaque plateforme manuellement avant de conclure."})}
-   setStep("social",list.length?"ok":"warn",list.length?"Réseaux détectés : "+list.join(", "):"Aucun compte détecté automatiquement",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non détectés (à confirmer manuellement) : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"Tous les réseaux configurés ont un résultat détecté.");
+   setStep("social",list.length?"ok":"warn",list.length?"Réseaux détectés : "+list.join(", "):searchUnavailable?"Recherche indisponible — résultat inconclusif":"Aucun compte détecté automatiquement",list.length?"Résultats à vérifier : "+list.join(", ")+".":searchUnavailable?"Les sources de recherche n’ont pas répondu ; ne pas conclure à l’absence de comptes.":"Non détectés (à confirmer manuellement) : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", ")+".");
   }catch(e){setStep("social","warn","Réseaux sociaux non vérifiés",frErr(e).text)}
   /* 6. Visibilité IA : Gemini avec Recherche Google, puis questions prêtes pour les autres assistants */
   $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=typeInfo(type).kw||type;$("campaignService").value="";
@@ -1085,7 +1085,8 @@ function socialBlock(forReport){
   const label=f?(forReport?esc(handle?"@"+handle:(confirmed?"Confirmé":"Profil trouvé")):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle:(confirmed?"Voir le compte":"Ouvrir le profil"))+'</a>'):"À vérifier";
   const status=f?(confirmed?"Confirmé manuellement":"Non confirmé — correspondance incertaine"):"Aucun compte confirmé";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
-  const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':'')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'">Recherche approfondie</button></div>';
+  const rejectedForNet=(S.rejected||[]).filter(x=>x&&x.net===n&&x.url);
+  const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':rejectedForNet.length?'<button type="button" class="soc-mini" data-social-restore="'+esc(n)+'" title="Annuler le signalement si ce profil était correct">Annuler le signalement</button>':'')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'">Recherche approfondie</button></div>';
   const suggestions=deep[n]&&deep[n].length?deep[n]:(S.candidates&&S.candidates[n]||[]);
   const options=(suggestions.length&&!forReport)?'<div class="soc-candidates"><small>Profils possibles — ouvrez le lien et vérifiez le commerce avant de choisir</small>'+suggestions.slice(0,5).map(c=>'<div class="soc-candidate-row"><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.title||c.url)+'</a><button type="button" class="soc-mini" data-social-pick="'+esc(n)+'" data-social-url="'+esc(c.url)+'">Utiliser</button></div>').join("")+'</div>':"";
   return '<div class="socwrap"><div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+'<small class="soc-verification">'+status+'</small>'+src+controls+'</span></div>'+options+'</div>';
@@ -1139,6 +1140,17 @@ document.addEventListener("click",async e=>{
   delete S.found[net];if(S.deepCandidates)delete S.deepCandidates[net];
   state.data.socials=(state.data.socials||[]).filter(x=>(x.net||netOf(hostOf(x.url)))!==net||x.url!==old.url);
   persistLocal();update();toast(net+" signalé incorrect pour cet audit.");return;
+ }
+ const restore=e.target.closest("[data-social-restore]");
+ if(restore){
+  const net=restore.dataset.socialRestore,S=state.data&&state.data.social;if(!S)return;
+  const index=(S.rejected||[]).findIndex(x=>x&&x.net===net&&x.url);
+  if(index<0)return;
+  const item=S.rejected.splice(index,1)[0];S.found=S.found||{};
+  S.found[net]={url:item.url,src:"signalement annulé par l’utilisateur",verified:false,confidence:"réintégré — à vérifier"};
+  state.data.socials=state.data.socials||[];
+  if(!state.data.socials.some(x=>(x.net||netOf(hostOf(x.url)))===net&&x.url===item.url))state.data.socials.push({net,url:item.url,src:"signalement annulé par l’utilisateur",verified:false});
+  persistLocal();update();toast("Profil "+net+" réintégré comme piste à vérifier.");return;
  }
  const deep=e.target.closest("[data-social-deep]");
  if(deep){const net=deep.dataset.socialDeep;deep.disabled=true;deep.textContent="Recherche…";try{await deepSocialSearch(net)}catch(err){toast("Recherche impossible pour le moment. Réessayez.");}finally{deep.disabled=false;deep.textContent="Recherche approfondie"}return}
