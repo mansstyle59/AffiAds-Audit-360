@@ -2114,18 +2114,18 @@ function botTime(){return new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",
 function botScroll(el){try{el.scrollIntoView({block:"end",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}catch(e){}}
 function botSay(html,actions,suggest){
  const el=document.createElement("div");el.className="bmsg bot";
- el.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/logo-64.png" alt="" width="18" height="18"></span><div class="bcol"><div class="bbub">'+html+(actions&&actions.length?'<div class="bacts">'+actions.map((a,i)=>'<button type="button" class="'+(i===0?"bact main":"bact")+'" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>':'')+'</div><span class="btime">'+botTime()+'</span></div>';
+ el.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/assistant-64.png" alt="" width="18" height="18"></span><div class="bcol"><div class="bbub">'+html+(actions&&actions.length?'<div class="bacts">'+actions.map((a,i)=>'<button type="button" class="'+(i===0?"bact main":"bact")+'" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>':'')+'</div><span class="btime">'+botTime()+'</span></div>';
  (actions||[]).forEach((a,i)=>{const b=el.querySelector('[data-i="'+i+'"]');if(b)b.onclick=()=>a[1]()});
  $("botLog").appendChild(el);botScroll(el);Bot.history.push({who:"bot",text:el.querySelector(".bbub").textContent.slice(0,500)});
  renderBotChips(suggest);
 }
 function botUser(t){const el=document.createElement("div");el.className="bmsg me";el.innerHTML='<div class="bcol"><div class="bbub">'+botEsc(t)+'</div><span class="btime">'+botTime()+'</span></div>';$("botLog").appendChild(el);botScroll(el);Bot.history.push({who:"me",text:t});const w=$("botLog").querySelector(".bwelcome");if(w)w.classList.add("small")}
-function botTyping(on){let t=$("botTyping");if(on&&!t){t=document.createElement("div");t.id="botTyping";t.className="bmsg bot";t.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/logo-64.png" alt="" width="18" height="18"></span><div class="bbub typing" aria-label="L’assistant écrit"><i></i><i></i><i></i></div>';$("botLog").appendChild(t);botScroll(t)}if(!on&&t)t.remove()}
+function botTyping(on){let t=$("botTyping");if(on&&!t){t=document.createElement("div");t.id="botTyping";t.className="bmsg bot";t.innerHTML='<span class="bav" aria-hidden="true"><img src="assets/assistant-64.png" alt="" width="18" height="18"></span><div class="bbub typing" aria-label="L’assistant écrit"><i></i><i></i><i></i></div>';$("botLog").appendChild(t);botScroll(t)}if(!on&&t)t.remove()}
 function botWelcome(){
  const name=settings.senderName?" "+botEsc(settings.senderName.split(" ")[0]):"";const h=new Date().getHours();
  const cur=state.biz&&state.biz.name&&state.data&&state.data.fetchedAt?state.biz.name:"";
  const w=document.createElement("div");w.className="bwelcome";
- w.innerHTML='<div class="bhero"><span class="botav big"><img src="assets/logo-64.png" alt="" width="34" height="34"></span><h3>'+(h<18&&h>=5?"Bonjour":"Bonsoir")+name+' 👋</h3><p>Que voulez-vous faire ?'+(cur?' L’audit ouvert est <b>'+botEsc(cur)+'</b>.':'')+'</p></div><div class="bgrid">'+BOT_START.map(([k,t,sx])=>'<button type="button" class="bcard" data-k="'+k+'"><span class="bico"><svg viewBox="0 0 24 24" aria-hidden="true">'+BOT_ICO[k]+'</svg></span><b>'+esc(t)+'</b><small>'+esc(sx)+'</small></button>').join("")+'</div>';
+ w.innerHTML='<div class="bhero"><span class="botav big"><img src="assets/assistant-64.png" alt="" width="34" height="34"></span><h3>'+(h<18&&h>=5?"Bonjour":"Bonsoir")+name+' 👋</h3><p>Que voulez-vous faire ?'+(cur?' L’audit ouvert est <b>'+botEsc(cur)+'</b>.':'')+'</p></div><div class="bgrid">'+BOT_START.map(([k,t,sx])=>'<button type="button" class="bcard" data-k="'+k+'"><span class="bico"><svg viewBox="0 0 24 24" aria-hidden="true">'+BOT_ICO[k]+'</svg></span><b>'+esc(t)+'</b><small>'+esc(sx)+'</small></button>').join("")+'</div>';
  w.querySelectorAll(".bcard").forEach(b=>b.onclick=()=>botAsk(BOT_ASK[b.dataset.k]));
  $("botLog").appendChild(w);
 }
