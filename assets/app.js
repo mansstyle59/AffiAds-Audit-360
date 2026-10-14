@@ -617,7 +617,13 @@ async function socialScan(name,city,known){
  const rejected=(previous.rejected||[]).filter(x=>x&&x.net&&x.url);
  const canonicalSocialUrl=url=>{try{const u=new URL(url);u.hash="";u.hostname=u.hostname.toLowerCase().replace(/^www\\./,"");u.pathname=u.pathname.replace(/\\/+$/,"")||"/";return u.href}catch(e){return String(url||"")}};
  const isRejected=(net,url)=>rejected.some(x=>x.net===net&&canonicalSocialUrl(x.url)===canonicalSocialUrl(url));
- /* Les liens déjà présents sur le site sont conservés comme sources, mais jamais présentés comme vérifiés automatiquement. */
+ /* Conserver les profils déjà choisis ou confirmés lors d’un audit précédent ; un profil signalé incorrect reste exclu. */
+ Object.entries(previous.found||{}).forEach(([net,f])=>{
+  if(f&&f.url&&NETS.some(x=>x[0]===net)&&profileOk(f.url)&&!isRejected(net,f.url)){
+   found[net]={...f};
+  }
+ });
+ /* Les liens présents sur le site complètent les profils conservés, sans les écraser. */
  (known||[]).forEach(s=>{
   const n=netOf(hostOf(s.url))||s.net;
   if(n&&NETS.some(x=>x[0]===n)&&!found[n]&&profileOk(s.url)&&!isRejected(n,s.url)){
@@ -661,7 +667,9 @@ async function socialScan(name,city,known){
    const url=u.href;
    if(isRejected(net,url))return;
    const rank=scoreCandidate({...r,url});
-   if(!rank.hasName)return;
+   /* Garder des pistes plus larges pour affichage, mais la sélection automatique reste très stricte plus bas. */
+   const plausible=rank.hasName||rank.matched>=1;
+   if(!plausible)return;
    const old=unique.get(url);
    if(!old||rank.score>old.rank.score)unique.set(url,{url,title:rank.title,rank});
   });
@@ -1078,7 +1086,8 @@ function socialBlock(forReport){
   const status=f?(confirmed?"Confirmé manuellement":"Non confirmé — correspondance incertaine"):"Aucun compte confirmé";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
   const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':'')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'">Recherche approfondie</button></div>';
-  const options=(deep[n]&&deep[n].length&&!forReport)?'<div class="soc-candidates"><small>Résultats à examiner — aucun n’est confirmé automatiquement</small>'+deep[n].map(c=>'<div class="soc-candidate-row"><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.title||c.url)+'</a><button type="button" class="soc-mini" data-social-pick="'+esc(n)+'" data-social-url="'+esc(c.url)+'">Utiliser</button></div>').join("")+'</div>':"";
+  const suggestions=deep[n]&&deep[n].length?deep[n]:(S.candidates&&S.candidates[n]||[]);
+  const options=(suggestions.length&&!forReport)?'<div class="soc-candidates"><small>Profils possibles — ouvrez le lien et vérifiez le commerce avant de choisir</small>'+suggestions.slice(0,5).map(c=>'<div class="soc-candidate-row"><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.title||c.url)+'</a><button type="button" class="soc-mini" data-social-pick="'+esc(n)+'" data-social-url="'+esc(c.url)+'">Utiliser</button></div>').join("")+'</div>':"";
   return '<div class="socwrap"><div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+'<small class="soc-verification">'+status+'</small>'+src+controls+'</span></div>'+options+'</div>';
  }).join("");
  return '<div class="socials">'+cards+'</div><p class="muted"><small>Règle stricte : un résultat de recherche n’est jamais considéré comme officiel sans vérification. Vérifiez le nom exact, la ville, les photos et les coordonnées. « Incorrect ? » retire le résultat de cet audit ; « Recherche approfondie » propose d’autres profils possibles.</small></p>';
