@@ -1365,3 +1365,38 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="dark"] #autoToReport{background:#ffffff0b!important;color:#f4f5ff!important;border-color:#ffffff35!important}
 :root[data-theme="dark"] details.adv summary{color:#c7ccef}
 :root[data-theme="dark"] .seg button[aria-checked="true"]{background:linear-gradient(120deg,#315ff2,#653cff);color:#fff;border-color:transparent}
+
+
+/* ===== Rapport premium : impression et export PDF ===== */
+.onepage{border:1px solid #e4e7f5;border-radius:20px;box-shadow:0 18px 44px -28px #16134a40}
+.op{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.48;letter-spacing:-.005em}
+.ophead{padding:18px 30px;background:linear-gradient(115deg,#304dff 0%,#5140f4 58%,#7138ed 100%)}
+.oplogo{border-radius:11px;box-shadow:0 3px 10px #15114a26}
+.opdate{letter-spacing:.01em}
+.optitle{padding-top:20px}
+.op h1{font-size:31px;letter-spacing:-.035em}
+.opsub{font-size:12.5px;line-height:1.5}
+.oprow{padding-top:14px;padding-bottom:8px}
+.k1{background:linear-gradient(145deg,#fff,#f8f8ff);border-color:#e5e7f7;box-shadow:0 2px 5px #20185b05}
+.opchart{margin:12px 28px 0;padding:13px 16px;background:#f7f8ff;border:1px solid #eaecfa;border-radius:14px}
+.opcharthead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;color:#262750;font-size:12px}
+.opcharthead span{color:#777b9d;font-size:10px}
+.opchartrow{display:grid;grid-template-columns:minmax(100px,145px) minmax(0,1fr) 25px;gap:9px;align-items:center;margin:7px 0}
+.opchartlabel{font-size:10.5px;color:#555b80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opcharttrack{height:7px;background:#e4e7f7;border-radius:99px;overflow:hidden}
+.opcharttrack i{display:block;height:100%;border-radius:99px}
+.opchartvalue{font-size:11px;text-align:right}
+.op2{gap:12px}
+.opbox{padding:12px 14px;border:1px solid transparent}
+.opbox.good{border-color:#d9f0e4;background:linear-gradient(145deg,#f1fbf5,#eaf7f0)}
+.opbox.bad{border-color:#f7dfe3;background:linear-gradient(145deg,#fff6f6,#fdf0f2)}
+.opbox h3,.opt,.opofl h3{letter-spacing:-.015em}
+.opact{padding:8px 11px;border-color:#e8eaf6;background:#fff;box-shadow:0 2px 6px #1b164508}
+.opnum{background:linear-gradient(145deg,#3d5bff,#6938f0)}
+.opoffer{background:linear-gradient(115deg,#304dff,#6339ef);box-shadow:0 7px 18px -12px #3d36db99}
+.opfoot{padding-top:8px;border-top:1px solid #e9eaf5}
+@media print{
+ .onepage{border:0;border-radius:0;box-shadow:none}
+ .ophead,.opoffer,.opnum,.opbox{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.pdfhold .pdfpage{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
