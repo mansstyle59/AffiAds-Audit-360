@@ -81,3 +81,19 @@ test("premium PDF export fits the one-page summary inside printable A4 margins",
   assert.match(css, /\.opchart\{/);
   assert.match(css, /\.opoffer\{/);
 });
+
+
+test("official AffiAds SVG logo stays compatible and consistent in the app and assistant", () => {
+  const appIcon = read("assets/app-icon.svg");
+  const assistantIcon = read("assets/assistant-icon.svg");
+  for (const svg of [appIcon, assistantIcon]) {
+    assert.match(svg, /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    assert.match(svg, /viewBox="0 0 512 512"/);
+    assert.match(svg, /<path[^>]+fill="#fff"/);
+    assert.match(svg, /<circle[^>]+r="76" fill="#fff"/);
+    assert.match(svg, /<circle[^>]+r="52" fill="url\(#affiads-gold\)"/);
+    assert.doesNotMatch(svg, /<script|foreignObject|https?:\/\//i);
+  }
+  assert.match(html, /assets\/app-icon\.svg\?v=2026-62/);
+  assert.match(sw, /affiads-audit-2026-62/);
+});
