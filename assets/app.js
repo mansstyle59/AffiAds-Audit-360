@@ -615,7 +615,8 @@ async function socialScan(name,city,known){
  const found={}, candidates={};
  const previous=(state.data&&state.data.social)||{};
  const rejected=(previous.rejected||[]).filter(x=>x&&x.net&&x.url);
- const isRejected=(net,url)=>rejected.some(x=>x.net===net&&x.url===url);
+ const canonicalSocialUrl=url=>{try{const u=new URL(url);u.hash="";u.hostname=u.hostname.toLowerCase().replace(/^www\\./,"");u.pathname=u.pathname.replace(/\\/+$/,"")||"/";return u.href}catch(e){return String(url||"")}};
+ const isRejected=(net,url)=>rejected.some(x=>x.net===net&&canonicalSocialUrl(x.url)===canonicalSocialUrl(url));
  /* Les liens déjà présents sur le site sont conservés comme sources, mais jamais présentés comme vérifiés automatiquement. */
  (known||[]).forEach(s=>{
   const n=netOf(hostOf(s.url))||s.net;
