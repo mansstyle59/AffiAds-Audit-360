@@ -52,3 +52,24 @@ test("static HTML contains no duplicate IDs", () => {
   const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   assert.deepEqual(duplicates, [], "duplicate IDs: " + duplicates.join(", "));
 });
+
+
+test("client list includes recency, completion and opportunity metadata", () => {
+  assert.match(js, /Modifié le /);
+  assert.match(js, /contrôles/);
+  assert.match(js, /Analyse réalisée/);
+});
+
+test("backup import is bounded, confirmed and avoids overwriting duplicate IDs", () => {
+  assert.match(js, /f\.size>25\*1024\*1024/);
+  assert.match(js, /list\.length>500/);
+  assert.match(js, /!confirm\("Importer "/);
+  assert.match(js, /if\(db\.audits\[a\.id\]\)/);
+  assert.match(js, /delete safeSettings\.googleKey/);
+});
+
+test("AI visibility compares platforms using only explicit yes/no results", () => {
+  assert.match(js, /Comparaison par assistant/);
+  assert.match(js, /presence==="yes"\|\|t\.presence==="no"/);
+  assert.match(js, /Incertain/);
+});
