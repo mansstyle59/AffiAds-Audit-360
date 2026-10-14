@@ -2071,7 +2071,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-93 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2121,7 +2121,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-92 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-93 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
@@ -2171,7 +2171,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Accessibility pass: explicit readable text pairs in both themes.
+/* 2026-93 • Accessibility pass: explicit readable text pairs in both themes.
    Deliberately excludes the printable report, whose paper surface stays white. */
 :root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
   h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
@@ -2236,7 +2236,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="light"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
 :root[data-theme="light"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small){color:#202653!important}
 
-/* 2026-92 • Access settings: selectable lock policy and readable mobile control. */
+/* 2026-93 • Access settings: selectable lock policy and readable mobile control. */
 #pinDelay{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;min-height:52px!important;padding:12px 38px 12px 14px!important;font-size:16px!important;line-height:1.35!important;font-weight:650!important;border:1.5px solid var(--line-2)!important;border-radius:15px!important;opacity:1!important}
 :root[data-theme="dark"] #pinDelay{background:#0c1433!important;color:#f5f7ff!important;border-color:#6474ad!important}
 :root[data-theme="light"] #pinDelay{background:#fff!important;color:#20294a!important;border-color:#b9c4df!important}
@@ -2247,7 +2247,7 @@ details.adv summary{color:#c7ccef}
 .pin-delay-field{min-width:0}
 
 
-/* 2026-92 • Header actions replace the oversized duplicate CTA. */
+/* 2026-93 • Header actions replace the oversized duplicate CTA. */
 .topacts .top-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 13px;border-radius:14px;font:750 13px/1.1 var(--font);white-space:nowrap}
 .topacts .top-action svg{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .topacts #topClients{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
@@ -2271,7 +2271,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Compact, readable prospect composer on mobile and desktop. */
+/* 2026-93 • Compact, readable prospect composer on mobile and desktop. */
 #view-pitch .grid{gap:10px}
 #view-pitch .card{padding:clamp(12px,2vw,20px)}
 #view-pitch .card>h2{margin-bottom:5px}
@@ -2304,7 +2304,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Global contrast audit: notices and legal footer must remain readable in both themes. */
+/* 2026-93 • Global contrast audit: notices and legal footer must remain readable in both themes. */
 :root[data-theme="dark"] .main .notice,
 :root[data-theme="dark"] .main .card .notice,
 :root[data-theme="dark"] .main .audit-form-card .notice,
@@ -2355,7 +2355,7 @@ details.adv summary{color:#c7ccef}
 #navMore[aria-expanded="true"] svg{stroke:#fff!important}
 
 
-/* 2026-92 • Prevent Safari on iPhone from auto-zooming when form controls receive focus. */
+/* 2026-93 • Prevent Safari on iPhone from auto-zooming when form controls receive focus. */
 /* Keep pinch-to-zoom enabled for accessibility; use a 16px minimum control font size. */
 @media (max-width: 900px){
   .main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -2370,7 +2370,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Assistant widget contrast: explicit colors prevent theme-variable collisions. */
+/* 2026-93 • Assistant widget contrast: explicit colors prevent theme-variable collisions. */
 :root[data-theme="dark"] .botpanel{
   --bot-panel-bg:#0c1230;
   --bot-card-bg:#192348;
@@ -2479,7 +2479,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-92 • Report screen polish: protect the paper preview from floating controls. */
+/* 2026-93 • Report screen polish: protect the paper preview from floating controls. */
 body[data-view="report"] .botfab{display:none!important}
 body[data-view="report"] .botpanel{z-index:80}
 #view-report{min-width:0}
@@ -2512,3 +2512,10 @@ body[data-view="report"] .botpanel{z-index:80}
  #view-report .repfmt button{font-size:12px!important}
  #view-report .onepage .ophead{padding:13px!important}
 }
+
+
+/* 2026-93: boutons réseaux compacts et utilisables sur mobile */
+.soc-actions{align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
+.soc-actions .soc-mini{display:inline-flex;align-items:center;justify-content:center;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;font-size:11px;line-height:1.25;padding:5px 7px;text-align:center}
+.soc-actions .soc-link{text-decoration:none}
+@media(max-width:420px){.soc-actions{gap:4px}.soc-actions .soc-mini{font-size:10px;padding:5px 6px}}

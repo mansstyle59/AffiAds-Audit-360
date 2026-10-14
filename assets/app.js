@@ -1111,7 +1111,8 @@ function socialBlock(forReport){
   const status=f?(confirmed?"Confirmé manuellement":"Non confirmé — correspondance incertaine"):"Aucun compte confirmé";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
   const rejectedForNet=(S.rejected||[]).filter(x=>x&&x.net===n&&x.url);
-  const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':rejectedForNet.length?'<button type="button" class="soc-mini" data-social-restore="'+esc(n)+'" title="Annuler le signalement si ce profil était correct">Annuler le signalement</button>':'')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'">Recherche approfondie</button></div>';
+   const searchUrl="https://www.google.com/search?q="+encodeURIComponent('"'+String(state.biz.name||"").trim()+'" '+String(state.biz.city||"").trim()+" site:"+match[1]);
+   const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':rejectedForNet.length?'<button type="button" class="soc-mini" data-social-restore="'+esc(n)+'" title="Annuler le signalement si ce profil était correct">Annuler le signalement</button>':'<a class="soc-mini soc-link" href="'+esc(searchUrl)+'" target="_blank" rel="noopener" title="Chercher le profil public sur Google">Google</a><button type="button" class="soc-mini" data-social-manual="'+esc(n)+'" title="Ajouter le lien public trouvé manuellement">Ajouter</button>')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'" title="Rechercher d’autres profils avec Bing">Autres pistes</button></div>';
   const suggestions=deep[n]&&deep[n].length?deep[n]:(S.candidates&&S.candidates[n]||[]);
   const options=(suggestions.length&&!forReport)?'<div class="soc-candidates"><small>Profils possibles — ouvrez le lien et vérifiez le commerce avant de choisir</small>'+suggestions.slice(0,5).map(c=>'<div class="soc-candidate-row"><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.title||c.url)+'</a><button type="button" class="soc-mini" data-social-pick="'+esc(n)+'" data-social-url="'+esc(c.url)+'">Utiliser</button></div>').join("")+'</div>':"";
   return '<div class="socwrap"><div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+'<small class="soc-verification">'+status+'</small>'+src+controls+'</span></div>'+options+'</div>';
@@ -1177,8 +1178,10 @@ document.addEventListener("click",async e=>{
   if(!state.data.socials.some(x=>(x.net||netOf(hostOf(x.url)))===net&&x.url===item.url))state.data.socials.push({net,url:item.url,src:"signalement annulé par l’utilisateur",verified:false});
   persistLocal();update();toast("Profil "+net+" réintégré comme piste à vérifier.");return;
  }
+ const manual=e.target.closest("[data-social-manual]");
+ if(manual){const net=manual.dataset.socialManual;nav("tools");$("socialVerifiedNet").value=net;$("socialVerifiedUrl").focus({preventScroll:true});toast("Collez le lien public de "+net+" puis touchez « Ajouter au rapport ».");return}
  const deep=e.target.closest("[data-social-deep]");
- if(deep){const net=deep.dataset.socialDeep;deep.disabled=true;deep.textContent="Recherche…";try{await deepSocialSearch(net)}catch(err){toast("Recherche impossible pour le moment. Réessayez.");}finally{deep.disabled=false;deep.textContent="Recherche approfondie"}return}
+ if(deep){const net=deep.dataset.socialDeep;deep.disabled=true;deep.textContent="Recherche…";try{await deepSocialSearch(net)}catch(err){toast("Recherche impossible pour le moment. Réessayez.");}finally{deep.disabled=false;deep.textContent="Autres pistes"}return}
  const pick=e.target.closest("[data-social-pick]");
  if(pick){
   const net=pick.dataset.socialPick,url=pick.dataset.socialUrl,S=state.data&&state.data.social;
@@ -1595,7 +1598,7 @@ function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet Affi
 let pdfBusy=false;
 async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
 
-/* PDF polish 2026-92: more deliberate A4 pagination and document metadata */
+/* PDF polish 2026-93: more deliberate A4 pagination and document metadata */
 function pdfPageHead(doc,M,y,title){
  doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(57,72,216);
  doc.text("AffiAds Audit 360°",M,9);
