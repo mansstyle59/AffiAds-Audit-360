@@ -2272,7 +2272,13 @@ bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSe
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
-\n/* Keep automatic appearance synchronized with iOS/macOS without overriding a manual choice. */\nif(window.matchMedia){const appearanceQuery=window.matchMedia("(prefers-color-scheme: dark)");const onAppearanceChange=()=>{if((settings.theme||"auto")==="auto")applyTheme()};if(appearanceQuery.addEventListener)appearanceQuery.addEventListener("change",onAppearanceChange);else if(appearanceQuery.addListener)appearanceQuery.addListener(onAppearanceChange)}
 
-/* Keep automatic theme synchronized when iOS appearance changes without restarting the app. */
-try{const themeMedia=window.matchMedia("(prefers-color-scheme: dark)");const onThemeChange=()=>{if((settings.theme||"auto")==="auto")applyTheme()};if(themeMedia.addEventListener)themeMedia.addEventListener("change",onThemeChange);else if(themeMedia.addListener)themeMedia.addListener(onThemeChange)}catch(e){}
+/* Keep automatic theme synchronized with iOS/macOS without overriding manual choices. */
+try {
+  const themeMedia = window.matchMedia("(prefers-color-scheme: dark)");
+  const onThemeChange = () => {
+    if ((settings.theme || "auto") === "auto") applyTheme();
+  };
+  if (themeMedia.addEventListener) themeMedia.addEventListener("change", onThemeChange);
+  else if (themeMedia.addListener) themeMedia.addListener(onThemeChange);
+} catch (e) {}
