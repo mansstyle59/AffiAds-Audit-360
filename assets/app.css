@@ -1743,3 +1743,50 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="dark"] .onepage .opoffer,:root[data-theme="dark"] .onepage .opoffer *,
 :root[data-theme="light"] .onepage .opnum,:root[data-theme="light"] .onepage .opnum *,
 :root[data-theme="dark"] .onepage .opnum,:root[data-theme="dark"] .onepage .opnum *{color:#fff!important}
+
+
+/* iPhone polish: edge-to-edge bottom navigation, safe-area support, legible themes */
+@media(max-width:900px){
+  :root{--tabbar:76px}
+  body{padding-bottom:0!important}
+  .nav{
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+    width:100%!important;box-sizing:border-box!important;
+    display:flex!important;flex-direction:row!important;align-items:stretch!important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;
+    min-height:calc(76px + env(safe-area-inset-bottom))!important;
+    border-radius:24px 24px 0 0!important;border:1px solid var(--line)!important;
+    border-bottom:0!important;box-shadow:0 -10px 34px #10143a18!important;
+    z-index:100!important;
+  }
+  .nav>button{min-width:0!important;min-height:58px!important;flex:1 1 20%!important}
+  .nav>button .t{display:block!important;white-space:nowrap!important}
+  .nav .navgroup{display:none!important}
+  .nav .navmore{bottom:calc(76px + env(safe-area-inset-bottom) + 8px)!important;max-height:min(62dvh,560px)!important;overflow-y:auto!important;overscroll-behavior:contain!important;z-index:101!important}
+  .main{padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}
+  .botfab{bottom:calc(88px + env(safe-area-inset-bottom))!important;z-index:90!important}
+  .botpanel{bottom:calc(88px + env(safe-area-inset-bottom))!important;max-height:min(68dvh,620px)!important;z-index:110!important}
+}
+/* Explicit, high-contrast color pairs: avoid pale text on white cards. */
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme="light"] body,:root[data-theme="light"] .layout,:root[data-theme="light"] .main{background:#f5f7ff!important;color:#172044!important}
+:root[data-theme="light"] .card,:root[data-theme="light"] .side{background:#fff!important;color:#172044!important;border-color:#dce3f5!important}
+:root[data-theme="light"] .card h1,:root[data-theme="light"] .card h2,:root[data-theme="light"] .card h3,:root[data-theme="light"] .card h4,:root[data-theme="light"] .card label,:root[data-theme="light"] .card p,:root[data-theme="light"] .card strong,:root[data-theme="light"] .main h1,:root[data-theme="light"] .main h2,:root[data-theme="light"] .main label{color:#172044!important}
+:root[data-theme="light"] .muted,:root[data-theme="light"] #pageSub{color:#596581!important}
+:root[data-theme="light"] .nav{background:#fffffffa!important;border-color:#dce3f5!important}
+:root[data-theme="light"] .nav>button{color:#424c6a!important}
+:root[data-theme="light"] .nav>button svg{stroke:#424c6a!important}
+:root[data-theme="light"] .nav>button.active{background:#eef1ff!important;color:#3047e8!important}
+:root[data-theme="light"] .nav>button.active svg{stroke:#3047e8!important}
+:root[data-theme="dark"] body,:root[data-theme="dark"] .layout,:root[data-theme="dark"] .main{background:#080d2d!important;color:#f3f5ff!important}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .side{background:#141b3c!important;color:#f3f5ff!important;border-color:#303b6b!important}
+:root[data-theme="dark"] .card h1,:root[data-theme="dark"] .card h2,:root[data-theme="dark"] .card h3,:root[data-theme="dark"] .card h4,:root[data-theme="dark"] .card label,:root[data-theme="dark"] .card p,:root[data-theme="dark"] .card strong,:root[data-theme="dark"] .main h1,:root[data-theme="dark"] .main h2,:root[data-theme="dark"] .main label{color:#f3f5ff!important}
+:root[data-theme="dark"] .muted,:root[data-theme="dark"] #pageSub{color:#c4cceb!important}
+:root[data-theme="dark"] .nav{background:#101735fa!important;border-color:#303b6b!important}
+:root[data-theme="dark"] .nav>button{color:#c7d0f2!important}
+:root[data-theme="dark"] .nav>button svg{stroke:#c7d0f2!important}
+:root[data-theme="dark"] .nav>button.active{background:#27336b!important;color:#fff!important}
+:root[data-theme="dark"] .nav>button.active svg{stroke:#fff!important}
+:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select{background:#0c1330!important;color:#f3f5ff!important;border-color:#465181!important}
+:root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder{color:#aeb9dc!important;opacity:1!important}
