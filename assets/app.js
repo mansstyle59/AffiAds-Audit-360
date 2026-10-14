@@ -1965,9 +1965,9 @@ async function pinSubmit(){
 }
 function renderPinSettings(){
  if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
- $("pinStatus").textContent=on?(lockDelay()<0?"Cet appareil se souvient de vous : l’appli s’ouvre sans code. Le code n’est redemandé qu’après « Verrouiller maintenant ».":"Code actif : il est demandé après la durée d’absence choisie ci-dessous."):"Aucun code : n’importe qui utilisant cet appareil peut ouvrir l’appli.";
+ $("pinStatus").textContent="Code propriétaire fixe actif : 6 chiffres demandés à chaque ouverture et reprise. Il ne peut pas être modifié ou désactivé depuis l’application.";
  $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
- $("pinDelay").value=String(on?lockDelay():1440);$("pinDelay").disabled=!on;
+ $("pinDelay").value="0";$("pinDelay").disabled=true;
  const pb=$("pinBio");if(pb){pb.hidden=!(on&&Lock.bioOk);pb.textContent=(Lock.cfg&&Lock.cfg.bio?"Désactiver ":"Activer ")+bioLabel()}
 }
 async function bioAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
@@ -1990,28 +1990,31 @@ function cancelGate(){if(!["verify","change"].includes(Lock.mode))return;setBarC
 function lockNow(manual){if(Lock.cfg&&Lock.cfg.hash){if(manual!==false){Lock.cfg.forceLock=true;lockSave()}setSession(false);showGate("unlock")}}
 function lockTick(){if(!Lock.cfg||!Lock.cfg.hash||document.body.classList.contains("locked"))return;const d=lockDelay();if(d>0&&Date.now()-Lock.lastActive>d*60000)lockNow(false)}
 function initLock(){
- lockLoad();if(Lock.cfg&&Lock.cfg.hash&&(Lock.cfg.v||0)<3){const d=Lock.cfg.delay??5;if(d>=0&&(d<=5||d===1440))Lock.cfg.delay=-1;Lock.cfg.v=3;lockSave()}buildPad();
+ /* Code propriétaire fixe : seule l’empreinte PBKDF2 est livrée au navigateur. */
+ lockLoad();
+ const previous=Lock.cfg||{};
+ Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:true,v:4,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
+ lockSave();buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
  document.addEventListener("keydown",e=>{if(!document.body.classList.contains("locked")||$("gateLock").hidden)return;if(/^\d$/.test(e.key)){e.preventDefault();pinKey(e.key)}else if(e.key==="Backspace"){e.preventDefault();pinKey("del")}else if(e.key==="Enter"&&!(e.target&&e.target.closest&&e.target.closest("button"))){e.preventDefault();pinKey("ok")}});
  $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
- $("gateForgot").onclick=()=>{if(!confirm("Sans le code, la seule solution est d’effacer toutes les données de l’appli sur cet appareil : audits, clients, clé Google et réglages. Pensez à vos exports. Tout effacer ?"))return;try{localStorage.removeItem(STORE);localStorage.removeItem(OLD);localStorage.removeItem(SETTINGS);localStorage.removeItem(LOCK_KEY)}catch(e){}setSession(false);location.reload()};
+ $("gateForgot").hidden=true;$("gateBio").hidden=true;$("rememberWrap").hidden=true;
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
- document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!document.body.classList.contains("locked"))markSeen()}else if(Lock.hiddenAt){const d=lockDelay();if(Lock.cfg&&Lock.cfg.hash&&d>0&&Date.now()-Lock.hiddenAt>d*60000)lockNow(false);Lock.hiddenAt=0}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(Lock.cfg&&Lock.cfg.hash&&!document.body.classList.contains("locked"))lockNow(false)}else{Lock.hiddenAt=0}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
- $("pinChange").onclick=()=>{if(Lock.cfg&&Lock.cfg.hash)requireOwner("Saisissez votre code actuel pour en choisir un nouveau.",()=>showGate("change"));else showGate("create")};
+ $("pinChange").hidden=true;
  $("gateCancel").onclick=cancelGate;
  $("pinLockNow").onclick=lockNow;
  $("gateBio").onclick=()=>bioUnlock();
  $("pinBio").onclick=async()=>{if(!Lock.cfg||!Lock.cfg.hash){toast("Créez d’abord un code.");return}if(Lock.cfg.bio){Lock.cfg.bio=null;lockSave();renderPinSettings();toast(bioLabel()+" désactivé.");return}try{await bioEnable();renderPinSettings();toast(bioLabel()+" activé : plus besoin de taper le code.")}catch(e){toast(e&&e.name==="NotAllowedError"?"Activation annulée.":"Cet appareil ne permet pas la reconnaissance ici.")}};
  bioAvailable().then(ok=>{Lock.bioOk=ok;renderPinSettings()});
- $("pinDisable").onclick=()=>{if(!confirm("Désactiver le code ? L’appli s’ouvrira sans protection sur cet appareil."))return;Lock.cfg=null;lockSave();renderPinSettings();toast("Code désactivé.")};
- $("pinDelay").onchange=()=>{if(Lock.cfg){Lock.cfg.delay=+$("pinDelay").value;lockSave();toast("Verrouillage automatique mis à jour.")}};
+ $("pinDisable").hidden=true;
+ $("pinDelay").disabled=true;
  /* Écran d'accueil : le logo s'affiche, puis le code (ou sa création au premier lancement) */
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  setTimeout(()=>{
-  if(Lock.cfg&&Lock.cfg.hash){if(unlockedThisSession()){Lock.mode="auto";hideGate()}else{showGate("unlock");if(Lock.cfg.bio)bioUnlock()}}
-  else showGate("create");
+  showGate("unlock");
  },reduce?0:900);
 }
 
