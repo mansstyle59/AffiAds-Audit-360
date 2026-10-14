@@ -2003,7 +2003,7 @@ function initLock(){
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  setTimeout(()=>{
   if(Lock.cfg&&Lock.cfg.hash){if(unlockedThisSession()){Lock.mode="auto";hideGate()}else{showGate("unlock");if(Lock.cfg.bio)bioUnlock()}}
-  else showGate("create");
+  else { $("gate").classList.add("hidden"); document.body.classList.remove("locked"); }
  },reduce?0:900);
 }
 
@@ -2256,8 +2256,115 @@ function initBot(){
   try{r.start()}catch(e){Bot.rec=null;mic.classList.remove("on")}}}
 }
 
+
+/* ---------- Connexion propriétaire : code e-mail Supabase ---------- */
+const OWNER_AUTH={
+ url:"https://vfxblubjsxwseacmslnu.supabase.co",
+ key:"sb_publishable_HojETqgwpBMQ_cjDzMNaAg_WGCFMaED",
+ email:"dewulf.denis@gmail.com",
+ id:"c35861e6-1a0c-4e50-bc62-b426f35cef96",
+ storage:"affiads-owner-session"
+};
+let OwnerAuth={busy:false,requested:false};
+function ownerSessionRead(){try{return JSON.parse(localStorage.getItem(OWNER_AUTH.storage)||"null")}catch(e){return null}}
+function ownerSessionWrite(s){try{localStorage.setItem(OWNER_AUTH.storage,JSON.stringify(s))}catch(e){}}
+function ownerSessionClear(){try{localStorage.removeItem(OWNER_AUTH.storage)}catch(e){}}
+function ownerMessage(t,bad=false){const el=document.getElementById("ownerMessage");if(el){el.textContent=t||"";el.classList.toggle("bad",bad)}}
+async function ownerApi(path,body,token=""){
+ const r=await fetch(OWNER_AUTH.url+path,{method:"POST",headers:{"Content-Type":"application/json","apikey":OWNER_AUTH.key,...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify(body)});
+ let data={};try{data=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(data.msg||data.message||data.error_description||data.error||"Connexion impossible. Réessayez.");
+ return data;
+}
+async function ownerVerifySession(session){
+ if(!session||!session.access_token)return false;
+ try{
+  let current=session;
+  if(!current.expires_at||current.expires_at<Date.now()/1000+60){
+   if(!current.refresh_token)return false;
+   const fresh=await ownerApi("/auth/v1/token?grant_type=refresh_token",{refresh_token:current.refresh_token});
+   current={...fresh,expires_at:Math.floor(Date.now()/1000)+(fresh.expires_in||3600)};
+   ownerSessionWrite(current);
+  }
+  const r=await fetch(OWNER_AUTH.url+"/auth/v1/user",{headers:{apikey:OWNER_AUTH.key,Authorization:"Bearer "+current.access_token}});
+  if(!r.ok)return false;
+  const user=await r.json();
+  if(user.id!==OWNER_AUTH.id||String(user.email||"").toLowerCase()!==OWNER_AUTH.email)return false;
+  ownerSessionWrite({...current,user:{id:user.id,email:user.email}});
+  return true;
+ }catch(e){return false}
+}
+function ownerGateShow(otp=false){
+ const gate=document.getElementById("ownerGate");if(!gate)return;
+ gate.hidden=false;
+ document.getElementById("ownerEmailStep").hidden=otp;
+ document.getElementById("ownerOtpStep").hidden=!otp;
+ document.getElementById("ownerSend").disabled=OwnerAuth.busy;
+ document.getElementById("ownerVerify").disabled=OwnerAuth.busy;
+ document.getElementById("ownerSend").textContent=OwnerAuth.busy?"Envoi…":"Recevoir mon code de connexion";
+ document.getElementById("ownerVerify").textContent=OwnerAuth.busy?"Vérification…":"Vérifier et ouvrir AFFIADS";
+}
+function ownerGateHide(){
+ const gate=document.getElementById("ownerGate");if(gate)gate.hidden=true;
+ document.body.classList.remove("owner-locked");
+}
+async function ownerSendCode(){
+ if(OwnerAuth.busy)return;
+ OwnerAuth.busy=true;ownerGateShow(false);ownerMessage("Envoi du lien de connexion sécurisé…");
+ try{
+  await ownerApi("/auth/v1/otp?redirect_to="+encodeURIComponent(location.origin+location.pathname),{email:OWNER_AUTH.email,create_user:false});
+  OwnerAuth.requested=true;ownerGateShow(true);
+  ownerMessage("Vérifiez votre boîte mail. Ouvrez le lien reçu, ou saisissez le code s’il est indiqué dans le message.");
+ }catch(e){ownerMessage("Envoi impossible : "+e.message,true)}
+ finally{OwnerAuth.busy=false;ownerGateShow(OwnerAuth.requested)}
+}
+async function ownerVerifyCode(){
+ if(OwnerAuth.busy)return;
+ const code=(document.getElementById("ownerOtp").value||"").replace(/\s/g,"");
+ if(!code){ownerMessage("Ouvrez le lien reçu par e-mail, ou saisissez le code de connexion.",true);return}
+ OwnerAuth.busy=true;ownerGateShow(true);ownerMessage("Vérification de votre identité…");
+ try{
+  const session=await ownerApi("/auth/v1/verify",{email:OWNER_AUTH.email,token:code,type:"email"});
+  const current={...session,expires_at:Math.floor(Date.now()/1000)+(session.expires_in||3600)};
+  ownerSessionWrite(current);
+  if(!await ownerVerifySession(current)){ownerSessionClear();throw new Error("Ce compte n’est pas autorisé à utiliser cette application.")}
+  ownerGateHide();ownerMessage("");
+ }catch(e){ownerMessage("Connexion non validée : "+e.message,true)}
+ finally{OwnerAuth.busy=false;ownerGateShow(OwnerAuth.requested)}
+}
+async function ownerAcceptRedirect(){
+ const hash=new URLSearchParams(location.hash.replace(/^#/,""));
+ const query=new URLSearchParams(location.search);
+ const access=hash.get("access_token"),refresh=hash.get("refresh_token");
+ if(access&&refresh){
+  const current={access_token:access,refresh_token:refresh,expires_at:Number(hash.get("expires_at"))||Math.floor(Date.now()/1000)+3600};
+  if(await ownerVerifySession(current)){history.replaceState(null,"",location.pathname+location.search.split("#")[0]);ownerGateHide();return true}
+  ownerSessionClear();
+ }
+ const tokenHash=query.get("token_hash");
+ if(tokenHash&&query.get("type")){
+  try{
+   const s=await ownerApi("/auth/v1/verify",{token_hash:tokenHash,type:query.get("type")});
+   const current={...s,expires_at:Math.floor(Date.now()/1000)+(s.expires_in||3600)};
+   if(await ownerVerifySession(current)){history.replaceState(null,"",location.pathname);ownerGateHide();return true}
+  }catch(e){ownerMessage("Le lien n’a pas pu être validé. Demandez un nouveau lien de connexion.",true)}
+ }
+ return false;
+}
+async function initOwnerAuth(){
+ document.body.classList.add("owner-locked");ownerGateShow(false);
+ document.getElementById("ownerSend").addEventListener("click",ownerSendCode);
+ document.getElementById("ownerVerify").addEventListener("click",ownerVerifyCode);
+ document.getElementById("ownerOtp").addEventListener("keydown",e=>{if(e.key==="Enter")ownerVerifyCode()});
+ const redirected=await ownerAcceptRedirect();
+ if(redirected)return;
+ const s=ownerSessionRead();
+ if(await ownerVerifySession(s)){ownerGateHide();return}
+ ownerSessionClear();ownerGateShow(false);
+}
+
 /* ---------- Démarrage ---------- */
-bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();syncInit();initBot();
+bind();loadAll();applyTheme();initInstallHelp();hydrate();initLock();renderPinSettings();syncInit();initBot();initOwnerAuth();
 {const h=location.hash.slice(1);if(h&&TITLES[h])nav(h);else document.body.dataset.view="auto"}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&TITLES[h]&&h!==curView)nav(h)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
