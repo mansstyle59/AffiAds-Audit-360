@@ -28,6 +28,8 @@ jobs:
         run: node --check assets/app.js
       - name: Test social search regressions
         run: node --test tests/social-regression.test.cjs
+      - name: Test app, PWA, themes and asset consistency
+        run: node --test tests/app-regression.test.cjs
       - name: Install SVG rasterizer
         run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
       - name: Generate crisp app icons
