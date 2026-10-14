@@ -817,3 +817,11 @@ body:not(.rep-one) #report1{display:none}
 /* Export PDF : les styles de visualisation ne dépendent jamais du thème système */
 .pdfhold .opchart{background:#fbfaff!important;color:#17134a!important}
 .pdfhold .opchartlabel,.pdfhold .opcharthead,.pdfhold .opchartrow{color:#45426b!important}
+
+
+/* Réseaux sociaux : ne pas présenter une correspondance automatique comme un compte confirmé */
+.soc.candidate{border-left-color:#d99b21!important;background:#fffaf0}
+.soc.candidate .soc-verification{display:block;color:#946200;font-size:10.5px;font-weight:750;margin-top:2px}
+.soc .soc-verification{display:block;font-size:10.5px;font-weight:750;margin-top:2px}
+.soc.on .soc-verification{color:#21815f}
+.soc-source{display:block;font-size:10px;line-height:1.3;color:#716e96;margin-top:2px}
