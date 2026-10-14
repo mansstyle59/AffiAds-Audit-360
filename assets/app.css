@@ -1790,3 +1790,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="dark"] .nav>button.active svg{stroke:#fff!important}
 :root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select{background:#0c1330!important;color:#f3f5ff!important;border-color:#465181!important}
 :root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder{color:#aeb9dc!important;opacity:1!important}
+
+/* Accès propriétaire : les options de création/réinitialisation ne sont pas proposées. */
+#rememberWrap[hidden],#gateForgot[hidden],#gateBio[hidden],#pinChange[hidden],#pinDisable[hidden]{display:none!important}
+#pinDelay:disabled{opacity:.8;color:var(--muted)}
