@@ -1,6 +1,14 @@
 name: Build iOS IPA for ESign / GBox
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - '.github/workflows/ios-ipa.yml'
   workflow_dispatch:
     inputs:
       bundle_id:
