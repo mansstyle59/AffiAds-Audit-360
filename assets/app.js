@@ -650,7 +650,7 @@ async function socialScan(name,city,known){
  const scoreCandidate=(r)=>{
   let decoded="";try{decoded=decodeURIComponent(r.url)}catch(e){decoded=r.url}
   const title=String(r.title||"");
-  const text=norm(title+" "+decoded.replace(/[-_./@]/g," "));
+  const text=norm(title+" "+decoded.replace(/[-_./@]/g," ")+" "+String(r.snippet||""));
   const packed=compact(title+" "+decoded);
   const matched=tokens.filter(w=>text.split(" ").includes(w)).length;
   const packedMatch=brand.length>=6&&packed.includes(brand);
@@ -1117,12 +1117,12 @@ async function deepSocialSearch(net){
   let u;try{u=new URL(r.url);u.hash="";}catch(e){continue}
   const url=u.href;if(rejected.includes(canonical(url))||S.found[net]?.url===url)continue;
   const title=String(r.title||"");let path="";try{path=decodeURIComponent(u.pathname)}catch(e){}
-  const text=normText(title+" "+path.replace(/[-_./@]/g," ")),packed=compact(title+" "+path);
+  const text=normText(title+" "+path.replace(/[-_./@]/g," ")+" "+String(r.snippet||"")),packed=compact(title+" "+path);
   const matched=tokens.filter(t=>text.split(" ").includes(t)).length;
   const exact=brand.length>=6&&packed.includes(brand);
   const cityHits=cityTokens.filter(t=>text.split(" ").includes(t)).length;
-  /* On exige une marque exacte ou plusieurs mots distinctifs ; la ville seule ne valide jamais un profil. */
-  if(!(exact||(tokens.length>=2&&matched>=Math.max(2,Math.ceil(tokens.length*.75)))))continue;
+  /* Recherche approfondie : conserver les pistes ayant au moins un mot distinctif dans le titre, l’URL ou l’extrait. La sélection automatique reste stricte ailleurs. */
+  if(!(exact||matched>=1))continue;
   const score=(exact?10:matched*2)+(cityHits?Math.min(3,cityHits):0)+(title?1:0);
   const old=ranked.get(url);if(!old||score>old.score)ranked.set(url,{url,title,score,cityMatch:cityHits>0});
  }
