@@ -1819,3 +1819,32 @@ details.adv summary{color:#c7ccef}
   .hero-points { gap:8px!important; }
   .hero-points span { min-width:0; }
 }
+
+
+/* AffiAds UI refinement: legible brand, one clear primary mobile action */
+.gatebrand{color:#fff!important;text-shadow:0 2px 18px #0b103b66}
+.gatebrand span{color:#f0edff!important}
+:root[data-theme="dark"] .brand,
+:root[data-theme="dark"] .brand>div{color:#f7f8ff!important}
+:root[data-theme="dark"] .brand span{color:#d6d9f4!important}
+:root[data-theme="dark"] .top .toptitle h1,
+:root[data-theme="dark"] #pageTitle{color:#f7f8ff!important;text-shadow:0 1px 0 #0002}
+:root[data-theme="dark"] #pageSub{color:#c6cbea!important}
+#clientChip{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);font-weight:750;min-height:46px;border-radius:14px}
+#clientChipName{max-width:none}
+#clientChip .chipdot{background:var(--mid);box-shadow:0 0 0 4px var(--gold-soft)}
+@media(max-width:700px){
+ .top{align-items:center;gap:8px}
+ .top .toptitle{min-width:0;flex:1 1 auto}
+ .top .toptitle h1{font-size:clamp(25px,6.5vw,32px);line-height:1.12;color:var(--ink)!important}
+ .topacts{flex:0 0 auto;display:flex;align-items:center;gap:0}
+ #clientChip{max-width:none;min-height:44px;padding:9px 12px;border-radius:14px;box-shadow:0 4px 14px #3425a51a}
+ #clientChipName{max-width:none;font-size:13px;white-space:nowrap}
+ #pdf{display:none!important}
+ #savedState{display:none!important}
+}
+@media(max-width:390px){
+ .top .toptitle h1{font-size:24px}
+ #clientChip{padding:8px 10px}
+ #clientChipName{font-size:12px}
+}
