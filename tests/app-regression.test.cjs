@@ -83,17 +83,22 @@ test("premium PDF export fits the one-page summary inside printable A4 margins",
 });
 
 
-test("official AffiAds SVG logo stays compatible and consistent in the app and assistant", () => {
+test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   const appIcon = read("assets/app-icon.svg");
   const assistantIcon = read("assets/assistant-icon.svg");
   for (const svg of [appIcon, assistantIcon]) {
     assert.match(svg, /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    assert.match(svg, /aria-labelledby="affiads-title affiads-desc"/);
+    assert.match(svg, /<title id="affiads-title">AffiAds<\/title>/);
     assert.match(svg, /viewBox="0 0 512 512"/);
-    assert.match(svg, /<path[^>]+fill="#fff"/);
-    assert.match(svg, /<circle[^>]+r="76" fill="#fff"/);
-    assert.match(svg, /<circle[^>]+r="52" fill="url\(#(?:affiads-)?gold\)"/);
+    assert.match(svg, /<path[^>]+fill="#FFFFFF"/);
+    assert.match(svg, /<circle[^>]+r="76" fill="#FFFFFF"/);
+    assert.match(svg, /<circle[^>]+r="52" fill="url\(#affiads-gold\)"/);
     assert.doesNotMatch(svg, /<script|foreignObject|href=["']https?:\/\//i);
   }
-  assert.match(html, /assets\/app-icon\.svg\?v=2026-62/);
-  assert.match(sw, /affiads-audit-2026-62/);
+  assert.match(html, /assets\/logo-192\.png\?v=2026-63/);
+  assert.match(html, /class="audit-form-card"/);
+  assert.match(html, /AUDIT LOCAL/);
+  assert.match(css, /\.ready-card\{/);
+  assert.match(sw, /affiads-audit-2026-63/);
 });
