@@ -112,13 +112,13 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
 });
 
 
-test("2026-77 keeps dark-theme cards, report preview and compact access screen readable", () => {
+test("2026-78 keeps dark-theme cards, report preview and compact access screen readable", () => {
   assert.match(css, /2026-75 • Contrast and coherence|2026-76 • Contrast and coherence/);
   assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#202653!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-77/);
-  assert.match(html, /assets\/app\.js\?v=2026-77/);
-  assert.match(sw, /affiads-audit-2026-77/);
+  assert.match(html, /assets\/app\.css\?v=2026-78/);
+  assert.match(html, /assets\/app\.js\?v=2026-78/);
+  assert.match(sw, /affiads-audit-2026-78/);
 });
 
 test("mobile navigation matches the reference order and all primary actions are reachable", () => {
@@ -132,12 +132,12 @@ test("mobile navigation matches the reference order and all primary actions are 
 });
 
 
-test("2026-77 compact iPhone access screen stays within small viewports", () => {
-  assert.ok(html.includes("assets/app.css?v=2026-77"));
-  assert.ok(html.includes("assets/app.js?v=2026-77"));
-  assert.ok(css.includes("2026-77 • Compact, safe-area-aware access screen for iPhone"));
+test("2026-78 compact iPhone access screen stays within small viewports", () => {
+  assert.ok(html.includes("assets/app.css?v=2026-78"));
+  assert.ok(html.includes("assets/app.js?v=2026-78"));
+  assert.ok(css.includes("2026-78 • Compact, safe-area-aware access screen for iPhone"));
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
-  assert.ok(sw.includes("affiads-audit-2026-77"));
+  assert.ok(sw.includes("affiads-audit-2026-78"));
 });

@@ -2084,7 +2084,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-77 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-78 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2132,3 +2132,53 @@ details.adv summary{color:#c7ccef}
  .gatelinks{margin-top:6px!important}
 }
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
+
+
+/* 2026-78 • Contrast repair: dark mode must override legacy light-theme colors. */
+:root[data-theme="dark"] #view-auto .audit-form-card,
+:root[data-theme="dark"] #view-auto .ready-card{
+  color:#f3f5ff!important;
+}
+:root[data-theme="dark"] #view-auto .audit-form-card .commerce-title h3,
+:root[data-theme="dark"] #view-auto .audit-form-card .field label,
+:root[data-theme="dark"] #view-auto .audit-form-card details.adv summary,
+:root[data-theme="dark"] #view-auto .audit-form-card .optline,
+:root[data-theme="dark"] #view-auto .audit-form-card #keyNotice{
+  color:#edf1ff!important;
+}
+:root[data-theme="dark"] #view-auto .audit-form-card details.adv{
+  border-top-color:#35416f!important;
+}
+:root[data-theme="dark"] #view-auto .audit-form-card input,
+:root[data-theme="dark"] #view-auto .audit-form-card select,
+:root[data-theme="dark"] #view-auto .audit-form-card textarea{
+  background:#0b1230!important;
+  color:#f7f8ff!important;
+  border-color:#4a588b!important;
+}
+:root[data-theme="dark"] #view-auto .audit-form-card input::placeholder,
+:root[data-theme="dark"] #view-auto .audit-form-card textarea::placeholder{
+  color:#b9c5e8!important;
+  opacity:1!important;
+}
+:root[data-theme="dark"] #view-auto .ready-card .ready-title h3,
+:root[data-theme="dark"] #view-auto .ready-card p,
+:root[data-theme="dark"] #view-auto .ready-card li{
+  color:#edf1ff!important;
+}
+:root[data-theme="dark"] #view-auto .ready-card small{
+  color:#c7d1ee!important;
+  border-top-color:#35416f!important;
+}
+:root[data-theme="dark"] #view-auto .ready-card .ready-dot{
+  box-shadow:0 0 0 4px #f6c84c22!important;
+}
+/* Keep the floating helper from covering the legal/footer text on narrow screens. */
+@media(max-width:700px){
+  .main .footer,
+  .main footer{
+    padding-right:92px!important;
+    padding-left:12px!important;
+    overflow-wrap:anywhere!important;
+  }
+}
