@@ -76,7 +76,7 @@ test("AI visibility compares platforms using only explicit yes/no results", () =
 
 
 test("premium PDF export includes branded A4 pagination and professional report styles", () => {
-  assert.match(js, /PDF polish 2026-74/);
+  assert.match(js, /PDF polish 2026-90/);
   assert.match(js, /doc\.text\("Page "\+i\+" \/ "\+n,210-M,290/);
   assert.match(js, /setDrawColor\(225,229,243\)/);
   assert.match(css, /\.ophead\{padding:18px 28px;background:linear-gradient/);
