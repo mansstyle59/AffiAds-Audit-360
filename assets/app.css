@@ -1848,3 +1848,81 @@ details.adv summary{color:#c7ccef}
  #clientChip{padding:8px 10px}
  #clientChipName{font-size:12px}
 }
+
+
+/* 2026-72 • Reference-inspired AffiAds mobile home */
+:root{--affi-navy:#061333;--affi-navy-2:#0a1b42;--affi-blue:#2672ff;--affi-violet:#6138ff}
+.hero-head{display:flex;align-items:center;gap:10px;min-width:0}
+.hero-copy{flex:1 1 auto;min-width:0}
+.hero-copy .hero-kicker{margin-bottom:10px}
+.hero-copy h2{font-size:clamp(30px,4vw,42px);margin-bottom:7px}
+.hero-intro{max-width:40rem;margin-bottom:0}
+.hero-art{flex:0 0 94px;height:96px;display:grid;place-items:center;perspective:400px}
+.hero-art-card{position:relative;width:76px;height:72px;border-radius:16px;background:linear-gradient(140deg,#4b20dc,#7b42ff);box-shadow:0 12px 24px #3c29cf44;transform:rotate(-8deg);display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:14px 10px}
+.hero-art-card span{width:11px;border-radius:4px 4px 2px 2px;background:linear-gradient(#9bc7ff,#4f9aff);height:23px;opacity:.9}
+.hero-art-card span:nth-child(2){height:36px}.hero-art-card span:nth-child(3){height:29px;background:linear-gradient(#ffdb5a,#f8ac21)}
+.hero-art-card i{position:absolute;width:38px;height:38px;right:3px;top:-8px;border-top:6px solid #a8a0ff;border-right:6px solid #a8a0ff;transform:skew(-22deg) rotate(-8deg);border-radius:4px}
+.new-client-hero{width:100%;display:flex;align-items:center;gap:14px;margin:18px 0 14px;padding:17px 18px;border:0;border-radius:22px;background:linear-gradient(115deg,#2776ff 0%,#493fff 55%,#6934f7 100%);color:#fff;text-align:left;box-shadow:0 12px 26px #234dff32;cursor:pointer;touch-action:manipulation;min-height:100px}
+.new-client-plus{width:52px;height:52px;flex:0 0 52px;display:grid;place-items:center;background:#fff;color:#315cff;border-radius:50%;font-size:36px;font-weight:400;line-height:1}
+.new-client-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.new-client-copy b{font-size:clamp(18px,4.5vw,24px);line-height:1.15;letter-spacing:-.025em}
+.new-client-copy small{font-size:13px;color:#f0efff;line-height:1.35}
+.new-client-arrow{font-size:34px;line-height:1;font-weight:300}
+.quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.quick-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;min-height:120px;padding:14px 6px 12px;border:1px solid #29406e;border-radius:19px;background:linear-gradient(145deg,#0b1c40,#071531);color:#f7f9ff;cursor:pointer;touch-action:manipulation}
+.quick-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;margin-bottom:2px}
+.quick-icon svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.quick-blue{background:linear-gradient(145deg,#165bdc,#1239b4);color:#fff}
+.quick-green{background:linear-gradient(145deg,#087d4f,#06613d);color:#72ffc1}
+.quick-gold{background:linear-gradient(145deg,#72500d,#48300a);color:#ffc440}
+.quick-card b{font-size:14px;line-height:1.2}
+.quick-card small{font-size:11.5px;line-height:1.25;color:#aabbe0}
+.commerce-title{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.commerce-title h3{font-size:18px;font-weight:750}
+.commerce-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(145deg,#267cff,#1643c5);color:white}
+.commerce-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.hero-points{display:none!important}
+.audit-form-card{border-radius:22px}
+.askfields .field input{border-radius:15px}
+.askactions #runAuto{width:100%;display:flex;justify-content:center;align-items:center;gap:10px;background:linear-gradient(115deg,#2676ff,#6439ff);font-size:18px}
+.askactions #runAuto svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.askactions #runAuto span{font-size:25px;font-weight:300;margin-left:auto}
+.askactions #autoToReport{display:none!important}
+:root[data-theme="dark"] .hero-art-card{box-shadow:0 12px 26px #2e1dbb55}
+:root[data-theme="dark"] .quick-card{color:#f7f9ff!important;border-color:#29406e!important;background:linear-gradient(145deg,#0b1c40,#071531)!important}
+:root[data-theme="dark"] .new-client-hero{color:#fff!important}
+@media(max-width:700px){
+ .hero-head{gap:5px}
+ .hero-art{flex-basis:88px;height:92px}
+ .hero-copy h2{font-size:32px}
+ .hero-intro{font-size:14px;line-height:1.5}
+ .new-client-hero{min-height:82px;padding:14px;border-radius:18px;margin:16px 0 12px;gap:11px}
+ .new-client-plus{width:46px;height:46px;flex-basis:46px;font-size:32px}
+ .new-client-copy b{font-size:19px}
+ .new-client-copy small{font-size:12px}
+ .new-client-arrow{font-size:28px}
+ .quick-actions{gap:8px;margin-bottom:14px}
+ .quick-card{min-height:112px;padding:12px 4px 10px;border-radius:16px}
+ .quick-icon{width:43px;height:43px;border-radius:13px}
+ .quick-card b{font-size:12.5px}
+ .quick-card small{font-size:10.5px}
+ .commerce-title h3{font-size:16px}
+ .audit-form-card{padding:16px}
+ .askactions #runAuto{min-height:54px}
+}
+@media(max-width:370px){
+ .hero-art{flex-basis:72px}
+ .hero-art-card{transform:scale(.85) rotate(-8deg)}
+ .quick-card b{font-size:11.5px}
+ .quick-card small{font-size:10px}
+ .new-client-copy b{font-size:17px}
+}
+/* Keep the navigation clean: no decorative dots beneath any tab labels. */
+@media(max-width:900px){
+ .nav>button::after,.nav>button .dot,.nav>button .nav-dot{display:none!important;content:none!important}
+ .nav{background:#071431f5!important;border-top:1px solid #203862!important;box-shadow:0 -12px 32px #02091a66!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+ .nav>button{color:#b8c9eb!important}
+ .nav>button.active{background:#142b59!important;color:#fff!important;border-radius:17px!important}
+ .nav>button.active svg{stroke:#fff!important}
+ :root[data-theme="dark"] .nav{background:#071431f5!important;border-color:#203862!important}
+}
