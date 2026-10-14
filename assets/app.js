@@ -1594,6 +1594,19 @@ function loadLib(url,test){if(test())return Promise.resolve();if(libCache[url])r
 function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet AffiAds - ":"Audit AffiAds - ")+(state.biz.name||"commerce")+(state.biz.city?" - "+state.biz.city:"")).replace(/[\\/:*?"<>|]+/g," ").trim()+".pdf"}
 let pdfBusy=false;
 async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
+
+/* PDF polish 2026-74: more deliberate A4 pagination and document metadata */
+function pdfPageHead(doc,M,y,title){
+ doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(57,72,216);
+ doc.text("AffiAds Audit 360°",M,9);
+ doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(88,96,128);
+ const biz=[state.biz.name,state.biz.city].filter(Boolean).join(" · ");
+ doc.text(biz.slice(0,64),210-M,9,{align:"right"});
+ doc.setDrawColor(218,224,246);doc.setLineWidth(.3);doc.line(M,11.5,210-M,11.5);
+ if(title){doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(27,38,76);doc.text(title.slice(0,90),M,18);return 24}
+ return y;
+}
+
 async function makePdf(){
  if(pdfBusy)return;pdfBusy=true;const full=settings.reportFormat==="full";
  const btns=[$("pdf"),$("printReport")];btns.forEach(b=>{if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent="Création du PDF…"}});
@@ -1618,20 +1631,47 @@ async function makePdf(){
   }else{
    const src=$("report").querySelector("table.printwrap>tbody>tr>td")||$("report");
    const wrap=document.createElement("div");wrap.className="card report pdfpage";wrap.innerHTML=src.innerHTML;holder.appendChild(wrap);await sleep(150);
-   const blocks=[];[...wrap.children].forEach(el=>{if(el.classList.contains("sec")&&el.offsetHeight*0.2645>150){[...el.children].forEach(ch=>blocks.push(ch))}else blocks.push(el)});const M=12,TOP=16,BOT=14,CW=210-2*M,CH=297-TOP-BOT;let y=TOP,first=true;
-   const head=()=>{doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(74,58,255);doc.text("AffiAds Audit 360°",M,9);doc.setFont("helvetica","normal");doc.setTextColor(110,107,145);doc.text(((state.biz.name||"")+(state.biz.city?" · "+state.biz.city:"")).slice(0,80),210-M,9,{align:"right"});doc.setDrawColor(228,226,245);doc.line(M,11.5,210-M,11.5)};
-   head();
-   for(const el of blocks){
-    if(!el.offsetHeight)continue;
-    const cv=await pdfCanvas(el,1.6);const hmm=cv.height*CW/cv.width;
-    if(el.classList.contains("cover")&&!first){doc.addPage();head();y=TOP}
-    const keep=/^H[23]$/.test(el.tagName)?70:0;if((y+hmm+keep>TOP+CH)&&y>TOP+1){doc.addPage();head();y=TOP}
-    if(hmm<=CH){doc.addImage(cv.toDataURL("image/jpeg",0.82),"JPEG",M,y,CW,hmm);y+=hmm+3}
-    else{const pxPerMm=cv.width/CW;let off=0;while(off<cv.height){const room=(TOP+CH-y)*pxPerMm;const hpx=Math.min(room,cv.height-off);const part=document.createElement("canvas");part.width=cv.width;part.height=Math.ceil(hpx);part.getContext("2d").drawImage(cv,0,-off);doc.addImage(part.toDataURL("image/jpeg",0.82),"JPEG",M,y,CW,hpx/pxPerMm);off+=hpx;y+=hpx/pxPerMm+3;if(off<cv.height){doc.addPage();head();y=TOP}}}
-    if(el.classList.contains("cover")){doc.addPage();head();y=TOP}
+   const M=12,TOP=25,BOT=17,CW=210-2*M,CH=297-TOP-BOT;
+   const blocks=[];[...wrap.children].forEach(el=>{
+    if(el.classList.contains("sec")&&el.offsetHeight*0.2645>150){
+     [...el.children].forEach(ch=>blocks.push({el:ch,section:el.querySelector(":scope > h2")?.textContent||""}));
+    }else blocks.push({el,section:el.classList.contains("cover")?"":""});
+   });
+   let y=TOP,first=true;
+   const head=(section)=>{pdfPageHead(doc,M,TOP,section||"");};
+   for(const item of blocks){
+    const el=item.el;if(!el.offsetHeight)continue;
+    const section=item.section||"";
+    const cv=await pdfCanvas(el,1.8);const hmm=cv.height*CW/cv.width;
+    const isCover=el.classList.contains("cover");
+    const isHeading=/^H[23]$/.test(el.tagName)||el.classList.contains("opt");
+    const reserved=isHeading?Math.max(18,hmm+7):0;
+    if(isCover&&first===false){doc.addPage();y=TOP;head(section)}
+    if((y+hmm+reserved>TOP+CH)&&y>TOP+1){doc.addPage();y=TOP;head(section)}
+    if(hmm<=CH){
+     doc.addImage(cv.toDataURL("image/jpeg",0.9),"JPEG",M,y,CW,hmm,undefined,"FAST");
+     y+=hmm+3;
+    }else{
+     const pxPerMm=cv.width/CW;let off=0;
+     while(off<cv.height){
+      const room=Math.max(10,((TOP+CH)-y)*pxPerMm);const hpx=Math.min(room,cv.height-off);
+      const part=document.createElement("canvas");part.width=cv.width;part.height=Math.ceil(hpx);
+      part.getContext("2d").drawImage(cv,0,-off);
+      doc.addImage(part.toDataURL("image/jpeg",0.9),"JPEG",M,y,CW,hpx/pxPerMm,undefined,"FAST");
+      off+=hpx;y+=hpx/pxPerMm+3;
+      if(off<cv.height){doc.addPage();y=TOP;head(section)}
+     }
+    }
+    if(isCover){doc.addPage();y=TOP;head("Sommaire de l’audit")}
     first=false;
    }
-   const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(138,135,168);doc.text((settings.senderLine||"AffiAds")+(settings.senderContact?" · "+settings.senderContact:""),M,290);doc.text("Page "+i+" / "+n,210-M,290,{align:"right"})}
+   const n=doc.getNumberOfPages();
+   for(let i=1;i<=n;i++){
+    doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(112,120,148);
+    doc.setDrawColor(225,229,243);doc.setLineWidth(.25);doc.line(M,284.5,210-M,284.5);
+    doc.text((settings.senderLine||"AffiAds")+(settings.senderContact?" · "+settings.senderContact:""),M,290);
+    doc.text("Page "+i+" / "+n,210-M,290,{align:"right"});
+   }
   }
   doc.setProperties({title:pdfName().replace(/\.pdf$/,""),author:settings.senderName||"AffiAds",creator:"AffiAds Audit 360°"});
   showPdfSheet(doc.output("blob"));
