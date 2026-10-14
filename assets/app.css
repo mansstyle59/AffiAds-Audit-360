@@ -2712,3 +2712,14 @@ details.adv .field input,details.adv .field select,details.adv .field textarea{b
  #view-clients .clientrow .del{flex-basis:36px;width:36px;height:36px;min-width:36px;min-height:36px}
  .nav{left:8px!important;right:8px!important}
 }
+
+
+/* 2026-97 finishing: remove duplicate mobile header actions */
+@media(max-width:900px){
+  .top{display:block!important;min-height:0!important;margin-bottom:18px!important}
+  .topacts{display:none!important}
+  .top>div:first-child{width:100%!important}
+  .toptitle h1{font-size:clamp(26px,7vw,34px)!important}
+  #pageSub{max-width:48ch!important}
+}
+/* Central + opens the audit form instead of routing through the client-list button. */
