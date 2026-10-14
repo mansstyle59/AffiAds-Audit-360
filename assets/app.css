@@ -1138,3 +1138,52 @@ body::before{background:#fff!important}
  html{scroll-behavior:auto}
  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+
+/* ---------- Correctifs lisibilité mobile / mode sombre ---------- */
+/* Les champs et boutons clairs doivent conserver une encre foncée même en mode sombre. */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] .btn:not(.primary),
+:root[data-theme="dark"] .chip,
+:root[data-theme="dark"] .topacts button,
+:root[data-theme="dark"] .navbottom,
+:root[data-theme="dark"] .tabbar,
+:root[data-theme="dark"] .bottomnav{
+  color:#211d50;
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder{color:#777493;opacity:1}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) textarea,
+  :root:not([data-theme="light"]) select,
+  :root:not([data-theme="light"]) .btn:not(.primary),
+  :root:not([data-theme="light"]) .chip,
+  :root:not([data-theme="light"]) .topacts button,
+  :root:not([data-theme="light"]) .navbottom,
+  :root:not([data-theme="light"]) .tabbar,
+  :root:not([data-theme="light"]) .bottomnav{color:#211d50}
+  :root:not([data-theme="light"]) input::placeholder,
+  :root:not([data-theme="light"]) textarea::placeholder{color:#777493;opacity:1}
+}
+/* Texte secondaire plus contrasté sur le fond indigo. */
+:root[data-theme="dark"] .ask>p.muted,
+:root[data-theme="dark"] .foot,
+:root[data-theme="dark"] .muted{color:#b8b5d8}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .ask>p.muted,
+  :root:not([data-theme="light"]) .foot,
+  :root:not([data-theme="light"]) .muted{color:#b8b5d8}
+}
+/* En-tête de marque : empêcher le nom clair de disparaître sur le bandeau blanc. */
+.brand{color:#211d50}
+.brand span{color:#555174}
+body::before{background:#fff!important}
+@media(max-width:900px){
+  .top{align-items:center}
+  .topacts{flex:0 0 auto;max-width:55%;gap:6px}
+  .topacts .chip{min-width:0;max-width:calc(100% - 60px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .main{padding-top:18px}
+}
