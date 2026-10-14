@@ -2054,3 +2054,31 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="dark"] .main .onepage .op .opbox.bad *,
 :root[data-theme="light"] .main .onepage .op .opbox.good *,
 :root[data-theme="light"] .main .onepage .op .opbox.bad *{color:#202653!important}
+
+
+/* 2026-76 • Reference navigation: Accueil / Clients / Nouveau / Audits / Plus */
+@media(max-width:900px){
+  .nav{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:3px!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;background:#071431f7!important;border:1px solid #233663!important;border-bottom:0!important;border-radius:26px 26px 0 0!important;box-shadow:0 -10px 30px #02091a55!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+  .nav>.navgroup{display:none!important}
+  .nav>button{flex:1 1 0!important;min-width:0!important;min-height:62px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;padding:5px 1px!important;border-radius:17px!important;background:transparent!important;color:#c3cdee!important;font-size:10.5px!important;font-weight:750!important;box-shadow:none!important}
+  .nav>button svg{width:22px!important;height:22px!important;stroke:currentColor!important;flex:0 0 auto!important}
+  .nav>button .t{display:block!important;line-height:1.1!important;white-space:nowrap!important}
+  .nav>button.active{background:#26366f!important;color:#fff!important;box-shadow:0 6px 18px -12px #536cff!important}
+  .nav>button.active svg{stroke:#fff!important}
+  .nav>#navNewClient{flex:1.15 1 0!important;gap:3px!important;overflow:visible!important;background:transparent!important;color:#dfe5ff!important}
+  .nav>#navNewClient .nav-new-icon{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;border-radius:50%!important;background:linear-gradient(140deg,#315fff,#7738f4)!important;box-shadow:0 7px 20px #4137ed66!important;margin-top:-19px!important;border:2px solid #0b1538!important}
+  .nav>#navNewClient .nav-new-icon svg{width:27px!important;height:27px!important;stroke:#fff!important;stroke-width:2.4!important;fill:none!important;stroke-linecap:round!important}
+  .nav>#navNewClient .t{font-size:10.5px!important}
+  .nav>#navNewClient:active .nav-new-icon{transform:scale(.96)}
+  .nav .navmore{bottom:calc(100% + 10px)!important;max-height:min(65dvh,580px)!important;overflow-y:auto!important}
+}
+@media(max-width:370px){
+  .nav{gap:1px!important;padding-left:5px!important;padding-right:5px!important}
+  .nav>button{font-size:9.5px!important}
+  .nav>#navNewClient .nav-new-icon{width:47px!important;height:47px!important}
+}
+@media(min-width:901px){
+  .nav>#navNewClient{background:linear-gradient(120deg,#315fff,#673bf0)!important;color:#fff!important;margin-top:8px!important}
+  .nav>#navNewClient .nav-new-icon{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:50%;background:#ffffff25}
+  .nav>#navNewClient .nav-new-icon svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
+}
