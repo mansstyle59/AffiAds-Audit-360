@@ -1983,7 +1983,7 @@ function showGate(mode){
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
 function applyRemember(){const cb=$("rememberMe");if(!Lock.cfg||!cb||$("rememberWrap").hidden)return;if(cb.checked)Lock.cfg.delay=-1;else if(lockDelay()<0)Lock.cfg.delay=1440;Lock.cfg.forceLock=false;lockSave()}
-function hideGate(){setBarColor("#4a3aff");if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}if((matchMedia("(display-mode: standalone)").matches||navigator.standalone===true)&&Lock.mode==="unlock"){Lock.cfg.pwaTrusted=true;Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function hideGate(){setBarColor("#4a3aff");if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}if(Lock.mode==="unlock"){Lock.cfg.pwaTrusted=true;Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
@@ -2006,7 +2006,7 @@ async function pinSubmit(){
 }
 function renderPinSettings(){
  if(!$("pinStatus"))return;const on=!!(Lock.cfg&&Lock.cfg.hash);
- $("pinStatus").textContent="Code propriétaire actif : demandé une seule fois dans la PWA sur cet appareil. La session reste mémorisée jusqu’à la suppression des données de l’application.";
+ $("pinStatus").textContent="Code propriétaire actif : demandé lors du premier déverrouillage, puis mémorisé sur cet appareil. Il ne sera redemandé que si vous verrouillez manuellement ou effacez les données du navigateur.";
  $("pinChange").textContent=on?"Changer le code":"Créer un code";$("pinDisable").hidden=!on;$("pinLockNow").hidden=!on;
  $("pinDelay").value="-1";$("pinDelay").disabled=true;
  const pb=$("pinBio");if(pb){pb.hidden=!(on&&Lock.bioOk);pb.textContent=(Lock.cfg&&Lock.cfg.bio?"Désactiver ":"Activer ")+bioLabel()}
@@ -2035,7 +2035,7 @@ function initLock(){
  lockLoad();
  const previous=Lock.cfg||{};
  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
- const unlockedPwaSession=standalone&&previous.pwaTrusted===true;
+ const unlockedPwaSession=previous.pwaTrusted===true;
  Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:-1,forceLock:!unlockedPwaSession,v:6,pwaTrusted:unlockedPwaSession,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
  lockSave();buildPad();
  const pin=$("pinInput");
@@ -2044,7 +2044,7 @@ function initLock(){
  $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
  $("gateForgot").hidden=true;$("gateBio").hidden=true;$("rememberWrap").hidden=true;
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
- document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!standalone&&Lock.cfg&&Lock.cfg.hash&&!document.body.classList.contains("locked"))lockNow(false)}else{Lock.hiddenAt=0;if(standalone&&!document.body.classList.contains("locked")){Lock.lastActive=Date.now();markSeen()}}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now()}else{Lock.hiddenAt=0;if(!document.body.classList.contains("locked")){Lock.lastActive=Date.now();markSeen()}}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
  $("pinChange").hidden=true;
  $("gateCancel").onclick=cancelGate;
