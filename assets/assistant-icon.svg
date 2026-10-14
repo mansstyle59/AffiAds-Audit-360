@@ -1,18 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">AffiAds</title>
-  <desc id="desc">Logo officiel AffiAds : triangle blanc de lecture et pastille dorée sur fond bleu-violet.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="affiads-title affiads-desc">
+  <title id="affiads-title">AffiAds</title>
+  <desc id="affiads-desc">Icône officielle AffiAds : triangle blanc de lecture et pastille dorée sur fond dégradé bleu-violet.</desc>
   <defs>
-    <linearGradient id="affiads-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3157FF"/>
-      <stop offset="1" stop-color="#7839F4"/>
+    <linearGradient id="affiads-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3157FF"/><stop offset="100%" stop-color="#7839F4"/>
     </linearGradient>
-    <linearGradient id="affiads-gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFD84A"/>
-      <stop offset="1" stop-color="#FFB51D"/>
+    <linearGradient id="affiads-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD84A"/><stop offset="100%" stop-color="#FFB51D"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#affiads-bg)"/>
-  <path d="M165 151c0-19 21-30 37-20l163 103c20 13 20 31 0 44L202 381c-16 10-37-1-37-20V151Z" fill="#fff"/>
-  <circle cx="372" cy="140" r="76" fill="#fff"/>
-  <circle cx="372" cy="140" r="52" fill="url(#affiads-gold)"/>
+  <path d="M165 151c0-19 21-30 37-20l163 103c20 13 20 31 0 44L202 381c-16 10-37-1-37-20V151Z" fill="#FFFFFF"/>
+  <circle cx="372" cy="140" r="76" fill="#FFFFFF"/><circle cx="372" cy="140" r="52" fill="url(#affiads-gold)"/>
 </svg>
