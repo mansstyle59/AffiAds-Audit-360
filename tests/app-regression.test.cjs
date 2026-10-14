@@ -295,7 +295,7 @@ test("2026-90 assistant widget uses explicit readable colors in dark and light t
   assert.match(css, /:root\[data-theme="dark"\] \.botpanel \.botfield textarea::placeholder[\s\S]*?opacity:1!important/);
   assert.match(css, /:root\[data-theme="light"\] \.botpanel \.bcard b,[\s\S]*?color:#20264a!important/);
   assert.match(css, /:root\[data-theme="light"\] \.botpanel \.botfield textarea[\s\S]*?-webkit-text-fill-color:#20264a!important/);
-  assert.match(html, /assets\\/app\\.css\\?v=2026-90/);
+  assert.ok(html.includes("assets/app.css?v=2026-90"));
   assert.match(sw, /affiads-audit-2026-90/);
 });
 
