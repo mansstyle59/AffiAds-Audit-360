@@ -1886,7 +1886,7 @@ function download(content,name,type){const blob=new Blob([content],{type});const
 
 
 /* ---------- 2026 : thème, installation, hors ligne, partage ---------- */
-function applyTheme(){const t=settings.theme||"auto";const effective=t==="auto"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.dataset.theme=effective;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",effective==="dark"?"#080d2d":"#f5f7ff");document.querySelectorAll("[data-theme-set]").forEach(b=>{b.setAttribute("aria-checked",String(b.dataset.themeSet===t));b.setAttribute("aria-pressed",String(b.dataset.themeSet===t))});document.documentElement.style.colorScheme=effective}
+function applyTheme(){const t=settings.theme||"auto";const effective=t==="auto"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.dataset.theme=effective;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",effective==="dark"?"#080d2d":"#f5f7ff");document.querySelectorAll("[data-theme-set]").forEach(b=>{b.setAttribute("aria-checked",String(b.dataset.themeSet===t));b.setAttribute("aria-pressed",String(b.dataset.themeSet===t))});document.documentElement.style.colorScheme=effective}const systemTheme=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;if(systemTheme){const onSystemThemeChange=()=>{if((settings.theme||"auto")==="auto")applyTheme()};if(systemTheme.addEventListener)systemTheme.addEventListener("change",onSystemThemeChange);else if(systemTheme.addListener)systemTheme.addListener(onSystemThemeChange)}
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const b=$("installApp");if(b)b.classList.remove("hidden")});
 window.addEventListener("appinstalled",()=>{installEvt=null;const b=$("installApp");if(b)b.classList.add("hidden");toast("Appli installée sur l’écran d’accueil.")});
@@ -1993,7 +1993,9 @@ function initLock(){
  /* Code propriétaire fixe : seule l’empreinte PBKDF2 est livrée au navigateur. */
  lockLoad();
  const previous=Lock.cfg||{};
- Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:true,v:4,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
+ const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+ let unlockedPwaSession=false;try{unlockedPwaSession=standalone&&sessionStorage.getItem(LOCK_SESSION)==="1"}catch(e){}
+ Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:!unlockedPwaSession,v:4,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
  lockSave();buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
@@ -2001,7 +2003,7 @@ function initLock(){
  $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
  $("gateForgot").hidden=true;$("gateBio").hidden=true;$("rememberWrap").hidden=true;
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
- document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(Lock.cfg&&Lock.cfg.hash&&!document.body.classList.contains("locked"))lockNow(false)}else{Lock.hiddenAt=0}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(!standalone&&Lock.cfg&&Lock.cfg.hash&&!document.body.classList.contains("locked"))lockNow(false)}else{Lock.hiddenAt=0;if(standalone&&!document.body.classList.contains("locked")){Lock.lastActive=Date.now();markSeen()}}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
  $("pinChange").hidden=true;
  $("gateCancel").onclick=cancelGate;
@@ -2014,7 +2016,8 @@ function initLock(){
  /* Écran d'accueil : le logo s'affiche, puis le code (ou sa création au premier lancement) */
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  setTimeout(()=>{
-  showGate("unlock");
+  if(unlockedPwaSession){document.body.classList.remove("locked");$("gate").classList.add("hidden");setBarColor(document.documentElement.dataset.theme==="dark"?"#080d2d":"#f5f7ff");Lock.lastActive=Date.now();markSeen();renderPinSettings()}
+  else showGate("unlock");
  },reduce?0:900);
 }
 
