@@ -1063,17 +1063,81 @@ const NET_ICON={Facebook:"facebook",Instagram:"instagram",TikTok:"tiktok",YouTub
 function netIcon(n,size,off){const f=NET_ICON[n];return f?'<img class="nico'+(off?" off":"")+'" src="assets/social/'+f+'.png" alt="" width="'+(size||28)+'" height="'+(size||28)+'">':""}
 function socialBlock(forReport){
  const S=(state.data||{}).social;if(!S)return "";
- return '<div class="socials">'+NETS.map(([n])=>{
-  const f=S.found[n];let handlePath="";
+ const deep=S.deepCandidates||{};
+ const cards=NETS.map(([n])=>{
+  const f=S.found&&S.found[n];let handlePath="";
   if(f){try{handlePath=decodeURIComponent(new URL(f.url).pathname.split("/").filter(Boolean)[0]||"")}catch(e){}}
   const handle=handlePath.startsWith("@")?handlePath.slice(1):handlePath;
   const confirmed=!!(f&&f.verified===true);
   const label=f?(forReport?esc(handle?"@"+handle:(confirmed?"Confirmé":"Profil trouvé")):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle:(confirmed?"Voir le compte":"Ouvrir le profil"))+'</a>'):"À vérifier";
-  const status=f?(confirmed?"Confirmé manuellement":"À confirmer"):"";
+  const status=f?(confirmed?"Confirmé manuellement":"Non confirmé — correspondance incertaine"):"Aucun compte confirmé";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
-  return '<div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+(status?'<small class="soc-verification">'+status+'</small>':"")+src+'</span></div>';
- }).join("")+'</div><p class="muted"><small>Les profils trouvés automatiquement sont des pistes, pas des comptes confirmés. Ouvrez chaque lien et vérifiez le nom, la ville, les photos et les coordonnées avant de le présenter comme officiel. Seuls les comptes validés manuellement sont marqués « Confirmé ». « À vérifier » ne prouve pas l’absence d’un compte.</small></p>';
+  const controls=forReport?"":'<div class="soc-actions">'+(f?'<button type="button" class="soc-mini" data-social-incorrect="'+esc(n)+'" title="Signaler ce profil comme incorrect">Incorrect ?</button>':'')+'<button type="button" class="soc-mini" data-social-deep="'+esc(n)+'">Recherche approfondie</button></div>';
+  const options=(deep[n]&&deep[n].length&&!forReport)?'<div class="soc-candidates"><small>Résultats à examiner — aucun n’est confirmé automatiquement</small>'+deep[n].map(c=>'<div class="soc-candidate-row"><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noopener">'+esc(c.title||c.url)+'</a><button type="button" class="soc-mini" data-social-pick="'+esc(n)+'" data-social-url="'+esc(c.url)+'">Utiliser</button></div>').join("")+'</div>':"";
+  return '<div class="socwrap"><div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+'<small class="soc-verification">'+status+'</small>'+src+controls+'</span></div>'+options+'</div>';
+ }).join("");
+ return '<div class="socials">'+cards+'</div><p class="muted"><small>Règle stricte : un résultat de recherche n’est jamais considéré comme officiel sans vérification. Vérifiez le nom exact, la ville, les photos et les coordonnées. « Incorrect ? » retire le résultat de cet audit ; « Recherche approfondie » propose d’autres profils possibles.</small></p>';
 }
+async function deepSocialSearch(net){
+ const d=state.data||{},S=d.social||(d.social={found:{},checked:NETS.map(x=>x[0])});
+ const match=NETS.find(x=>x[0]===net);if(!match)throw new Error("Réseau inconnu");
+ const domain=match[1],name=String(state.biz.name||"").trim(),city=String(state.biz.city||"").trim(),address=String(state.biz.address||"").trim();
+ if(!name){toast("Renseignez d’abord le nom exact du commerce.");return}
+ const queries=[
+  '"'+name+'" "'+city+'" site:'+domain,
+  '"'+name+'" "'+address+'" site:'+domain,
+  '"'+name+'" site:'+domain,
+  '"'+name+'" '+city+' '+domain,
+  '"'+name.replace(/["']/g,"")+'" profil officiel '+net+' '+city,
+  '"'+name+'" '+(state.biz.phone||"")+' site:'+domain
+ ].filter((q,i,a)=>a.indexOf(q)===i);
+ const rejected=(S.rejected||[]).filter(x=>x.net===net).map(x=>x.url);
+ const all=[];for(const q of queries){try{const r=await bingSearch(q);all.push(...(r.rows||[]))}catch(e){}}
+ const normText=v=>norm(String(v||""));
+ const compact=v=>normText(v).replace(/[^a-z0-9]/g,"");
+ const tokens=[...new Set(toks(name).filter(w=>w.length>=3))],cityTokens=[...new Set(toks(city).filter(w=>w.length>=3))],brand=compact(name);
+ const ranked=new Map();
+ for(const r of all){
+  if(netOf(hostOf(r.url))!==net||!profileOk(r.url))continue;
+  let u;try{u=new URL(r.url);u.hash="";}catch(e){continue}
+  const url=u.href;if(rejected.includes(url)||S.found[net]?.url===url)continue;
+  const title=String(r.title||"");let path="";try{path=decodeURIComponent(u.pathname)}catch(e){}
+  const text=normText(title+" "+path.replace(/[-_./@]/g," ")),packed=compact(title+" "+path);
+  const matched=tokens.filter(t=>text.split(" ").includes(t)).length;
+  const exact=brand.length>=6&&packed.includes(brand);
+  const cityHits=cityTokens.filter(t=>text.split(" ").includes(t)).length;
+  /* On exige une marque exacte ou plusieurs mots distinctifs ; la ville seule ne valide jamais un profil. */
+  if(!(exact||(tokens.length>=2&&matched>=Math.max(2,Math.ceil(tokens.length*.75)))))continue;
+  const score=(exact?10:matched*2)+(cityHits?Math.min(3,cityHits):0)+(title?1:0);
+  const old=ranked.get(url);if(!old||score>old.score)ranked.set(url,{url,title,score,cityMatch:cityHits>0});
+ }
+ S.deepCandidates=S.deepCandidates||{};
+ S.deepCandidates[net]=[...ranked.values()].sort((a,b)=>b.score-a.score).slice(0,5);
+ S.deepCheckedAt=new Date().toISOString();S.deepQueries=(S.deepQueries||0)+queries.length;
+ persistLocal();update();
+ toast(S.deepCandidates[net].length?S.deepCandidates[net].length+" piste(s) trouvée(s) : vérifiez avant de choisir.":"Aucun profil assez fiable trouvé. Essayez le nom officiel exact.");
+}
+document.addEventListener("click",async e=>{
+ const bad=e.target.closest("[data-social-incorrect]");
+ if(bad){
+  const net=bad.dataset.socialIncorrect,S=state.data&&state.data.social;if(!S||!S.found||!S.found[net])return;
+  const old=S.found[net];S.rejected=S.rejected||[];if(!S.rejected.some(x=>x.net===net&&x.url===old.url))S.rejected.push({net,url:old.url,at:new Date().toISOString()});
+  delete S.found[net];if(S.deepCandidates)delete S.deepCandidates[net];
+  state.data.socials=(state.data.socials||[]).filter(x=>(x.net||netOf(hostOf(x.url)))!==net||x.url!==old.url);
+  persistLocal();update();toast(net+" signalé incorrect pour cet audit.");return;
+ }
+ const deep=e.target.closest("[data-social-deep]");
+ if(deep){const net=deep.dataset.socialDeep;deep.disabled=true;deep.textContent="Recherche…";try{await deepSocialSearch(net)}catch(err){toast("Recherche impossible pour le moment. Réessayez.");}finally{deep.disabled=false;deep.textContent="Recherche approfondie"}return}
+ const pick=e.target.closest("[data-social-pick]");
+ if(pick){
+  const net=pick.dataset.socialPick,url=pick.dataset.socialUrl,S=state.data&&state.data.social;
+  if(!S||!url||netOf(hostOf(url))!==net)return;
+  S.found=S.found||{};S.found[net]={url,src:"piste choisie après recherche approfondie",verified:false,confidence:"non confirmé — contrôle manuel nécessaire"};
+  S.deepCandidates=S.deepCandidates||{};delete S.deepCandidates[net];
+  state.data.socials=(state.data.socials||[]).filter(x=>(x.net||netOf(hostOf(x.url)))!==net);state.data.socials.push({net,url,src:"piste choisie après recherche approfondie",verified:false});
+  persistLocal();update();toast("Profil ajouté comme piste à vérifier, pas comme compte officiel.");
+ }
+});
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
  const comps=(d.competitors||[]).filter(c=>c.ownerPhotos!=null);const med=comps.length?comps.map(c=>c.ownerPhotos).sort((a,b)=>a-b)[Math.floor(comps.length/2)]:null;
