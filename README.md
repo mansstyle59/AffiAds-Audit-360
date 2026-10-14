@@ -85,15 +85,16 @@ L’interface utilise un système visuel commun : mêmes couleurs, typographie, 
 
 ## Build iOS IPA pour ESign / GBox
 
-Le workflow `.github/workflows/ios-ipa.yml` construit un IPA **non signé**, prêt à être importé dans ESign ou GBox pour être signé avec ton propre certificat. Aucun certificat Apple ni secret GitHub n’est nécessaire pour fabriquer l’artefact.
+Le workflow `.github/workflows/ios-ipa.yml` se lance automatiquement après une mise à jour de l’application sur `main`, ou manuellement depuis **Actions → Build iOS IPA for ESign / GBox → Run workflow**. Il construit un IPA **non signé** destiné à être importé dans ESign/GBox. Aucun certificat Apple ni secret GitHub n’est nécessaire pour fabriquer l’artefact.
 
-1. Ouvre **Actions → Build iOS IPA for ESign / GBox → Run workflow**.
-2. Laisse l’identifiant par défaut `fr.affiads.audit360`, ou remplace-le par l’identifiant de bundle associé à ton profil de signature.
-3. Lance le workflow et attends que l’exécution soit verte.
-4. Dans le détail de l’exécution, télécharge l’artefact **AffiAds-Audit-360-ESign-GBox-IPA**.
-5. Sur l’iPhone, importe le fichier IPA dans ESign/GBox puis signe-le avec un certificat et un profil de provisionnement valides, correspondant à l’identifiant de bundle et à ton appareil si le profil l’exige. Installe ensuite l’application depuis l’outil.
+1. Ouvre l’onglet [Actions](https://github.com/mansstyle59/AffiAds-Audit-360/actions).
+2. Sélectionne l’exécution **Build iOS IPA for ESign / GBox** la plus récente et attends qu’elle soit terminée avec succès.
+3. Télécharge l’artefact **AffiAds-Audit-360-ESign-GBox-IPA** dans le bas de la page de l’exécution.
+4. Sur l’iPhone, importe le fichier IPA dans ESign/GBox puis signe-le avec un certificat et un profil valides correspondant à l’identifiant de bundle et à l’appareil, si nécessaire.
 
-**Important :** l’IPA généré par GitHub Actions est volontairement non signé. ESign/GBox ne peut l’installer que si la signature est valide pour ton appareil et ta configuration. Le workflow ne fournit pas de certificat, ne contourne pas les règles de signature iOS et ne garantit pas la compatibilité avec un certificat révoqué ou un profil expiré. Évite les certificats d’entreprise partagés provenant de sources inconnues.
+L’identifiant de bundle par défaut est `fr.affiads.audit360`. Si ton profil ESign/GBox utilise un autre identifiant, renseigne celui-ci au lancement manuel du workflow.
+
+**Important :** l’IPA généré est volontairement non signé. ESign/GBox doit le signer avec un certificat et un profil valides avant l’installation. Le workflow ne fournit pas de certificat et ne contourne pas les règles de signature iOS. Évite les certificats d’entreprise partagés provenant de sources inconnues.
 
 ### Code d’accès et confidentialité
 
