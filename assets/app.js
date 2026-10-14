@@ -1261,7 +1261,7 @@ function renderReport(){
  const sender=settings.senderName||"",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"";
  const top3=(d.findings||[]).slice(0,3);
  const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div>'
-  +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'
+  +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Votre prochain audit")+'</h1>'
   +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+(b.reg&&b.reg.date?'<br>Établissement ouvert en '+esc(fmtOpen(b.reg.date))+' (registre SIRENE)':'')+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
   +scoreTile(totals.score)+partialNote()+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
@@ -1575,7 +1575,7 @@ function renderOnePage(){
  const ko='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#d1344b"/><path d="M8 4.2v5M8 11.4v.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg>';
  box.innerHTML='<div class="op">'
   +'<div class="ophead"><span class="opbrand"><span class="oplogo"><img src="assets/logo-64.png" alt="" width="26" height="26"></span>AffiAds Audit 360°</span><span class="opdate">Audit de visibilité en ligne<br>'+esc(frDate(b.date||today()))+'</span></div>'
-  +'<div class="optitle"><h1>'+esc(b.name||"Commerce à renseigner")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')+'</div>'
+  +'<div class="optitle'+(!String(b.name||"").trim()?' op-emptytitle':'')+'"><h1>'+esc(b.name||"Votre prochain audit")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')+(!String(b.name||"").trim()?'<p class="op-emptyhint">Renseignez le nom et la ville du commerce pour personnaliser ce rapport.</p>':'')+'</div>'
   +'<div class="oprow"><div class="opscore">'+ring+'<div><b>'+esc(vt)+'</b><span>'+esc(vsub)+'</span></div></div><div class="opk">'+kp+'</div></div>'
   +(d.partial&&d.fetchedAt?'<p class="opnote">Audit partiel : la fiche Google n’a pas été analysée, les chiffres Google ne sont pas inclus.</p>':'')
   +bars
@@ -1595,7 +1595,7 @@ function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet Affi
 let pdfBusy=false;
 async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
 
-/* PDF polish 2026-90: more deliberate A4 pagination and document metadata */
+/* PDF polish 2026-91: more deliberate A4 pagination and document metadata */
 function pdfPageHead(doc,M,y,title){
  doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(57,72,216);
  doc.text("AffiAds Audit 360°",M,9);
