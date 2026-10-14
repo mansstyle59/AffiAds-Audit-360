@@ -613,11 +613,29 @@ function netOf(host){host=String(host||"").replace(/^(www|m|fr-fr|fr)\./,"");con
 function profileOk(u){try{const x=new URL(u);return !/\/(sharer|share|intent|dialog|plugins|login|hashtag|explore|search|watch\?)/i.test(x.pathname+x.search)&&x.pathname.length>1}catch(e){return false}}
 async function socialScan(name,city,known){
  const found={};(known||[]).forEach(s=>{const n=netOf(hostOf(s.url))||s.net;if(n&&NETS.some(x=>x[0]===n)&&!found[n])found[n]={url:s.url,src:s.src||"site"}});
- const q='"'+name+'" '+city+' (site:facebook.com OR site:instagram.com OR site:tiktok.com OR site:youtube.com OR site:snapchat.com)';
- let rows=[],engine="";try{const r=await bingSearch(q);rows=r.rows;engine=r.engine}catch(e){}
- const tk=toks(name);
- rows.forEach(r=>{const n=netOf(r.host);if(!n||found[n]||!profileOk(r.url))return;const t=norm(r.title+" "+decodeURIComponent(r.url).replace(/[-_./]/g," "));const hit=tk.filter(w=>t.includes(w)).length;if(tk.length&&hit>=Math.max(1,Math.ceil(tk.length*0.6)))found[n]={url:r.url,src:"recherche",title:r.title}});
- return {found,engine,checked:NETS.map(n=>n[0])};
+ /* Une recherche séparée par réseau évite qu'un réseau très visible masque TikTok ou Snapchat. */
+ const searches=await Promise.all(NETS.map(async ([net,domain])=>{
+  const queries=[(name+" "+city+" site:"+domain),(name+" site:"+domain)];
+  const all=[];let engine="";
+  for(const query of queries){try{const r=await bingSearch(query);all.push(...(r.rows||[]));engine=engine||r.engine||""}catch(e){}}
+  return {net,rows:all,engine};
+ }));
+ const engines=searches.map(x=>x.engine).filter(Boolean);
+ const compact=v=>norm(String(v||"")).replace(/[^a-z0-9]/g,"");
+ const brand=compact(name),tk=toks(name).filter(w=>w.length>1);
+ searches.forEach(({net,rows})=>rows.forEach(r=>{
+  if(found[net]||netOf(r.host)!==net||!profileOk(r.url))return;
+  let decoded="";try{decoded=decodeURIComponent(r.url)}catch(e){decoded=r.url}
+  const text=norm((r.title||"")+" "+decoded.replace(/[-_./@]/g," "));
+  const compactText=compact((r.title||"")+" "+decoded);
+  const hit=tk.filter(w=>text.includes(w)).length;
+  /* Les handles sont souvent concaténés, par exemple @papaours_narbonne. */
+  const brandMatch=brand.length>=5&&compactText.includes(brand);
+  if(brandMatch||(tk.length&&hit>=Math.max(1,Math.ceil(tk.length*0.5)))){
+   found[net]={url:r.url,src:"recherche Bing ciblée",title:r.title||"",confidence:brandMatch?"nom ou identifiant correspondant":"correspondance partielle"};
+  }
+ }));
+ return {found,engine:engines.join(", "),checked:NETS.map(n=>n[0]),queries:searches.length*2};
 }
 /* ---------- Audit automatique ---------- */
 let steps=[];
@@ -884,11 +902,11 @@ async function runAuto(){
    const F=sc.found,list=NETS.map(n=>n[0]).filter(n=>F[n]);
    const searched=!!sc.engine;
    setAuto("2-0",F.Facebook&&F.Instagram?"ok":(F.Facebook||F.Instagram)?(searched?"issue":"info"):searched?"issue":"info",(F.Facebook&&F.Instagram)?"Comptes Facebook et Instagram trouvés. Fréquence des publications à vérifier.":(F.Facebook||F.Instagram)?(F.Facebook?"Facebook":"Instagram")+" trouvé, mais "+(F.Facebook?"Instagram":"Facebook")+" non trouvé (ni relié depuis le site, ni par recherche).":(searched?"Aucun compte Facebook ni Instagram trouvé (site, OpenStreetMap et recherche Bing).":"Aucun compte relié depuis le site ou OpenStreetMap ; la recherche web n’a pas répondu : à vérifier à la main."),"Recherche des réseaux, "+data.fetchedAt);
-   setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok trouvé.":"Aucun compte TikTok trouvé : à envisager si la clientèle visée y est présente.","Recherche des réseaux, "+data.fetchedAt);
+   setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok détecté : "+F.TikTok.url+" (ouvrir le lien et confirmer qu’il s’agit du bon commerce).":"TikTok non détecté par les sources consultées. Cela ne prouve pas que le compte est absent : vérification manuelle recommandée.",F.TikTok?(F.TikTok.src||"Recherche web"):"Recherche web ciblée · "+data.fetchedAt);
    setAuto("2-4",list.length||!searched?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
    if(!F.Facebook&&!F.Instagram){if(searched)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce (ni sur son site, ni par recherche) : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."})}
-   else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux trouvés : "+list.join(", ")+". Non trouvé"+(miss.length>1?"s":"")+" : "+miss.join(", ")+" (aucun compte relié ni trouvé par recherche)."})}
-   setStep("social",list.length?"ok":"warn",list.length?"Réseaux trouvés : "+list.join(", "):"Aucun réseau social trouvé",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non trouvés : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"");
+   else{const miss=["Instagram","Facebook","TikTok"].filter(n=>!F[n]);if(miss.length)findings.push({sev:1,text:"Réseaux détectés : "+list.join(", ")+". Comptes non détectés par les sources consultées : "+miss.join(", ")+". Cela ne prouve pas leur absence ; vérifier chaque plateforme manuellement avant de conclure."})}
+   setStep("social",list.length?"ok":"warn",list.length?"Réseaux détectés : "+list.join(", "):"Aucun compte détecté automatiquement",NETS.map(n=>n[0]).filter(n=>!F[n]).length?"Non détectés (à confirmer manuellement) : "+NETS.map(n=>n[0]).filter(n=>!F[n]).join(", "):"Tous les réseaux configurés ont un résultat détecté.");
   }catch(e){setStep("social","warn","Réseaux sociaux non vérifiés",frErr(e).text)}
   /* 6. Visibilité IA : Gemini avec Recherche Google, puis questions prêtes pour les autres assistants */
   $("campaignBusiness").value=name;$("campaignCity").value=city;$("campaignType").value=typeInfo(type).kw||type;$("campaignService").value="";
@@ -1504,8 +1522,14 @@ function renderTools(){
   ["Test des résultats enrichis",u?"https://search.google.com/test/rich-results?url="+encodeURIComponent(u.href):"https://search.google.com/test/rich-results?hl=fr","Données structurées"],
   ["Pages indexées",u?"https://www.google.com/search?q="+q("site:"+u.hostname):"https://www.google.com/","Combien de pages Google connaît"],
   ["Bibliothèque publicitaire Meta","https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=FR&search_type=keyword_unordered&q="+q(n),"Publicités actives"],
-  ["Instagram / Facebook","https://www.google.com/search?q="+q(n+" "+c+" (site:instagram.com OR site:facebook.com)"),"Comptes sociaux"],
-  ["TikTok","https://www.tiktok.com/search?q="+q(n+" "+c),"Présence TikTok"],
+  ["Recherche réseaux sociaux (Google)","https://www.google.com/search?q="+q('"'+n+'" '+c+" (site:instagram.com OR site:facebook.com OR site:tiktok.com OR site:youtube.com OR site:snapchat.com)"),"Recherche large des comptes publics"],
+  ["TikTok — Google","https://www.google.com/search?q="+q(n+" "+c+" site:tiktok.com"),"Recherche ciblée des profils et vidéos"],
+  ["TikTok — Bing","https://www.bing.com/search?q="+q(n+" "+c+" site:tiktok.com"),"Deuxième moteur pour réduire les faux négatifs"],
+  ["TikTok — recherche directe","https://www.tiktok.com/search?q="+q(n+" "+c),"Recherche sur TikTok"],
+  ["Instagram — Google","https://www.google.com/search?q="+q(n+" "+c+" site:instagram.com"),"Recherche ciblée des profils"],
+  ["Facebook — Google","https://www.google.com/search?q="+q(n+" "+c+" site:facebook.com"),"Recherche ciblée des pages"],
+  ["YouTube — Google","https://www.google.com/search?q="+q(n+" "+c+" site:youtube.com"),"Recherche ciblée des chaînes"],
+  ["Snapchat — Google","https://www.google.com/search?q="+q(n+" "+c+" site:snapchat.com"),"Recherche ciblée des profils"],
   ["PagesJaunes","https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui="+q(n)+"&ou="+q(c),"Annuaire"],
   ["Tripadvisor","https://www.tripadvisor.fr/Search?q="+q(n+" "+c),"Avis touristiques"],
   ["OpenStreetMap",state.data&&state.data.osm&&state.data.osm.me?state.data.osm.me.url:"https://www.openstreetmap.org/search?query="+q(n+" "+c),"Alimente Apple Plans et de nombreuses applis"],
@@ -1581,7 +1605,17 @@ function buildResearch(){
  if(kw&&city)s.push(["Mot-clé local Google","https://www.google.com/search?q="+q(kw+" "+city)]);
  if(kw&&city)s.push(["Mot-clé local Bing","https://www.bing.com/search?q="+q(kw+" "+city)]);
  if(name)s.push(["Avis et réputation","https://www.google.com/search?q="+q('"'+name+'" avis '+city)]);
- if(name)s.push(["Réseaux sociaux","https://www.google.com/search?q="+q(name+" "+city+" (site:instagram.com OR site:facebook.com OR site:tiktok.com)")]);
+ if(name){
+  const target=name+" "+city;
+  s.push(["Réseaux sociaux — recherche large","https://www.google.com/search?q="+q('"'+name+'" '+city+" (site:instagram.com OR site:facebook.com OR site:tiktok.com OR site:youtube.com OR site:snapchat.com)")]);
+  s.push(["TikTok — Google","https://www.google.com/search?q="+q(target+" site:tiktok.com")]);
+  s.push(["TikTok — Bing","https://www.bing.com/search?q="+q(target+" site:tiktok.com")]);
+  s.push(["TikTok — recherche dans l’application web","https://www.tiktok.com/search?q="+q(name+" "+city)]);
+  s.push(["Instagram — Google","https://www.google.com/search?q="+q(target+" site:instagram.com")]);
+  s.push(["Facebook — Google","https://www.google.com/search?q="+q(target+" site:facebook.com")]);
+  s.push(["YouTube — Google","https://www.google.com/search?q="+q(target+" site:youtube.com")]);
+  s.push(["Snapchat — Google","https://www.google.com/search?q="+q(target+" site:snapchat.com")]);
+ }
  if(name)s.push(["Presse et articles locaux","https://www.google.com/search?tbm=nws&q="+q('"'+name+'" '+city)]);
  const u=normalizeUrl(site);if(u)s.push(["Pages indexées du site","https://www.google.com/search?q="+q("site:"+u.hostname)]);
  if(kw)s.push(["Questions / FAQ","https://www.google.com/search?q="+q(kw+" "+city+" questions avis prix")]);
