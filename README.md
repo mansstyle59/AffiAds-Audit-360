@@ -24,7 +24,7 @@ Le **rapport client** comprend une page de couverture avec jauge de score, une s
 
 **Réseaux sociaux** : détection des comptes Facebook, Instagram, TikTok, YouTube et Snapchat (site, OpenStreetMap, recherche Bing).
 
-**Code d’accès** : écran d’accueil animé et code de 4 à 6 chiffres (créé au premier lancement) qui protège l’appli sur chaque appareil ; verrouillage automatique réglable, limitation des essais, code stocké sous forme chiffrée (PBKDF2). Sans serveur, le code protège l’accès sur l’appareil, pas le site public.
+**Protection et confidentialité** : le code PIN actuel et le verrouillage biométrique local ne constituent pas une authentification serveur. L’application publiée sur GitHub Pages reste accessible publiquement à toute personne connaissant son URL ; ne stockez pas de secret sensible dans le code ou dans le navigateur. Une authentification propriétaire validée côté serveur est nécessaire avant de considérer l’application comme privée.
 
 **Version 2026** : menu regroupé (Prospection, Analyse détaillée, Outils), barre d'onglets flottante effet verre sur téléphone, écran **Clients** avec l'historique des audits, **mode sombre** automatique, transitions entre écrans, **installation sur l'écran d'accueil** et interface disponible hors ligne, **partage natif** du résumé et du message, test du **Mode IA de Google**, checklist mise à jour (fin des questions-réponses Google, vidéos courtes verticales).
 
@@ -76,3 +76,8 @@ Le site est publié automatiquement sur GitHub Pages à chaque mise à jour de l
 ## Audit Instagram et YouTube
 
 Écran « Plus → Instagram et YouTube » : collez le lien d’un compte. YouTube : abonnés, rythme, Shorts, titres et descriptions (SEO), tags, chapitres, engagement (données officielles avec la clé Google et l’API « YouTube Data API v3 », sinon page publique et flux RSS). Instagram : abonnés, publications, nom et bio quand ils sont publics, puis vérification guidée du profil. Avec la clé Google, l’IA propose niche, mots-clés, hashtags et idées de contenus. Le résultat s’ajoute au rapport client.
+
+
+## Cohérence de l’interface
+
+L’interface utilise un système visuel commun : mêmes couleurs, typographie, rayons, états de boutons, champs de formulaire et espacements sur Audit, Clients, Rapport, Message, Analyse détaillée et Réglages. La navigation mobile garde les actions principales visibles ; les sections secondaires sont regroupées dans « Plus ». Les indicateurs automatiques doivent être distingués des vérifications manuelles et des correspondances de comptes sociaux qui restent à confirmer.
