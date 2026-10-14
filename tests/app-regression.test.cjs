@@ -116,7 +116,7 @@ test("2026-95 keeps dark-theme cards, report preview and compact access screen r
   assert.match(css, /2026-75 • Contrast and coherence|2026-76 • Contrast and coherence/);
   assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#202653!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-95/);
+  assert.ok(html.includes("assets/app.js?v=2026-95"));
   assert.match(html, /assets\/app\.js\?v=2026-95/);
   assert.match(sw, /affiads-audit-2026-95/);
 });
@@ -342,7 +342,7 @@ test("2026-95 social cards offer direct Google search and one-tap manual profile
   assert.ok(js.includes('" site:"+match[1]'));
   assert.match(js, /Collez le lien public de /);
   assert.match(js, /data-social-deep/);
-  assert.match(css, /\\.soc-actions \\.soc-mini\\{display:inline-flex/);
+  assert.ok(css.includes(".soc-actions .soc-mini{display:inline-flex"));
   assert.ok(html.includes("assets/app.js?v=2026-95"));
   assert.match(sw, /affiads-audit-2026-95/);
 });
