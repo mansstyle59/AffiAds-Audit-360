@@ -1,9 +1,9 @@
 /* AffiAds Audit 360° — fonctionnement hors ligne de l'interface.
    Les pages de l'appli sont servies depuis le réseau en priorité (pour recevoir les mises à jour),
    puis depuis le cache si le réseau est absent. Les appels aux services d'analyse ne sont jamais mis en cache. */
-const CACHE = "affiads-audit-2026-62";
+const CACHE = "affiads-audit-2026-63";
 const SHELL = ["./", "index.html", "assets/app.css", "assets/app.js", "manifest.webmanifest",
-  "assets/app-icon.svg", "assets/logo-64.png", "assets/logo-192.png", "assets/logo-512.png", "assets/apple-touch-icon.png"];
+  "assets/app-icon.svg", "assets/assistant-icon.svg", "assets/logo-64.png", "assets/logo-192.png", "assets/logo-512.png", "assets/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
