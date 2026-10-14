@@ -147,7 +147,7 @@ test("2026-83 remembers trusted access in Safari and installed PWA without promp
   assert.match(js, /const unlockedPwaSession=previous\.pwaTrusted===true/);
   assert.match(js, /if\(Lock\.mode==="unlock"\)\{Lock\.cfg\.pwaTrusted=true/);
   assert.doesNotMatch(js, /if\(!standalone&&Lock\.cfg&&Lock\.cfg\.hash&&!document\.body\.classList\.contains\("locked"\)\)lockNow\(false\)/);
-  assert.match(js, /Code propriétaire actif : demandé lors du premier déverrouillage/);
+  assert.match(js, /Choisissez quand le code doit être redemandé/);
   assert.match(html, /assets\/app\.js\?v=2026-83/);
   assert.match(sw, /affiads-audit-2026-83/);
 });
