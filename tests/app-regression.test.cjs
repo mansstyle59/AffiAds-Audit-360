@@ -73,3 +73,11 @@ test("AI visibility compares platforms using only explicit yes/no results", () =
   assert.match(js, /presence==="yes"\|\|t\.presence==="no"/);
   assert.match(js, /Incertain/);
 });
+
+
+test("premium PDF export fits the one-page summary inside printable A4 margins", () => {
+  assert.match(js, /const maxW=194,maxH=277/);
+  assert.match(js, /AFFIADS AUDIT 360°  ·  DOCUMENT DE TRAVAIL CONFIDENTIEL/);
+  assert.match(css, /\.opchart\{/);
+  assert.match(css, /\.opoffer\{/);
+});
