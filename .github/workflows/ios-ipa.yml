@@ -147,7 +147,7 @@ jobs:
           test "$PACKAGED_BUNDLE_ID" = "$IOS_BUNDLE_ID"
           /usr/bin/unzip -l dist/AffiAds-Audit-360-ESign-GBox.ipa | grep -E 'Payload/App\.app/(Info\.plist|App)$'
           echo "IPA validé : dist/AffiAds-Audit-360-ESign-GBox.ipa"
-          echo "IPA non signé : signer dans KSign avec un certificat et un profil valides avant l'installation."
+          echo "IPA non signé : importer dans ESign/GBox puis signer avec un certificat et un profil valides avant l'installation."
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
