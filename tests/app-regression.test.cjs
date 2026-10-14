@@ -364,7 +364,7 @@ test("mobile layout keeps audit and client screens aligned with the bottom navig
   assert.match(css, /#view-clients \.clientlist\{display:grid;gap:10px/);
   assert.match(css, /#view-clients \.clientrow \.del\{align-self:center/);
   assert.match(css, /\.main\{padding:18px 16px calc\(var\(--tabbar\) \+ 30px \+ env\(safe-area-inset-bottom\)\)!important/);
-  assert.match(css, /\.askactions\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,\.8fr\)/);
+  assert.match(css, /\.askactions\{display:grid;grid-template-columns:minmax\(0,1\.3fr\) minmax\(0,\.8fr\)/);
   assert.match(css, /\.nav>button \.t\{display:block!important;font-size:10px!important/);
   assert.match(html, /id="runAuto"/);
   assert.match(html, /id="clientSearch"/);
