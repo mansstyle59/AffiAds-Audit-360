@@ -2071,7 +2071,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-85 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-86 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2121,7 +2121,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-85 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-86 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
@@ -2171,7 +2171,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-85 • Accessibility pass: explicit readable text pairs in both themes.
+/* 2026-86 • Accessibility pass: explicit readable text pairs in both themes.
    Deliberately excludes the printable report, whose paper surface stays white. */
 :root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
   h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
@@ -2236,7 +2236,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="light"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
 :root[data-theme="light"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small){color:#202653!important}
 
-/* 2026-85 • Access settings: selectable lock policy and readable mobile control. */
+/* 2026-86 • Access settings: selectable lock policy and readable mobile control. */
 #pinDelay{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;min-height:52px!important;padding:12px 38px 12px 14px!important;font-size:16px!important;line-height:1.35!important;font-weight:650!important;border:1.5px solid var(--line-2)!important;border-radius:15px!important;opacity:1!important}
 :root[data-theme="dark"] #pinDelay{background:#0c1433!important;color:#f5f7ff!important;border-color:#6474ad!important}
 :root[data-theme="light"] #pinDelay{background:#fff!important;color:#20294a!important;border-color:#b9c4df!important}
@@ -2247,7 +2247,7 @@ details.adv summary{color:#c7ccef}
 .pin-delay-field{min-width:0}
 
 
-/* 2026-85 • Header actions replace the oversized duplicate CTA. */
+/* 2026-86 • Header actions replace the oversized duplicate CTA. */
 .topacts .top-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 13px;border-radius:14px;font:750 13px/1.1 var(--font);white-space:nowrap}
 .topacts .top-action svg{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .topacts #topClients{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
@@ -2268,4 +2268,37 @@ details.adv summary{color:#c7ccef}
  .topacts{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) auto!important;gap:5px!important}
  .topacts .top-action{gap:4px!important;padding-inline:6px!important;font-size:11.5px!important}
  .topacts .top-action svg{width:15px;height:15px;flex-basis:15px}
+}
+
+
+/* 2026-86 • Compact, readable prospect composer on mobile and desktop. */
+#view-pitch .grid{gap:10px}
+#view-pitch .card{padding:clamp(12px,2vw,20px)}
+#view-pitch .card>h2{margin-bottom:5px}
+#view-pitch .card>p.muted{margin:0 0 12px;line-height:1.45}
+#view-pitch .fields{gap:10px}
+#view-pitch .field{gap:6px}
+#view-pitch textarea.pitch{min-height:175px;height:175px;resize:vertical;line-height:1.48;padding:12px 13px}
+#view-pitch .pitch-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px!important}
+#view-pitch .pitch-actions .btn{min-width:0;min-height:42px;padding:9px 11px;font-size:14px;line-height:1.2;white-space:normal}
+#view-pitch .pitch-actions #pitchRegen{grid-column:1/-1}
+#view-pitch .pitch-note{margin-top:9px!important;padding:11px 12px;border-radius:14px;font-size:13px;line-height:1.5}
+:root[data-theme="dark"] #view-pitch .pitch-note{background:#222b55!important;border:1px solid #48558a!important;color:#e4eaff!important}
+:root[data-theme="light"] #view-pitch .pitch-note{background:#f1f4ff!important;border:1px solid #d4dcf4!important;color:#34405f!important}
+@media(max-width:700px){
+ #view-pitch .card{padding:13px!important;border-radius:18px!important}
+ #view-pitch .card>h2{font-size:20px!important}
+ #view-pitch .card>p.muted{font-size:13px!important;line-height:1.4!important;margin-bottom:9px!important}
+ #view-pitch .fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px!important}
+ #view-pitch .field label{font-size:13px!important}
+ #view-pitch .field input,#view-pitch .field select{min-height:42px!important;padding:9px 10px!important;font-size:14px!important}
+ #view-pitch textarea.pitch{height:148px!important;min-height:148px!important;font-size:15px!important;line-height:1.42!important;padding:10px 11px!important}
+ #view-pitch .pitch-actions{gap:7px!important;margin-top:8px!important}
+ #view-pitch .pitch-actions .btn{min-height:40px!important;padding:8px 7px!important;font-size:13px!important;border-radius:12px!important}
+ #view-pitch .pitch-actions #pitchRegen{min-height:43px!important}
+ #view-pitch .pitch-note{font-size:12px!important;padding:9px 10px!important}
+}
+@media(max-width:360px){
+ #view-pitch .fields{grid-template-columns:minmax(0,1fr)!important}
+ #view-pitch textarea.pitch{height:140px!important;min-height:140px!important}
 }

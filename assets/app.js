@@ -1694,16 +1694,21 @@ function showPdfSheet(blob){
 function buildPitch(){
  const b=state.biz,d=state.data||{},tone=$("pitchTone").value,who=$("pitchContact").value.trim();
  const sender=settings.senderName||"Denis",line=settings.senderLine||"AffiAds — Votre visibilité, notre expertise.",contact=settings.senderContact||"";
- let facts=(d.findings||[]).slice(0,tone==="sms"?1:3).map(f=>String(f.text||"").trim()).filter(Boolean);
- if(!facts.length)facts=issuesList().slice(0,tone==="sms"?1:3).map(p=>p.it.toLowerCase()+" : "+p.reco.charAt(0).toLowerCase()+p.reco.slice(1));
+ const raw=(d.findings||[]).map(f=>String(f.text||"").trim()).filter(Boolean);
+ const fallback=issuesList().map(p=>p.it.charAt(0).toUpperCase()+p.it.slice(1)+" : "+p.reco.charAt(0).toLowerCase()+p.reco.slice(1));
+ const facts=[...new Set((raw.length?raw:fallback).map(s=>s.replace(/^[-•\s]+/,"").replace(/\s+/g," ").trim()).filter(Boolean))].slice(0,tone==="sms"?1:2);
  const hello="Bonjour"+(who?" "+who:"")+",";
- const biz=b.name||"votre établissement",city=b.city?" à "+b.city:"";
+ const biz=(b.name||"votre établissement").trim(),city=b.city?" à "+b.city.trim():"";
  const brand=line.split("—")[0].trim()||"AffiAds";
- const teaser=facts.length?facts[0]:"quelques pistes concrètes pour améliorer votre présence en ligne";
- if(tone==="sms")return hello+"\n\nJe suis "+sender+", d’"+brand+". J’ai réalisé un audit gratuit de la visibilité en ligne de "+biz+city+". J’ai repéré "+teaser+". Souhaitez-vous que je vous envoie le résumé ? C’est gratuit et sans engagement.\n\n"+sender+"\n"+line+(contact?"\n"+contact:"");
- const bullets=facts.length?facts.map(f=>"• "+f).join("\n"):"• Des pistes d’amélioration à vérifier sur votre fiche Google, votre site et vos réseaux sociaux.";
- if(tone==="email")return "Objet : Votre visibilité en ligne — audit gratuit de "+biz+"\n\n"+hello+"\n\nJe suis "+sender+", d’"+brand+". J’aide les professionnels à améliorer leur visibilité en ligne grâce à une communication adaptée : fiche Google, site internet, vidéos et réseaux sociaux.\n\nJ’ai préparé un premier audit de "+biz+city+" à partir des informations publiques disponibles. Voici quelques points relevés :\n\n"+bullets+"\n\nJe peux vous transmettre le rapport complet et vous expliquer les actions à prioriser, simplement et sans engagement.\n\nSouhaitez-vous que je vous l’envoie ?\n\nBien cordialement,\n"+sender+"\n"+line+(contact?"\n"+contact:"");
- return hello+"\n\nJe suis "+sender+", d’"+brand+". J’ai réalisé un audit gratuit de la visibilité en ligne de "+biz+city+".\n\nJ’ai relevé quelques pistes concrètes, notamment :\n\n"+bullets+"\n\nJe peux vous envoyer le rapport avec les points à améliorer et les actions à prioriser. Vous pourrez le consulter tranquillement, sans engagement.\n\nEst-ce que cela vous intéresserait ?\n\n"+sender+"\n"+line+(contact?"\n"+contact:"");
+ const signature="\n\n"+sender+"\n"+line+(contact?"\n"+contact:"");
+ const teaser=facts[0]||"quelques pistes concrètes pour améliorer votre visibilité en ligne";
+ if(tone==="sms")return hello+"\n\nJe suis "+sender+" d’"+brand+". En regardant la présence en ligne de "+biz+city+", j’ai repéré une piste à explorer : "+teaser.charAt(0).toLowerCase()+teaser.slice(1)+".\n\nJe peux vous envoyer un court résumé, gratuitement et sans engagement. Cela vous intéresserait ?"+signature;
+ if(tone==="email"){
+  const bullets=facts.length?facts.map(f=>"• "+f).join("\n"):"• Quelques pistes à vérifier sur votre fiche Google, votre site et vos réseaux sociaux.";
+  return "Objet : Quelques pistes pour la visibilité de "+biz+"\n\n"+hello+"\n\nJe me permets de vous contacter au nom d’"+brand+". Nous accompagnons les commerces et professionnels dans leur visibilité en ligne : fiche Google, site internet, contenus vidéo et réseaux sociaux.\n\nJ’ai examiné les informations publiques disponibles concernant "+biz+city+" et relevé quelques points qui mériteraient d’être étudiés :\n\n"+bullets+"\n\nJe peux vous transmettre le résumé de l’audit et vous présenter les actions à envisager, en fonction de vos priorités. Vous restez bien entendu libre d’y donner suite ou non.\n\nSeriez-vous disponible pour un bref échange, ou préférez-vous recevoir le résumé par e-mail ?\n\nBien cordialement,"+signature;
+ }
+ const bullets=facts.length?facts.map(f=>"• "+f).join("\n"):"• Quelques pistes à vérifier sur votre fiche Google, votre site et vos réseaux sociaux.";
+ return hello+"\n\nJe suis "+sender+" d’"+brand+". J’ai examiné les informations publiques concernant "+biz+city+" et repéré quelques pistes d’amélioration :\n\n"+bullets+"\n\nSi vous le souhaitez, je peux vous envoyer un résumé clair avec les priorités à envisager. Vous pourrez le consulter librement, sans engagement.\n\nEst-ce que je vous l’envoie ?"+signature;
 }
 
 /* ---------- Navigation ---------- */
