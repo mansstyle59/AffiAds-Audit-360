@@ -1617,3 +1617,129 @@ details.adv summary{color:#c7ccef}
   .nav{left:7px!important;right:7px!important;padding:5px!important}
   .nav>button{font-size:9px!important}
 }
+
+
+/* ===== Correctif prioritaire iPhone : dock au bord inférieur + thèmes à contraste fort ===== */
+@media(max-width:900px){
+  .nav{
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
+    width:100%!important;box-sizing:border-box!important;margin:0!important;
+    border-radius:24px 24px 0 0!important;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;
+    gap:4px!important;z-index:100!important;
+    display:flex!important;flex-direction:row!important;align-items:stretch!important;
+  }
+  .nav>.navgroup,.nav>.sidenote{display:none!important}
+  .nav>button{flex:1 1 0!important;width:20%!important;min-width:0!important;min-height:60px!important;height:auto!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;gap:4px!important;padding:7px 2px!important;font-size:10px!important;line-height:1.1!important;white-space:normal!important}
+  .nav>button .t{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .navmore{
+    position:fixed!important;left:10px!important;right:10px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;top:auto!important;
+    width:auto!important;max-width:none!important;max-height:min(68dvh,600px)!important;overflow:auto!important;
+    z-index:101!important;border-radius:22px!important;padding:14px!important;
+    box-shadow:0 20px 60px #02061750!important;
+  }
+  .main{padding-bottom:calc(112px + env(safe-area-inset-bottom))!important}
+  .botfab{z-index:90!important;bottom:calc(104px + env(safe-area-inset-bottom))!important}
+  .botpanel{z-index:120!important;bottom:calc(94px + env(safe-area-inset-bottom))!important;max-height:min(70dvh,620px)!important}
+}
+/* Strong, explicit text/background pairs. These override legacy !important declarations. */
+:root[data-theme="light"] body,
+:root[data-theme="light"] .layout,
+:root[data-theme="light"] .main{background:#f5f7ff!important;color:#172044!important}
+:root[data-theme="light"] .side,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .audit-form-card,
+:root[data-theme="light"] .ready-card{background:#fff!important;color:#172044!important;border-color:#dce3f5!important}
+:root[data-theme="light"] .top h1,
+:root[data-theme="light"] .top h2,
+:root[data-theme="light"] .card h1,
+:root[data-theme="light"] .card h2,
+:root[data-theme="light"] .card h3,
+:root[data-theme="light"] .card h4,
+:root[data-theme="light"] .card label,
+:root[data-theme="light"] .card p,
+:root[data-theme="light"] .card strong,
+:root[data-theme="light"] .brand,
+:root[data-theme="light"] .brand span,
+:root[data-theme="light"] .main label{color:#172044!important}
+:root[data-theme="light"] .muted,
+:root[data-theme="light"] #pageSub,
+:root[data-theme="light"] .card .muted,
+:root[data-theme="light"] .sidenote{color:#596581!important}
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{background:#fff!important;color:#172044!important;border-color:#cbd5eb!important}
+:root[data-theme="light"] input::placeholder,
+:root[data-theme="light"] textarea::placeholder{color:#69748e!important;opacity:1!important}
+:root[data-theme="light"] .nav{background:#fff!important;border-color:#dce3f5!important}
+:root[data-theme="light"] .nav>button{color:#424c6a!important}
+:root[data-theme="light"] .nav>button svg{stroke:#424c6a!important}
+:root[data-theme="light"] .nav>button.active{background:linear-gradient(135deg,#3157ff,#5140ed)!important;color:#fff!important}
+:root[data-theme="light"] .nav>button.active svg{stroke:#fff!important}
+:root[data-theme="light"] .navmore{background:#fff!important;border-color:#dce3f5!important}
+:root[data-theme="light"] .navmore .navgroup{color:#596581!important}
+:root[data-theme="light"] .navmore button{background:#f4f6ff!important;color:#172044!important;border-color:#e0e6f6!important}
+:root[data-theme="light"] .navmore button .t,
+:root[data-theme="light"] .navmore button .s{color:#172044!important}
+:root[data-theme="light"] #view-auto .ask h2{color:#172044!important}
+:root[data-theme="light"] #view-auto .hero-intro{color:#596581!important}
+:root[data-theme="light"] #view-auto .hero-points span{background:#fff!important;color:#293454!important;border-color:#dce3f5!important}
+:root[data-theme="light"] #view-auto .hero-points b{color:#a96c00!important}
+:root[data-theme="light"] #view-auto .hero-kicker{background:#eaf0ff!important;color:#2444c8!important}
+:root[data-theme="light"] #view-auto .hero-accent{background:none!important;color:#4d3cff!important}
+:root[data-theme="light"] .topacts .chip{background:#fff!important;color:#172044!important;border-color:#cbd5eb!important}
+:root[data-theme="light"] .topacts #pdf{background:#3157ff!important;color:#fff!important;border-color:#3157ff!important}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .layout,
+:root[data-theme="dark"] .main{background:#080d2d!important;color:#f3f5ff!important}
+:root[data-theme="dark"] .side,
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .audit-form-card,
+:root[data-theme="dark"] .ready-card{background:#141b3c!important;color:#f3f5ff!important;border-color:#303b6b!important}
+:root[data-theme="dark"] .top h1,
+:root[data-theme="dark"] .top h2,
+:root[data-theme="dark"] .card h1,
+:root[data-theme="dark"] .card h2,
+:root[data-theme="dark"] .card h3,
+:root[data-theme="dark"] .card h4,
+:root[data-theme="dark"] .card label,
+:root[data-theme="dark"] .card p,
+:root[data-theme="dark"] .card strong,
+:root[data-theme="dark"] .brand,
+:root[data-theme="dark"] .brand span,
+:root[data-theme="dark"] .main label{color:#f3f5ff!important}
+:root[data-theme="dark"] .muted,
+:root[data-theme="dark"] #pageSub,
+:root[data-theme="dark"] .card .muted,
+:root[data-theme="dark"] .sidenote{color:#c4cceb!important}
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select{background:#0c1330!important;color:#f3f5ff!important;border-color:#465181!important}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder{color:#aeb9dc!important;opacity:1!important}
+:root[data-theme="dark"] .nav{background:#111936!important;border-color:#303b6b!important}
+:root[data-theme="dark"] .nav>button{color:#c7d0f2!important}
+:root[data-theme="dark"] .nav>button svg{stroke:#c7d0f2!important}
+:root[data-theme="dark"] .nav>button.active{background:linear-gradient(135deg,#3157ff,#5140ed)!important;color:#fff!important}
+:root[data-theme="dark"] .nav>button.active svg{stroke:#fff!important}
+:root[data-theme="dark"] .navmore{background:#111936!important;border-color:#394675!important}
+:root[data-theme="dark"] .navmore .navgroup{color:#b9c3eb!important}
+:root[data-theme="dark"] .navmore button{background:#1b254b!important;color:#f3f5ff!important;border-color:#35416e!important}
+:root[data-theme="dark"] .navmore button .t,
+:root[data-theme="dark"] .navmore button .s{color:#f3f5ff!important}
+:root[data-theme="dark"] #view-auto .ask h2{color:#fff!important}
+:root[data-theme="dark"] #view-auto .hero-intro{color:#d0d6f5!important}
+:root[data-theme="dark"] #view-auto .hero-points span{background:#151c43!important;color:#f0f2ff!important;border-color:#303966!important}
+:root[data-theme="dark"] .topacts .chip{background:#151c43!important;color:#f3f5ff!important;border-color:#444e83!important}
+:root[data-theme="dark"] .topacts #pdf{background:#fff!important;color:#24245b!important;border-color:#fff!important}
+/* Report preview remains a paper-like document in every theme. */
+:root[data-theme="light"] .onepage,:root[data-theme="light"] .report,
+:root[data-theme="dark"] .onepage,:root[data-theme="dark"] .report{background:#fff!important;color:#202653!important;border-color:#e0e5f5!important}
+:root[data-theme="light"] .onepage *,:root[data-theme="light"] .report *,
+:root[data-theme="dark"] .onepage *,:root[data-theme="dark"] .report *{color:#202653}
+:root[data-theme="light"] .onepage .ophead,:root[data-theme="light"] .onepage .ophead *,
+:root[data-theme="dark"] .onepage .ophead,:root[data-theme="dark"] .onepage .ophead *,
+:root[data-theme="light"] .onepage .opoffer,:root[data-theme="light"] .onepage .opoffer *,
+:root[data-theme="dark"] .onepage .opoffer,:root[data-theme="dark"] .onepage .opoffer *,
+:root[data-theme="light"] .onepage .opnum,:root[data-theme="light"] .onepage .opnum *,
+:root[data-theme="dark"] .onepage .opnum,:root[data-theme="dark"] .onepage .opnum *{color:#fff!important}
