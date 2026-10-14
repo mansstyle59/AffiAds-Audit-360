@@ -495,6 +495,12 @@ async function googleSuggest(input){
  const r=await fetchJson("https://places.googleapis.com/v1/places:autocomplete",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify(body)},12000);
  return (r.suggestions||[]).map(s=>s.placePrediction).filter(Boolean).map(p=>({src:"google",id:p.placeId,main:p.structuredFormat&&p.structuredFormat.mainText&&p.structuredFormat.mainText.text||p.text&&p.text.text||"",secondary:p.structuredFormat&&p.structuredFormat.secondaryText&&p.structuredFormat.secondaryText.text||"",types:p.types||[]}));
 }
+/* Secours : la recherche textuelle Google trouve les commerces même lorsque
+   l’autocomplétion ne renvoie rien pour les premiers mots saisis. */
+async function googleTextSuggest(input){
+ const list=await placesSearch(input,"places.id,places.displayName,places.formattedAddress,places.primaryType,places.primaryTypeDisplayName,places.types",8);
+ return list.map(p=>({src:"google",id:p.id,main:p.displayName&&p.displayName.text||"",secondary:p.formattedAddress||"",city:cityFromSecondary(p.formattedAddress||""),types:p.types||[],typeLabel:p.primaryTypeDisplayName&&p.primaryTypeDisplayName.text||""})).filter(p=>p.main);
+}
 async function photonSuggest(input){
  const r=await fetchJson("https://photon.komoot.io/api/?lang=fr&limit=8&q="+encodeURIComponent(input),{},12000);
  return (r.features||[]).filter(f=>f.properties&&f.properties.name&&["FR","BE","CH","LU","MC"].includes(String(f.properties.countrycode).toUpperCase())&&f.properties.osm_key!=="place"&&f.properties.osm_key!=="highway"&&f.properties.osm_key!=="boundary").slice(0,6).map(f=>{const p=f.properties;return {src:"osm",main:p.name,secondary:[[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.town||p.village].filter(Boolean).join(" ")].filter(Boolean).join(", "),city:p.city||p.town||p.village||"",lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],key:p.osm_key,value:p.osm_value,osmType:p.osm_type,osmId:p.osm_id}});
@@ -519,9 +525,28 @@ function renderSuggest(){
 }
 function queueSuggest(){
  clearTimeout(suggestTimer);
- const name=$("autoName").value.trim();if(name.length<3){suggestItems=[];closeSuggest();return}
+ const name=$("autoName").value.trim();if(name.length<2){suggestItems=[];closeSuggest();return}
  const q=name+($("autoCity").value.trim()?" "+$("autoCity").value.trim():"");
- suggestTimer=setTimeout(async()=>{const seq=++suggestSeq;try{let items=[];if(hasKey()){try{items=await googleSuggest(q)}catch(e){items=[]}}if(!items.length)items=await photonSuggest(q);if(seq!==suggestSeq)return;suggestItems=items;suggestIdx=-1;items.forEach(s=>s.regPending=true);renderSuggest();enrichSuggest(seq,name)}catch(e){suggestItems=[];closeSuggest()}},hasKey()?280:650);
+ suggestTimer=setTimeout(async()=>{
+  const seq=++suggestSeq;
+  try{
+   let items=[];
+   if(hasKey()){
+    try{items=await googleSuggest(q)}catch(e){items=[]}
+    if(!items.length){try{items=await googleTextSuggest(q)}catch(e){items=[]}}
+   }
+   if(!items.length){try{items=await photonSuggest(q)}catch(e){items=[]}}
+   if(seq!==suggestSeq)return;
+   suggestItems=items;suggestIdx=-1;items.forEach(s=>s.regPending=true);
+   if(items.length){renderSuggest();enrichSuggest(seq,name)}
+   else renderSuggestEmpty(name,hasKey());
+  }catch(e){if(seq===suggestSeq)renderSuggestEmpty(name,hasKey())}
+ },hasKey()?220:420);
+}
+function renderSuggestEmpty(name,withGoogle){
+ const box=$("suggest");
+ box.innerHTML='<div class="src" style="padding:12px">Aucun commerce trouvé pour « '+esc(name)+' ». Essayez avec le nom et la ville, ou vérifiez la clé Google dans Réglages'+(withGoogle?' (API Places et restrictions de la clé).':'.')+'</div>';
+ box.classList.remove("hidden");$("autoName").setAttribute("aria-expanded","true");
 }
 function setPickInfo(){const b=state.biz;$("pickInfo").textContent=b.placeId?"✓ Établissement Google sélectionné : "+(b.pickLabel||b.name):b.osmPick?"✓ Établissement OpenStreetMap sélectionné : "+(b.pickLabel||b.name):""}
 function clearPick(){delete state.biz.reg;delete state.biz.placeId;delete state.biz.osmPick;delete state.biz.pickLabel;setPickInfo()}
