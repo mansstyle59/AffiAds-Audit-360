@@ -1,0 +1,54 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const read = (p) => fs.readFileSync(path.join(process.cwd(), p), "utf8");
+const html = read("index.html"), css = read("assets/app.css"), js = read("assets/app.js"), sw = read("sw.js");
+const manifest = JSON.parse(read("manifest.webmanifest"));
+
+test("PWA manifest is valid and its icons exist", () => {
+  assert.equal(manifest.name, "AffiAds Audit 360°");
+  assert.equal(manifest.lang, "fr");
+  assert.equal(manifest.display, "standalone");
+  assert.ok(Array.isArray(manifest.icons) && manifest.icons.length);
+  for (const icon of manifest.icons) {
+    const p = icon.src.split("?")[0].replace(/^\.\//, "");
+    assert.ok(fs.existsSync(path.join(process.cwd(), p)), "missing PWA icon: " + icon.src);
+  }
+});
+
+test("home audit, chat and theme controls are present", () => {
+  for (const id of ["view-auto","autoName","autoCity","runAuto","autoToReport","keyNotice","botFab","botPanel","botClose","view-settings"]) {
+    assert.ok(new RegExp('id=["\\x27]' + id + '["\\x27]').test(html), "missing element id=" + id);
+  }
+  for (const theme of ["auto","light","dark"]) assert.ok(html.includes('data-theme-set="' + theme + '"'));
+});
+
+test("all local assets referenced in HTML exist", () => {
+  const refs = [...html.matchAll(/(?:src|href)=["\\x27]([^"\\x27]+)["\\x27]/g)].map(m => m[1]);
+  for (const ref of refs) {
+    if (!ref.startsWith("assets/")) continue;
+    const p = ref.split("?")[0];
+    assert.ok(fs.existsSync(path.join(process.cwd(), p)), "missing HTML asset: " + ref);
+  }
+});
+
+test("service worker caches the essential application shell", () => {
+  for (const p of ["index.html","assets/app.css","assets/app.js","manifest.webmanifest","assets/app-icon.svg"]) {
+    assert.ok(sw.includes('"' + p + '"'), "service worker missing " + p);
+  }
+  assert.match(sw, /affiads-audit-2026-\d+/);
+});
+
+test("day/night theme overrides global forced backgrounds and keeps dark card text readable", () => {
+  assert.match(css, /:root\[data-theme="light"\] body\{background:#f6f7ff!important;color:#171b4f!important\}/);
+  assert.match(css, /:root\[data-theme="dark"\] body\{background:#080d2d!important;color:#f3f4ff!important\}/);
+  assert.match(css, /:root\[data-theme="dark"\] \.card h2[^\{]*\{[^}]*color:#e6eaff!important/);
+  assert.match(js, /function applyTheme\(\)[^{]*\{[^}]*settings\.theme/);
+});
+
+test("static HTML contains no duplicate IDs", () => {
+  const ids = [...html.matchAll(/\bid=["\\x27]([^"\\x27]+)["\\x27]/g)].map(m => m[1]);
+  const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+  assert.deepEqual(duplicates, [], "duplicate IDs: " + duplicates.join(", "));
+});
