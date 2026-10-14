@@ -1434,7 +1434,7 @@ function socScore(C){let t=0,o=0;C.forEach(x=>{t+=x.w;if(x.ok)o+=x.w});return t?
 let socRunning=false;
 async function runSocial(){
  if(socRunning)return;const force=$("socNet").value;const ref=socParse($("socUrl").value,force==="auto"?null:force);
- if(!ref){toast("Collez le lien d’un compte Instagram ou d’une chaîne YouTube, ou son @nom.");$("socUrl").focus();return}
+ if(!ref){toast("Collez un lien Instagram ou YouTube pour l’analyse automatique. Facebook, TikTok et Snapchat se confirment dans « Boîte à outils ».");$("socUrl").focus();return}
  const niche=$("socNiche").value.trim();socRunning=true;$("runSocial").disabled=true;$("runSocial").textContent="Analyse en cours…";
  const box=$("socResult");box.innerHTML='<p class="muted"><span class="spin">◌</span> Lecture du compte '+(ref.net==="youtube"?"YouTube":"Instagram")+'…</p>';
  const res={net:ref.net,input:$("socUrl").value.trim(),niche,at:nowLabel(),date:today()};
@@ -1474,8 +1474,8 @@ function socBlock(r,forReport){
 }
 function renderSocial(){
  const A=state.socialAudits||{},box=$("socResult");if(!box)return;
- const found=((state.data&&state.data.social&&state.data.social.found)||{});const chips=["Instagram","YouTube"].filter(n=>found[n]).map(n=>'<button type="button" class="chipq chipico" data-soc="'+esc(found[n].url)+'">'+netIcon(n,20)+n+' trouvé : analyser</button>').join("");
- $("socFound").innerHTML=chips;$("socFound").querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>{$("socUrl").value=b.dataset.soc;$("socNet").value="auto";runSocial()});
+ const found=((state.data&&state.data.social&&state.data.social.found)||{});const chips=["Facebook","Instagram","YouTube","TikTok","Snapchat"].filter(n=>found[n]).map(n=>'<button type="button" class="chipq chipico" data-soc="'+esc(found[n].url)+'" data-net="'+esc(n)+'">'+netIcon(n,20)+n+(n==="Facebook"?' trouvé : vérifier':' trouvé : analyser')+'</button>').join("");
+ $("socFound").innerHTML=chips;$("socFound").querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>{if(b.dataset.net==="Facebook"||b.dataset.net==="TikTok"||b.dataset.net==="Snapchat"){nav("tools");$("socialVerifiedNet").value=b.dataset.net;$("socialVerifiedUrl").value=b.dataset.soc;$("socialVerifiedUrl").focus();toast("Profil "+b.dataset.net+" trouvé : confirmez le lien public pour l’ajouter au rapport.");return}$("socUrl").value=b.dataset.soc;$("socNet").value="auto";runSocial()});
  if(!$("socNiche").value&&state.biz&&state.biz.name)$("socNiche").value=[kwOf(state.biz.type),state.biz.city].filter(Boolean).join(" à ");
  const parts=["instagram","youtube"].filter(n=>A[n]).map(n=>socBlock(A[n],false)+(n==="instagram"?socManualHtml():""));
  box.innerHTML=(parts.join("")||'<p class="muted" style="margin-top:12px">Aucun compte analysé pour ce client.</p>');glossify(box);
