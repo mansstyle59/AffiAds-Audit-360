@@ -825,3 +825,15 @@ body:not(.rep-one) #report1{display:none}
 .soc .soc-verification{display:block;font-size:10.5px;font-weight:750;margin-top:2px}
 .soc.on .soc-verification{color:#21815f}
 .soc-source{display:block;font-size:10px;line-height:1.3;color:#716e96;margin-top:2px}
+
+/* Actions discrètes de vérification des réseaux sociaux */
+.socwrap{min-width:0}
+.soc-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.soc-mini{appearance:none;border:1px solid #dedbed;background:#fff;color:#625b86;border-radius:7px;padding:4px 7px;font:600 10px/1.2 inherit;cursor:pointer}
+.soc-mini:hover{border-color:#9185e8;background:#f8f6ff}
+.soc-mini:disabled{opacity:.6;cursor:wait}
+.soc-candidates{margin:5px 0 8px;padding:8px 10px;border:1px solid #e8e4f3;border-radius:10px;background:#fbfaff}
+.soc-candidates>small{display:block;color:#716b8e;font-size:10px;margin-bottom:5px}
+.soc-candidate-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid #efedf6}
+.soc-candidate-row a{font-size:11px;min-width:0;overflow-wrap:anywhere}
+@media(max-width:420px){.soc-actions{gap:4px}.soc-mini{font-size:9.5px;padding:4px 6px}.soc-candidate-row{align-items:flex-start}}
