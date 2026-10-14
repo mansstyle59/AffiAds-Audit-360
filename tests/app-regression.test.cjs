@@ -19,13 +19,13 @@ test("PWA manifest is valid and its icons exist", () => {
 
 test("home audit, chat and theme controls are present", () => {
   for (const id of ["view-auto","autoName","autoCity","runAuto","autoToReport","keyNotice","botFab","botPanel","botClose","view-settings"]) {
-    assert.ok(new RegExp('id=["\\x27]' + id + '["\\x27]').test(html), "missing element id=" + id);
+    assert.ok(new RegExp('id="' + id + '"' ).test(html), "missing element id=" + id);
   }
   for (const theme of ["auto","light","dark"]) assert.ok(html.includes('data-theme-set="' + theme + '"'));
 });
 
 test("all local assets referenced in HTML exist", () => {
-  const refs = [...html.matchAll(/(?:src|href)=["\\x27]([^"\\x27]+)["\\x27]/g)].map(m => m[1]);
+  const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m => m[1]);
   for (const ref of refs) {
     if (!ref.startsWith("assets/")) continue;
     const p = ref.split("?")[0];
