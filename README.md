@@ -83,17 +83,18 @@ Le site est publié automatiquement sur GitHub Pages à chaque mise à jour de l
 L’interface utilise un système visuel commun : mêmes couleurs, typographie, rayons, états de boutons, champs de formulaire et espacements sur Audit, Clients, Rapport, Message, Analyse détaillée et Réglages. La navigation mobile garde les actions principales visibles ; les sections secondaires sont regroupées dans « Plus ». Les indicateurs automatiques doivent être distingués des vérifications manuelles et des correspondances de comptes sociaux qui restent à confirmer.
 
 
-## Build iOS IPA (installation sur iPhone)
+## Build iOS IPA pour ESign / GBox
 
-Le workflow `.github/workflows/ios-ipa.yml` prépare une application iOS native à partir des fichiers web et produit un fichier IPA signé pour installation personnelle. Pour l’exécuter :
+Le workflow `.github/workflows/ios-ipa.yml` construit un IPA **non signé**, prêt à être importé dans ESign ou GBox pour être signé avec ton propre certificat. Aucun certificat Apple ni secret GitHub n’est nécessaire pour fabriquer l’artefact.
 
-1. Dans GitHub, ouvrir **Settings → Secrets and variables → Actions → New repository secret**.
-2. Ajouter les secrets suivants : `APPLE_CERTIFICATE_BASE64` (certificat Apple Distribution au format .p12 encodé en Base64), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64` (profil Ad Hoc encodé en Base64), `APPLE_TEAM_ID` et `IOS_BUNDLE_ID`.
-3. Le certificat et le profil doivent correspondre au même compte Apple Developer, à l’identifiant de bundle et aux appareils autorisés dans le profil.
-4. Ouvrir **Actions → Build iOS IPA → Run workflow**. Une fois terminé, récupérer `AffiAds-Audit-360-IPA` dans les artefacts du run (conservé 7 jours).
+1. Ouvre **Actions → Build iOS IPA for ESign / GBox → Run workflow**.
+2. Laisse l’identifiant par défaut `fr.affiads.audit360`, ou remplace-le par l’identifiant de bundle associé à ton profil de signature.
+3. Lance le workflow et attends que l’exécution soit verte.
+4. Dans le détail de l’exécution, télécharge l’artefact **AffiAds-Audit-360-ESign-GBox-IPA**.
+5. Sur l’iPhone, importe le fichier IPA dans ESign/GBox puis signe-le avec un certificat et un profil de provisionnement valides, correspondant à l’identifiant de bundle et à ton appareil si le profil l’exige. Installe ensuite l’application depuis l’outil.
 
-**Important :** ce workflow ne crée pas un certificat Apple et ne contourne pas la signature iOS. Un compte Apple Developer et un profil de provisionnement valides sont nécessaires pour un IPA Ad Hoc installable. Pour une publication officielle sur l’App Store, il faut une procédure de distribution App Store distincte.
+**Important :** l’IPA généré par GitHub Actions est volontairement non signé. ESign/GBox ne peut l’installer que si la signature est valide pour ton appareil et ta configuration. Le workflow ne fournit pas de certificat, ne contourne pas les règles de signature iOS et ne garantit pas la compatibilité avec un certificat révoqué ou un profil expiré. Évite les certificats d’entreprise partagés provenant de sources inconnues.
 
 ### Code d’accès et confidentialité
 
-Le code PIN est configuré dans l’application et son empreinte est stockée localement ; il n’est pas intégré comme texte en clair au dépôt public. Après l’installation, créer le code **1606** sur l’appareil si aucun code n’est déjà configuré, puis confirmer ce même code. Une réinstallation peut effacer ce réglage local : le code devra alors être configuré de nouveau. Ne pas considérer ce PIN local comme une authentification serveur : les données et les clés sensibles ne doivent pas être publiées dans le code client. La véritable restriction à une seule personne nécessite une authentification côté serveur.
+Le code PIN est configuré dans l’application et son empreinte est stockée localement ; il n’est pas intégré comme texte en clair au dépôt public. Après l’installation, configure le code **1606** sur l’appareil si aucun code n’est déjà configuré, puis confirme ce même code. Une réinstallation peut effacer ce réglage local : le code devra alors être configuré de nouveau. Ne considère pas ce PIN local comme une authentification serveur : une véritable restriction à une seule personne nécessite une authentification côté serveur.
