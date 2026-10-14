@@ -1508,3 +1508,27 @@ details.adv summary{color:#c7ccef}
   .audit-form-card{padding:15px!important}
   .main{padding-left:14px!important;padding-right:14px!important}
 }
+
+
+/* Export et aperçu PDF : contraste indépendant du thème de l'application */
+.onepage .op,.pdfhold .op{background:#fff!important;color:#202653!important}
+.onepage .op h1,.onepage .op h2,.onepage .op h3,.onepage .op p,.onepage .op li,.onepage .op span,.onepage .op strong,
+.pdfhold .op h1,.pdfhold .op h2,.pdfhold .op h3,.pdfhold .op p,.pdfhold .op li,.pdfhold .op span,.pdfhold .op strong{color:#202653}
+.onepage .ophead,.onepage .ophead *,.pdfhold .ophead,.pdfhold .ophead *,
+.onepage .opoffer,.onepage .opoffer *,.pdfhold .opoffer,.pdfhold .opoffer *,
+.onepage .opnum,.onepage .opnum *,.pdfhold .opnum,.pdfhold .opnum *{color:#fff!important}
+.onepage .ophead,.pdfhold .ophead{background:linear-gradient(115deg,#304dff 0%,#5140f4 58%,#7138ed 100%)!important}
+.onepage .opbox.good,.onepage .opbox.bad,.pdfhold .opbox.good,.pdfhold .opbox.bad{background:#fff!important}
+.onepage .opcharttrack,.pdfhold .opcharttrack{background:#eceeff!important}
+.onepage .opfoot,.pdfhold .opfoot{color:#62698b!important}
+.onepage .opfoot *,.pdfhold .opfoot *{color:#62698b!important}
+.pdfhold{position:fixed!important;left:-12000px!important;top:0!important;width:794px!important;background:#fff!important;color:#202653!important;z-index:-1!important;pointer-events:none!important}
+.pdfhold .onepage,.pdfhold .report{width:794px!important;max-width:794px!important;background:#fff!important;color:#202653!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+@media(max-width:900px){
+  .clientrow{background:#f7f8ff!important;border:1px solid #e4e8f8!important;border-radius:18px!important}
+  .clientrow .who b{color:#171b4f!important}
+  .clientrow .who span{color:#687092!important}
+  .clientrow .del{background:#fff!important;color:#25295c!important;border-color:#dce1f5!important}
+  #view-clients .listhead{align-items:center!important;gap:10px!important}
+  #view-clients .listhead .btn{white-space:nowrap!important}
+}
