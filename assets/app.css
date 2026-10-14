@@ -1794,3 +1794,28 @@ details.adv summary{color:#c7ccef}
 /* Accès propriétaire : les options de création/réinitialisation ne sont pas proposées. */
 #rememberWrap[hidden],#gateForgot[hidden],#gateBio[hidden],#pinChange[hidden],#pinDisable[hidden]{display:none!important}
 #pinDelay:disabled{opacity:.8;color:var(--muted)}
+
+
+/* UI polish 2026-68: high-contrast brand and focused mobile actions */
+:root[data-theme="dark"] .brand,
+:root[data-theme="dark"] .brand>div,
+:root[data-theme="dark"] .brand>div:first-line { color:#f5f7ff!important; }
+:root[data-theme="dark"] .brand span { color:#c7d2f4!important; }
+:root[data-theme="dark"] .top .toptitle h1,
+:root[data-theme="dark"] #pageTitle { color:#f7f8ff!important; }
+:root[data-theme="dark"] .top .toptitle { min-width:0; }
+:root[data-theme="dark"] .topacts .chip,
+:root[data-theme="dark"] #clientChip { background:#202b58!important; color:#fff!important; border:1px solid #6475bc!important; }
+:root[data-theme="dark"] #clientChipName { color:#fff!important; }
+#clientChip { font-weight:750; min-height:44px; padding:10px 16px; border-radius:14px; }
+#clientChip .chipdot { flex:0 0 9px; }
+@media(max-width:900px){
+  .top { align-items:flex-start; gap:10px; }
+  .top .toptitle h1 { font-size:clamp(26px,7vw,34px); line-height:1.12; }
+  .topacts { flex-wrap:wrap; justify-content:flex-end; gap:7px; }
+  #savedState { display:none!important; }
+  #clientChip { min-height:42px; padding:9px 12px; font-size:13px; }
+  #pdf { min-height:42px; padding:9px 14px; }
+  .hero-points { gap:8px!important; }
+  .hero-points span { min-width:0; }
+}
