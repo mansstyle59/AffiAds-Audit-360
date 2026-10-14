@@ -829,7 +829,7 @@ body:not(.rep-one) #report1{display:none}
 /* Actions discrètes de vérification des réseaux sociaux */
 .socwrap{min-width:0}
 .soc-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
-.soc-mini{appearance:none;border:1px solid #dedbed;background:#fff;color:#625b86;border-radius:7px;padding:4px 7px;font:600 10px/1.2 inherit;cursor:pointer}
+.soc-mini{appearance:none;border:1px solid #dedbed;background:#fff;color:#625b86;border-radius:7px;padding:4px 7px;font-family:inherit;font-size:10px;font-weight:600;line-height:1.2;cursor:pointer}
 .soc-mini:hover{border-color:#9185e8;background:#f8f6ff}
 .soc-mini:disabled{opacity:.6;cursor:wait}
 .soc-candidates{margin:5px 0 8px;padding:8px 10px;border:1px solid #e8e4f3;border-radius:10px;background:#fbfaff}
