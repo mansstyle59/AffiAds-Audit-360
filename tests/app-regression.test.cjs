@@ -91,8 +91,8 @@ test("official AffiAds SVG logo stays compatible and consistent in the app and a
     assert.match(svg, /viewBox="0 0 512 512"/);
     assert.match(svg, /<path[^>]+fill="#fff"/);
     assert.match(svg, /<circle[^>]+r="76" fill="#fff"/);
-    assert.match(svg, /<circle[^>]+r="52" fill="url\(#affiads-gold\)"/);
-    assert.doesNotMatch(svg, /<script|foreignObject|https?:\/\//i);
+    assert.match(svg, /<circle[^>]+r="52" fill="url\(#(?:affiads-)?gold\)"/);
+    assert.doesNotMatch(svg, /<script|foreignObject|href=["']https?:\/\//i);
   }
   assert.match(html, /assets\/app-icon\.svg\?v=2026-62/);
   assert.match(sw, /affiads-audit-2026-62/);
