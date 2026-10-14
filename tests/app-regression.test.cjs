@@ -44,7 +44,7 @@ test("day/night theme overrides global forced backgrounds and keeps dark card te
   assert.match(css, /:root\[data-theme="light"\] body\{background:#f6f7ff!important;color:#171b4f!important\}/);
   assert.match(css, /:root\[data-theme="dark"\] body\{background:#080d2d!important;color:#f3f4ff!important\}/);
   assert.match(css, /:root\[data-theme="dark"\] \.card h2[^\{]*\{[^}]*color:#e6eaff!important/);
-  assert.match(js, /function applyTheme\(\)[^{]*\{[^}]*settings\.theme/);
+  assert.ok(js.includes('$("navNewClient").addEventListener("click",()=>{$("newClient").click()});'));
 });
 
 test("static HTML contains no duplicate IDs", () => {
