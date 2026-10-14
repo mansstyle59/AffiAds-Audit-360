@@ -1606,8 +1606,15 @@ async function makePdf(){
   try{await document.fonts.ready}catch(e){}
   if(!full){
    const page=$("report1").cloneNode(true);page.removeAttribute("id");page.classList.add("pdfpage");holder.appendChild(page);await sleep(120);
-   const canvas=await pdfCanvas(page);let w=210,h=canvas.height*210/canvas.width;if(h>297){w=w*297/h;h=297}
-   doc.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",(210-w)/2,0,w,h);
+   const canvas=await pdfCanvas(page,2.5);
+   const maxW=194,maxH=277,scale=Math.min(maxW/canvas.width,maxH/canvas.height);
+   const w=canvas.width*scale,h=canvas.height*scale,x=(210-w)/2,y=(297-h)/2;
+   doc.setFillColor(255,255,255);doc.rect(0,0,210,297,"F");
+   doc.addImage(canvas.toDataURL("image/jpeg",0.94),"JPEG",x,y,w,h,undefined,"FAST");
+   doc.setDrawColor(226,228,245);doc.setLineWidth(0.25);doc.line(10,285,200,285);
+   doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(115,116,145);
+   doc.text("AFFIADS AUDIT 360°  ·  DOCUMENT DE TRAVAIL CONFIDENTIEL",10,290);
+   doc.text("Édité le "+frDate(today()),200,290,{align:"right"});
   }else{
    const src=$("report").querySelector("table.printwrap>tbody>tr>td")||$("report");
    const wrap=document.createElement("div");wrap.className="card report pdfpage";wrap.innerHTML=src.innerHTML;holder.appendChild(wrap);await sleep(150);
