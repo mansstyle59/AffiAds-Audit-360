@@ -1081,7 +1081,7 @@ function socialBlock(forReport){
 async function deepSocialSearch(net){
  const d=state.data||{},S=d.social||(d.social={found:{},checked:NETS.map(x=>x[0])});
  const match=NETS.find(x=>x[0]===net);if(!match)throw new Error("Réseau inconnu");
- const domain=match[1],name=String(state.biz.name||"").trim(),city=String(state.biz.city||"").trim(),address=String(state.biz.address||"").trim();
+ const domain=match[1],name=String(state.biz.name||"").trim(),city=String(state.biz.city||"").trim(),address=String(state.biz.address||"").trim();S.found=S.found||{};
  if(!name){toast("Renseignez d’abord le nom exact du commerce.");return}
  const queries=[
   '"'+name+'" "'+city+'" site:'+domain,
