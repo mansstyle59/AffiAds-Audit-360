@@ -1067,10 +1067,12 @@ function socialBlock(forReport){
   const f=S.found[n];let handlePath="";
   if(f){try{handlePath=decodeURIComponent(new URL(f.url).pathname.split("/").filter(Boolean)[0]||"")}catch(e){}}
   const handle=handlePath.startsWith("@")?handlePath.slice(1):handlePath;
-  const label=f?(forReport?esc(handle?"@"+handle:"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle:"Voir le compte")+'</a>'):"À vérifier";
+  const confirmed=!!(f&&f.verified===true);
+  const label=f?(forReport?esc(handle?"@"+handle:(confirmed?"Confirmé":"Profil trouvé")):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle:(confirmed?"Voir le compte":"Ouvrir le profil"))+'</a>'):"À vérifier";
+  const status=f?(confirmed?"Confirmé manuellement":"À confirmer"):"";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
-  return '<div class="soc '+(f?"on":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+src+'</span></div>';
- }).join("")+'</div><p class="muted"><small>Les comptes affichés sont détectés par recherche ou ajoutés après vérification manuelle. « À vérifier » signifie que les sources consultées n’ont pas confirmé de compte : cela ne prouve pas son absence. Contrôlez l’identité et l’activité du profil.</small></p>';
+  return '<div class="soc '+(confirmed?"on":f?"candidate":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+(status?'<small class="soc-verification">'+status+'</small>':"")+src+'</span></div>';
+ }).join("")+'</div><p class="muted"><small>Les profils trouvés automatiquement sont des pistes, pas des comptes confirmés. Ouvrez chaque lien et vérifiez le nom, la ville, les photos et les coordonnées avant de le présenter comme officiel. Seuls les comptes validés manuellement sont marqués « Confirmé ». « À vérifier » ne prouve pas l’absence d’un compte.</small></p>';
 }
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
