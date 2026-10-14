@@ -314,12 +314,12 @@ test("2026-91 assistant prioritizes client lookup and shows stored client detail
 
 
 test("2026-91 report preview has a helpful empty state and avoids floating assistant overlap", () => {
-  assert.match(js, /b\\.name\\|\\|"Votre prochain audit"/);
-  assert.match(js, /Renseignez le nom et la ville du commerce pour personnaliser ce rapport/);
-  assert.match(css, /body\\[data-view="report"\\] \\.botfab\\{display:none!important\\}/);
-  assert.match(css, /#view-report \\.onepage \\.op-emptyhint/);
-  assert.match(css, /#view-report \\.actions\\{display:grid!important;grid-template-columns:1fr 1fr!important/);
+  assert.ok(js.includes('b.name||"Votre prochain audit"'));
+  assert.ok(js.includes("Renseignez le nom et la ville du commerce pour personnaliser ce rapport."));
+  assert.ok(css.includes('body[data-view="report"] .botfab{display:none!important}'));
+  assert.ok(css.includes("#view-report .onepage .op-emptyhint"));
+  assert.ok(css.includes("#view-report .actions{display:grid!important;grid-template-columns:1fr 1fr!important"));
   assert.ok(html.includes("assets/app.css?v=2026-91"));
   assert.ok(html.includes("assets/app.js?v=2026-91"));
-  assert.match(sw, /affiads-audit-2026-91/);
+  assert.ok(sw.includes("affiads-audit-2026-91"));
 });
