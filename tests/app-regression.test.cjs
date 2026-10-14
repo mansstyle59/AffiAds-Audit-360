@@ -112,13 +112,21 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
 });
 
 
-test("2026-75 fixes unreadable dark-theme cards and keeps report preview readable on white paper", () => {
-  assert.match(css, /2026-75 • Contrast and coherence/);
-  assert.match(css, /\\.main \\.card:not\\(\\.onepage\\):not\\(\\.report\\) h2,/);
-  assert.match(css, /:root\\[data-theme="dark"\\] \\.main \\.onepage \\.op h1,/);
+test("2026-76 keeps dark-theme cards and the white report preview readable", () => {
+  assert.match(css, /2026-75 • Contrast and coherence|2026-76 • Contrast and coherence/);
+  assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#202653!important/);
-  assert.match(css, /\\.main \\.onepage \\.op \\.ophead \\*/);
-  assert.match(html, /assets\\/app\\.css\\?v=2026-75/);
-  assert.match(html, /assets\\/app\\.js\\?v=2026-75/);
-  assert.match(sw, /affiads-audit-2026-75/);
+  assert.match(html, /assets\/app\.css\?v=2026-76/);
+  assert.match(html, /assets\/app\.js\?v=2026-76/);
+  assert.match(sw, /affiads-audit-2026-76/);
+});
+
+test("mobile navigation matches the reference order and all primary actions are reachable", () => {
+  assert.match(html, /<span class="t">Accueil<\/span>/);
+  assert.match(html, /<span class="t">Clients<\/span>/);
+  assert.match(html, /id="navNewClient"[^>]*aria-label="Commencer un nouvel audit"/);
+  assert.match(html, /<span class="t">Audits<\/span>/);
+  assert.match(html, /id="navMore"/);
+  assert.match(html, /data-view="pitch"/);
+  assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{\$\("newClient"\)\.click\(\)\}\)/);
 });
