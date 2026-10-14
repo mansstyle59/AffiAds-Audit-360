@@ -1595,7 +1595,7 @@ function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet Affi
 let pdfBusy=false;
 async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
 
-/* PDF polish 2026-74: more deliberate A4 pagination and document metadata */
+/* PDF polish 2026-90: more deliberate A4 pagination and document metadata */
 function pdfPageHead(doc,M,y,title){
  doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(57,72,216);
  doc.text("AffiAds Audit 360°",M,9);
@@ -2159,14 +2159,14 @@ async function syncHandlePending(){
    redemandent le code ou Face ID. Questions libres : Gemini si la clé le permet. */
 const Bot={open:false,history:[],started:false,rec:null};
 const BOT_START=[
- ["sum","Résumer l’audit en cours","Score, constats et priorités"],
- ["offer","Que proposer au client ?","Prestations adaptées à l’audit"],
- ["find","Trouver un audit","Par nom ou par ville"],
- ["new","Nouvel audit","Analyser un autre commerce"],
- ["lock","Code et Face ID","Changer le code, déverrouillage"],
- ["sync","Ajouter un appareil","Téléphone, ordinateur, tablette"]];
+ ["find","Trouver un client","Par nom, ville, téléphone ou site"],
+ ["info","Fiche client","Coordonnées, audit, score et priorités"],
+ ["recent","Derniers clients","Rouvrir rapidement un dossier"],
+ ["sum","Résumer l’audit","Score, constats et prochaines actions"],
+ ["offer","Que proposer ?","Prestations adaptées à l’audit"],
+ ["new","Nouvel audit","Analyser un autre commerce"]];
 const BOT_ICO={sum:'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',offer:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',find:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',new:'<path d="M12 5v14M5 12h14"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',sync:'<rect x="3" y="5" width="12" height="9" rx="1.5"/><rect x="16" y="9" width="5" height="10" rx="1.2"/><path d="M6 18h7"/>'};
-const BOT_ASK={sum:"Résume l’audit en cours",offer:"Que proposer à ce client ?",find:"Trouver un audit",new:"Nouvel audit",lock:"Changer mon code",sync:"Ajouter un appareil"};
+const BOT_ASK={find:"Trouver un client",info:"Informations sur le client actuel",recent:"Mes derniers clients",sum:"Résume l’audit en cours",offer:"Que proposer à ce client ?",new:"Nouvel audit"};
 function botEsc(t){return esc(t).replace(/\n/g,"<br>")}
 /* Mise en forme légère des réponses de l'IA : gras, listes, paragraphes */
 function botMd(t){
@@ -2200,7 +2200,7 @@ function botToggle(open){
  if(Bot.open){if(!Bot.started){Bot.started=true;botReset()}setTimeout(()=>{if(matchMedia("(min-width:901px)").matches)$("botInput").focus()},80)}
  else if(Bot.rec){try{Bot.rec.stop()}catch(e){}}
 }
-const BOT_CHIPS=["Résumer l’audit","Que proposer ?","Mes derniers audits","Les meilleures opportunités","Changer mon code","Exporter mes audits"];
+const BOT_CHIPS=["Trouver un client","Infos sur le client actuel","Mes derniers clients","Coordonnées du client","Que proposer ?","Rédiger un message"];
 function renderBotChips(list){const L=list&&list.length?list:BOT_CHIPS;$("botChips").innerHTML=L.map(c=>'<button type="button" class="chipq">'+esc(c)+'</button>').join("");$("botChips").querySelectorAll(".chipq").forEach(b=>b.onclick=()=>botAsk(b.textContent))}
 /* Synthèse de l'audit ouvert, à partir des données réelles */
 function botHasAudit(){return !!(state.biz&&state.biz.name&&(state.data&&state.data.fetchedAt||calc().n))}
@@ -2239,14 +2239,43 @@ function botShowAudits(list,title){
  botSay((title||"Vos audits")+" :<ul class=\"blist\">"+top.map(a=>"<li>"+auditLine(a)+"</li>").join("")+"</ul>"+(list.length>5?"<small>+ "+(list.length-5)+" autre(s) dans l’écran Clients.</small>":""),
   top.slice(0,3).flatMap(a=>[["Ouvrir "+a.biz.name,()=>{switchTo(a.id);botToggle(false);nav("auto")}],["Rapport "+a.biz.name,()=>{switchTo(a.id);botToggle(false);nav("report")}]]).slice(0,4).concat(list.length>3?[["Voir tous les clients",()=>{botToggle(false);nav("clients")}]]:[]));
 }
+function botClientSearchText(a){
+ const b=a.biz||{},d=a.data||{};
+ return norm([b.name,b.city,b.type,b.site,b.maps,b.phone,b.address,b.context,b.keyword,a.notes,a.pitch,
+  ...(d.findings||[]).map(x=>x.text),
+  ...Object.values(a.auto||{}).map(x=>typeof x==="string"?x:JSON.stringify(x||{})),
+  ...Object.values(a.socialAudits||{}).map(x=>JSON.stringify(x||{}))].filter(Boolean).join(" "));
+}
+function botClientActions(a){
+ return [["Ouvrir la fiche",()=>{switchTo(a.id);botToggle(false);nav("auto")}],["Voir le rapport",()=>{switchTo(a.id);botToggle(false);nav("report")}],["Message prospect",()=>{switchTo(a.id);botToggle(false);nav("pitch")}]];
+}
+function botClientDetail(a){
+ const b=a.biz||{},d=a.data||{},score=scoreOf(a),findings=(d.findings||[]).slice(0,3);
+ const rows=[["Ville",b.city],["Activité",b.type],["Téléphone",b.phone],["Adresse",b.address],["Site web",b.site],["Fiche Google",b.maps],["Note Google",b.rating!=null?b.rating+(b.reviews!=null?" ("+b.reviews+" avis)":""):null],["Date de la fiche",b.date?frDate(b.date):null],["Notes",a.notes]];
+ const info=rows.filter(([k,v])=>v!==undefined&&v!==null&&String(v).trim()!=="").map(([k,v])=>"<li><b>"+botEsc(k)+" :</b> "+(k==="Site web"||k==="Fiche Google"&&/^https?:/i.test(String(v))?'<a href="'+botEsc(safeUrl(v)||"#")+'" target="_blank" rel="noopener">'+botEsc(v)+'</a>':botEsc(String(v)))+"</li>").join("");
+ const status=d.fetchedAt?"Audit réalisé":Object.keys(a.checks||{}).some(k=>a.checks[k])?"Audit en cours":"Fiche enregistrée";
+ const facts=findings.length?findings.map(x=>"<li>"+botEsc(x.text)+"</li>").join(""):"";
+ botSay("<b>"+botEsc(b.name||"Client sans nom")+"</b><p>"+botEsc(status)+(score!=null?" · Score indicatif : <b>"+score+"/100</b>":" · Score pas encore disponible")+"</p>"+(info?'<p class="bsub">Informations enregistrées</p><ul class="blist">'+info+"</ul>":"<p>Aucune coordonnée complémentaire n’est enregistrée dans cette fiche.</p>")+(facts?'<p class="bsub">Constats de l’audit</p><ul class="blist">'+facts+"</ul>":""),botClientActions(a),["Trouver un autre client","Que proposer ?","Rédiger un message"]);
+}
 function botFind(q){
- const stop=/\b(trouve[rz]?|cherche[rz]?|retrouve[rz]?|ouvre[rz]?|ouvrir|affiche[rz]?|montre[rz]?|audit|audits|rapport|le|la|les|l|de|du|des|d|mon|mes|pour|sur|a|à|svp|stp|moi|client|commerce|resto|restaurant|ville)\b/gi;
- const term=norm(q.replace(stop," "));const words=term.split(" ").filter(w=>w.length>1);
- if(!words.length){botShowAudits(auditsSorted());return}
- const res=auditsSorted().filter(a=>{const t=norm(a.biz.name+" "+(a.biz.city||"")+" "+(a.biz.type||""));return words.every(w=>t.includes(w))||words.some(w=>w.length>3&&t.includes(w))});
- botShowAudits(res,res.length?"J’ai trouvé "+res.length+" audit"+(res.length>1?"s":"")+" pour « "+botEsc(term)+" »":"");
+ const stop=/\b(trouve[rz]?|cherche[rz]?|recherche|retrouve[rz]?|ouvre[rz]?|ouvrir|affiche[rz]?|montre[rz]?|audit|audits|rapport|le|la|les|l|de|du|des|d|mon|mes|pour|sur|a|à|svp|stp|moi|client|clients|commerce|resto|restaurant|ville|fiche|infos?|informations?|coordonnees?|telephone|adresse|site|web|dernier|recents?|actuel|actuelle)\b/gi;
+ const term=norm(q.replace(stop," ")),words=term.split(" ").filter(w=>w.length>1);
+ if(!words.length){botShowAudits(auditsSorted(),"Vos clients les plus récents");return}
+ const res=auditsSorted().map(a=>({a,text:botClientSearchText(a)})).map(x=>({...x,score:words.reduce((n,w)=>n+(x.text.includes(w)?(norm(x.a.biz.name).includes(w)?3:1):0),0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||String(b.a.updatedAt||b.a.createdAt).localeCompare(String(a.a.updatedAt||a.a.createdAt))).map(x=>x.a);
+ if(res.length===1){botClientDetail(res[0]);return}
+ botShowAudits(res,res.length?"J’ai trouvé "+res.length+" client"+(res.length>1?"s":"")+" correspondant à « "+botEsc(term)+" »":"Aucun client ne correspond à « "+botEsc(term)+" »");
+}
+function botInfo(q){
+ const cleaned=norm(q).replace(/\b(donne|donnez|montre|montrez|affiche|affichez|cherche|trouve|retrouve|infos?|informations?|details?|fiche|coordonnees?|telephone|numero|adresse|site|web|email|mail|sur|pour|du|de|des|la|le|les|l|mon|ma|mes|ce|cet|cette|client|clients|commerce|actuel|actuelle|enregistre|enregistres|dernier|derniers|audit|audits|svp|stp)\b/g," ").trim();
+ const words=cleaned.split(/\s+/).filter(w=>w.length>1);
+ if(!words.length){if(state.biz&&state.biz.name){botClientDetail(state);return}botSay("Quel client recherchez-vous ? Donnez-moi son nom, sa ville, son téléphone ou son site.",[["Trouver un client",()=>botAsk("Trouver un client")],["Mes derniers clients",()=>botAsk("Mes derniers clients")]]);return}
+ const matches=auditsSorted().map(a=>({a,t:botClientSearchText(a)})).map(x=>({...x,score:words.reduce((n,w)=>n+(x.t.includes(w)?(norm(x.a.biz.name).includes(w)?4:1):0),0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).map(x=>x.a);
+ if(matches.length===1){botClientDetail(matches[0]);return}
+ if(matches.length>1){botShowAudits(matches,"Plusieurs clients correspondent. Choisissez le bon dossier.");return}
+ botSay("Je n’ai pas trouvé de dossier correspondant à « "+botEsc(cleaned)+" ». Je peux rechercher par nom, ville, téléphone ou site.",[["Voir tous les clients",()=>botShowAudits(auditsSorted(),"Vos clients enregistrés")],["Nouvel audit",()=>botAsk("Nouvel audit")]])
 }
 const INTENTS=[
+ {re:/(infos?|informations?|details?|fiche|coordonnees?|telephone|numero|adresse|site web).*(client|commerce|sur|de|du|actuel|actuelle)?|^(qui est|donne moi|donnez moi).*(client|commerce)/,run:botInfo},
  {re:/(instagram|youtube|insta\b|chaine youtube|reels|shorts)/,run:()=>botSay("L’écran « Instagram et YouTube » analyse un compte : niche, SEO, régularité, engagement et plan d’action. Le résultat s’ajoute au rapport du client.",[["Ouvrir l’audit Instagram / YouTube",()=>{botToggle(false);nav("social");setTimeout(()=>$("socUrl").focus(),300)}]])},
  {re:/(resum|synthese|bilan|recap).*(audit|client|en cours)?|^resume/,run:botSummary},
  {re:/(propos|vendre|offre|prestation|quoi faire pour|que faire pour)/,run:botOffer},
@@ -2292,10 +2321,12 @@ function botQr(){
 }
 const BOT_GUIDE="Tu es l’assistant intégré de l’appli AffiAds Audit 360° de Denis (AffiAds : visibilité en ligne des commerces locaux : fiche Google, photos et vidéos, réseaux sociaux, site mobile, avis). Réponds en français, au vouvoiement, simplement, en 5 phrases maximum ou une courte liste. Appuie-toi uniquement sur les données d’audit fournies ; si une donnée manque, dis-le au lieu d’inventer. Ne promets jamais de position ni de résultat chiffré. Écrans de l’appli : Audit (taper le nom du commerce, le choisir, puis lancer), Clients, Rapport (PDF), Message (prospection), Plus → Fiche commerce, Checklist, Visibilité IA, Recherche web, Tests du site, Boîte à outils, Réglages (thème, Face ID, code, synchronisation, clé Google, signature, export). Si la question ne concerne ni l’appli ni le marketing local, dis-le poliment.";
 function botContext(){
- const L="Audits enregistrés : "+auditsSorted().slice(0,15).map(a=>a.biz.name+(a.biz.city?" ("+a.biz.city+")":"")+(scoreOf(a)!=null?" score "+scoreOf(a):"")).join(" ; ")+".";
+ const L="Dossiers clients enregistrés (recherche locale sur cet appareil) : "+auditsSorted().slice(0,40).map(a=>{
+  const b=a.biz||{};return [b.name,b.city,b.type,b.phone,b.site,b.address,scoreOf(a)!=null?"score "+scoreOf(a)+"/100":""].filter(Boolean).join(" · ");
+ }).join(" ; ")+".";
  if(!botHasAudit())return L;
  const b=state.biz,c=calc();
- return L+"\nAudit ouvert : "+b.name+(b.city?", "+b.city:"")+(b.type?", "+b.type:"")+". Score "+(c.score??"—")+"/100. Constats : "+(state.data.findings||[]).map(f=>f.text).join(" | ")+"\nPlan d’action : "+issuesList().slice(0,8).map(p=>p.it+" → "+p.reco+(p.goal?" (objectif : "+p.goal+")":"")).join(" | ");
+ return L+"\nFiche actuellement ouverte : "+[b.name,b.city,b.type,b.phone,b.address,b.site,b.maps,b.rating!=null?"note "+b.rating:"",b.reviews!=null?b.reviews+" avis":"",b.date?"date "+b.date:"",state.notes?"notes "+state.notes:""].filter(Boolean).join(" · ")+". Score "+(c.score??"—")+"/100. Constats : "+(state.data.findings||[]).map(f=>f.text).join(" | ")+"\nPlan d’action : "+issuesList().slice(0,8).map(p=>p.it+" → "+p.reco+(p.goal?" (objectif : "+p.goal+")":"")).join(" | ");
 }
 async function botAsk(text){
  text=String(text||"").trim();if(!text)return;botUser(text);$("botInput").value="";botGrow();
