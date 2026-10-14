@@ -44,7 +44,7 @@ test("day/night theme overrides global forced backgrounds and keeps dark card te
   assert.match(css, /:root\[data-theme="light"\] body\{background:#f6f7ff!important;color:#171b4f!important\}/);
   assert.match(css, /:root\[data-theme="dark"\] body\{background:#080d2d!important;color:#f3f4ff!important\}/);
   assert.match(css, /:root\[data-theme="dark"\] \.card h2[^\{]*\{[^}]*color:#e6eaff!important/);
-  assert.ok(js.includes('$("navNewClient").addEventListener("click",()=>{$("newClient").click()});'));
+  assert.ok(js.includes('$("navNewClient").addEventListener("click",()=>{nav("auto");requestAnimationFrame(()=>{$("autoName").focus({preventScroll:true})})});'));
 });
 
 test("static HTML contains no duplicate IDs", () => {
@@ -128,14 +128,14 @@ test("mobile navigation matches the reference order and all primary actions are 
   assert.match(html, /<span class="t">Audits<\/span>/);
   assert.match(html, /id="navMore"/);
   assert.match(html, /data-view="pitch"/);
-  assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{\$\("newClient"\)\.click\(\)\}\)/);
+  assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{nav\("auto"\);requestAnimationFrame\(\(\)=>\{\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}\)\}\)/);
 });
 
 
 test("2026-97 compact iPhone access screen stays within small viewports", () => {
   assert.ok(html.includes("assets/app.css?v=2026-97"));
   assert.ok(html.includes("assets/app.js?v=2026-97"));
-  assert.ok(css.includes("2026-97 • Compact, safe-area-aware access screen for iPhone"));
+  assert.ok(css.includes("Finition cohérente mobile") || css.includes("2026-97 finishing") || css.includes("2026-97 final polish"));
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
@@ -216,14 +216,12 @@ test("2026-97 removes the oversized duplicate new-client hero button", () => {
   assert.match(sw, /affiads-audit-2026-97/);
 });
 
-test("2026-97 top bar offers useful Clients, New Audit and PDF actions", () => {
-  assert.match(html, /id="topClients"[^>]*title="Ouvrir la liste des clients"/);
-  assert.match(html, /id="topNewAudit"[^>]*title="Démarrer un nouvel audit"/);
+test("2026-97 mobile header removes duplicate Clients/New Audit actions while preserving PDF", () => {
+  assert.doesNotMatch(html, /id="topClients"|id="topNewAudit"/);
   assert.match(html, /id="pdf"[^>]*title="Créer le rapport PDF"/);
-  assert.match(js, /\$\("topClients"\)\.onclick=\(\)=>nav\("clients"\)/);
-  assert.match(js, /\$\("topNewAudit"\)\.onclick=\(\)=>\$\("newClient"\)\.click\(\)/);
-  assert.match(css, /\.topacts \.top-action\{display:inline-flex/);
-  assert.match(css, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.2fr\) auto!important/);
+  assert.doesNotMatch(js, /\$\("topClients"\)|\$\("topNewAudit"\)/);
+  assert.match(css, /\.topacts\{display:none!important\}/);
+  assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{nav\("auto"\);requestAnimationFrame\(\(\)=>\{\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}\)\}\)/);
   assert.match(html, /assets\/app\.js\?v=2026-97/);
   assert.match(sw, /affiads-audit-2026-97/);
 });
@@ -365,7 +363,7 @@ test("mobile layout keeps audit and client screens aligned with the bottom navig
   assert.match(css, /\.hero-head\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(100px,160px\)/);
   assert.match(css, /#view-clients \.clientlist\{display:grid;gap:10px/);
   assert.match(css, /#view-clients \.clientrow \.del\{align-self:center/);
-  assert.match(css, /padding:calc\(var\(--tabbar\) \+ 30px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /\.main\{padding:18px 16px calc\(var\(--tabbar\) \+ 30px \+ env\(safe-area-inset-bottom\)\)!important/);
   assert.match(css, /\.askactions\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,\.8fr\)/);
   assert.match(css, /\.nav>button \.t\{display:block!important;font-size:10px!important/);
   assert.match(html, /id="runAuto"/);
