@@ -1598,7 +1598,7 @@ function pdfName(){return ((settings.reportFormat==="full"?"Rapport complet Affi
 let pdfBusy=false;
 async function pdfCanvas(el,sc){return html2canvas(el,{scale:sc||2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:794,windowWidth:794})}
 
-/* PDF polish 2026-93: more deliberate A4 pagination and document metadata */
+/* PDF polish 2026-94: more deliberate A4 pagination and document metadata */
 function pdfPageHead(doc,M,y,title){
  doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(57,72,216);
  doc.text("AffiAds Audit 360°",M,9);
