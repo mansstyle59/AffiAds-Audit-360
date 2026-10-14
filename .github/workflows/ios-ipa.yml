@@ -78,6 +78,30 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
+      - name: Set native iOS app icon
+        run: |
+          set -euo pipefail
+          ICON_SET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+          test -f assets/logo-512.png || { echo "::error::assets/logo-512.png introuvable"; exit 1; }
+          mkdir -p "$ICON_SET"
+          sips -z 1024 1024 assets/logo-512.png --out "$ICON_SET/AppIcon-1024.png" >/dev/null
+          cat > "$ICON_SET/Contents.json" <<'JSON'
+          {
+            "images": [
+              {
+                "filename": "AppIcon-1024.png",
+                "idiom": "universal",
+                "platform": "ios",
+                "size": "1024x1024"
+              }
+            ],
+            "info": {
+              "author": "xcode",
+              "version": 1
+            }
+          }
+          JSON
+
       - name: Build iOS app without signing
         run: |
           set -euo pipefail
@@ -103,13 +127,27 @@ jobs:
             find "$RUNNER_TEMP/DerivedData/Build/Products" -maxdepth 4 -print || true
             exit 1
           fi
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName AffiAds Audit 360" "$APP_PATH/Info.plist"
+          ACTUAL_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist")
+          if [ "$ACTUAL_BUNDLE_ID" != "$IOS_BUNDLE_ID" ]; then
+            echo "::error::Bundle ID inattendu : $ACTUAL_BUNDLE_ID (attendu : $IOS_BUNDLE_ID)"
+            exit 1
+          fi
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist")
+          if [ ! -x "$APP_PATH/$EXECUTABLE" ]; then
+            echo "::error::Exécutable iOS introuvable : $EXECUTABLE"
+            exit 1
+          fi
           mkdir -p "$RUNNER_TEMP/ipa/Payload" dist
-          cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/AffiAds Audit 360.app"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $IOS_BUNDLE_ID" "$RUNNER_TEMP/ipa/Payload/AffiAds Audit 360.app/Info.plist"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/App.app"
           (cd "$RUNNER_TEMP/ipa" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/dist/AffiAds-Audit-360-ESign-GBox.ipa" Payload)
-          /usr/bin/unzip -l dist/AffiAds-Audit-360-ESign-GBox.ipa | grep -E 'Payload/[^/]+\.app/Info.plist$'
-          echo "IPA créé : dist/AffiAds-Audit-360-ESign-GBox.ipa"
-          echo "Ce fichier est non signé : il doit être signé dans ESign/GBox avec un certificat et un profil valides."
+          /usr/bin/unzip -t dist/AffiAds-Audit-360-ESign-GBox.ipa
+          /usr/bin/unzip -p dist/AffiAds-Audit-360-ESign-GBox.ipa Payload/App.app/Info.plist > "$RUNNER_TEMP/Info.plist"
+          PACKAGED_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$RUNNER_TEMP/Info.plist")
+          test "$PACKAGED_BUNDLE_ID" = "$IOS_BUNDLE_ID"
+          /usr/bin/unzip -l dist/AffiAds-Audit-360-ESign-GBox.ipa | grep -E 'Payload/App\.app/(Info\.plist|App)$'
+          echo "IPA validé : dist/AffiAds-Audit-360-ESign-GBox.ipa"
+          echo "IPA non signé : signer dans KSign avec un certificat et un profil valides avant l'installation."
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
