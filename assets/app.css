@@ -2084,7 +2084,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-82 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-83 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2134,7 +2134,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-82 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-83 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
@@ -2184,7 +2184,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-82 • Accessibility pass: explicit readable text pairs in both themes.
+/* 2026-83 • Accessibility pass: explicit readable text pairs in both themes.
    Deliberately excludes the printable report, whose paper surface stays white. */
 :root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
   h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
@@ -2249,7 +2249,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="light"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
 :root[data-theme="light"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small){color:#202653!important}
 
-/* 2026-82 • Access settings: selectable lock policy and readable mobile control. */
+/* 2026-83 • Access settings: selectable lock policy and readable mobile control. */
 #pinDelay{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;min-height:52px!important;padding:12px 38px 12px 14px!important;font-size:16px!important;line-height:1.35!important;font-weight:650!important;border:1.5px solid var(--line-2)!important;border-radius:15px!important;opacity:1!important}
 :root[data-theme="dark"] #pinDelay{background:#0c1433!important;color:#f5f7ff!important;border-color:#6474ad!important}
 :root[data-theme="light"] #pinDelay{background:#fff!important;color:#20294a!important;border-color:#b9c4df!important}

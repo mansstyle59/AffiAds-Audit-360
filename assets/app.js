@@ -2049,7 +2049,7 @@ function initLock(){
  $("gate").addEventListener("click",e=>{if(!e.target.closest("button"))pin.focus({preventScroll:true})});
  $("gateForgot").hidden=true;$("gateBio").hidden=true;$("rememberWrap").hidden=true;
  ["pointerdown","keydown","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>{if(document.body.classList.contains("locked"))return;if(Date.now()-Lock.lastActive>20000)markSeen();else Lock.lastActive=Date.now()},{passive:true}));
- document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now()}else{Lock.hiddenAt=0;if(!document.body.classList.contains("locked")){Lock.lastActive=Date.now();markSeen()}}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){Lock.hiddenAt=Date.now();if(lockDelay()===0&&!document.body.classList.contains("locked"))lockNow(false)}else{const away=Lock.hiddenAt?Date.now()-Lock.hiddenAt:0;Lock.hiddenAt=0;if(!document.body.classList.contains("locked")){if(lockDelay()>0&&away>=lockDelay()*60000)lockNow(false);else{Lock.lastActive=Date.now();markSeen()}}}});
  clearInterval(Lock.timer);Lock.timer=setInterval(lockTick,15000);
  $("pinChange").hidden=true;
  $("gateCancel").onclick=cancelGate;
