@@ -1026,10 +1026,14 @@ const NET_ICON={Facebook:"facebook",Instagram:"instagram",TikTok:"tiktok",YouTub
 function netIcon(n,size,off){const f=NET_ICON[n];return f?'<img class="nico'+(off?" off":"")+'" src="assets/social/'+f+'.png" alt="" width="'+(size||28)+'" height="'+(size||28)+'">':""}
 function socialBlock(forReport){
  const S=(state.data||{}).social;if(!S)return "";
- const handlePath=f?(()=>{try{return decodeURIComponent(new URL(f.url).pathname).split("/").filter(Boolean)[0]||""}catch(e){return ""}})():"";
-  const label=f?(forReport?esc(handlePath?"@"+handlePath.replace(/^@/,""):"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handlePath?"@"+handlePath.replace(/^@/,""):"Voir le compte")+'</a>'):"À vérifier";
+ return '<div class="socials">'+NETS.map(([n])=>{
+  const f=S.found[n];let handlePath="";
+  if(f){try{handlePath=decodeURIComponent(new URL(f.url).pathname.split("/").filter(Boolean)[0]||"")}catch(e){}}
+  const handle=handlePath.startsWith("@")?handlePath.slice(1):handlePath;
+  const label=f?(forReport?esc(handle?"@"+handle:"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle:"Voir le compte")+'</a>'):"À vérifier";
   const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
-  return '<div class="soc '+(f?"on":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+src+'</span></div>'}).join("")+'</div><p class="muted"><small>Les comptes affichés sont détectés par recherche ou ajoutés après vérification manuelle. « À vérifier » signifie que les sources consultées n’ont pas confirmé de compte : cela ne prouve pas son absence. Contrôlez l’identité et l’activité du profil.</small></p>';
+  return '<div class="soc '+(f?"on":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+src+'</span></div>';
+ }).join("")+'</div><p class="muted"><small>Les comptes affichés sont détectés par recherche ou ajoutés après vérification manuelle. « À vérifier » signifie que les sources consultées n’ont pas confirmé de compte : cela ne prouve pas son absence. Contrôlez l’identité et l’activité du profil.</small></p>';
 }
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
