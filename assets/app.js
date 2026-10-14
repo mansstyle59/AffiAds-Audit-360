@@ -1840,7 +1840,7 @@ function bind(){
  $("printFull").onclick=()=>{nav("report");setTimeout(()=>window.print(),300)};
  document.querySelectorAll("[data-repfmt]").forEach(b=>b.onclick=()=>setReportFormat(b.dataset.repfmt));
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
- $("clientChip").onclick=()=>nav("clients");
+ $("clientChip").onclick=()=>$("newClient").click();
  document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{settings.theme=b.dataset.themeSet;saveSettings();applyTheme()});
  $("installApp").onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$("installApp").classList.add("hidden")};
  $("shareReport").onclick=()=>shareText("Audit AffiAds",summaryText());
