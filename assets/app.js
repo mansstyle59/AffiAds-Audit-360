@@ -898,7 +898,7 @@ async function runAuto(){
    const mine=data.psi&&data.psi.scores.perf;const faster=done.filter(c=>mine!=null&&c.perf>mine);if(mine!=null&&faster.length)findings.push({sev:2,text:faster.length+" concurrent"+(faster.length>1?"s":"")+" sur "+done.length+(faster.length>1?" ont":" a")+" un site plus rapide sur mobile ("+faster.map(c=>c.name+" : "+c.perf+"/100").join(", ")+", contre "+mine+"/100)."});}
   /* 5 bis. Réseaux sociaux */
   setStep("social","run","Présence sur les réseaux sociaux","Facebook, Instagram, TikTok, YouTube, Snapchat");
-  try{const known=[...(data.socials||[]).map(s=>({...s,src:"site ou OpenStreetMap"}))];const sc=await socialScan(name,city,known);data.social=sc;
+  try{const known=[...(data.socials||[]).map(s=>({...s,src:s.src||"site ou OpenStreetMap"}))];const sc=await socialScan(name,city,known);data.social=sc;
    const F=sc.found,list=NETS.map(n=>n[0]).filter(n=>F[n]);
    const searched=!!sc.engine;
    setAuto("2-0",F.Facebook&&F.Instagram?"ok":(F.Facebook||F.Instagram)?(searched?"issue":"info"):searched?"issue":"info",(F.Facebook&&F.Instagram)?"Comptes Facebook et Instagram trouvés. Fréquence des publications à vérifier.":(F.Facebook||F.Instagram)?(F.Facebook?"Facebook":"Instagram")+" trouvé, mais "+(F.Facebook?"Instagram":"Facebook")+" non trouvé (ni relié depuis le site, ni par recherche).":(searched?"Aucun compte Facebook ni Instagram détecté par les sources consultées ; vérifier manuellement avant de conclure.":"Aucun compte relié depuis le site ou OpenStreetMap ; la recherche web n’a pas répondu : à vérifier à la main."),"Recherche des réseaux, "+data.fetchedAt);
@@ -1026,8 +1026,10 @@ const NET_ICON={Facebook:"facebook",Instagram:"instagram",TikTok:"tiktok",YouTub
 function netIcon(n,size,off){const f=NET_ICON[n];return f?'<img class="nico'+(off?" off":"")+'" src="assets/social/'+f+'.png" alt="" width="'+(size||28)+'" height="'+(size||28)+'">':""}
 function socialBlock(forReport){
  const S=(state.data||{}).social;if(!S)return "";
- return '<div class="socials">'+NETS.map(([n])=>{const f=S.found[n];let handle="";if(f){try{handle=decodeURIComponent(new URL(f.url).pathname).replace(/^\/|\/$/g,"").split("/")[0]}catch(e){}}
-  return '<div class="soc '+(f?"on":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+(f?(forReport?esc(handle?"@"+handle.replace(/^@/,""):"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle.replace(/^@/,""):"Voir le compte")+'</a>'):"Non trouvé")+'</span></div>'}).join("")+'</div><p class="muted"><small>Recherche sur le site du commerce, OpenStreetMap et Bing. Un compte peut exister sans être trouvé s’il n’est relié nulle part : c’est déjà un signal de faible visibilité. Activité récente à vérifier sur chaque compte.</small></p>';
+ return '<div class="socials">'+NETS.map(([n])=>{const f=S.found[n];let handle="";if(f){try{handle=decodeURIComponent(new URL(f.url).pathname).replace(/^\\/|\\/$/g,"").split("/")[0]}catch(e){}}
+  const label=f?(forReport?esc(handle?"@"+handle.replace(/^@/,""):"Trouvé"):'<a href="'+esc(safeUrl(f.url))+'" target="_blank" rel="noopener">'+esc(handle?"@"+handle.replace(/^@/,""):"Voir le compte")+'</a>'):"À vérifier";
+  const src=f&&f.src?'<small class="soc-source">'+esc(f.src==="vérification manuelle"?"Vérifié manuellement":f.src)+'</small>':"";
+  return '<div class="soc '+(f?"on":"off")+'">'+netIcon(n,32,!f)+'<span class="sname">'+esc(n)+'</span><span class="sstate">'+label+src+'</span></div>'}).join("")+'</div><p class="muted"><small>Les comptes affichés sont détectés par recherche ou ajoutés après vérification manuelle. « À vérifier » signifie que les sources consultées n’ont pas confirmé de compte : cela ne prouve pas son absence. Contrôlez l’identité et l’activité du profil.</small></p>';
 }
 function photosBlock(){
  const d=state.data||{},L=d.photoList||[];if(!d.place)return "";
@@ -1535,6 +1537,29 @@ function renderTools(){
   ["OpenStreetMap",state.data&&state.data.osm&&state.data.osm.me?state.data.osm.me.url:"https://www.openstreetmap.org/search?query="+q(n+" "+c),"Alimente Apple Plans et de nombreuses applis"],
   ["Search Console","https://search.google.com/search-console/about?hl=fr","SEO du site (accès propriétaire)"]];
  $("links").innerHTML=list.map(t=>'<a href="'+esc(t[1])+'" target="_blank" rel="noopener"><span><b>'+esc(t[0])+'</b><br><span class="muted">'+esc(t[2])+' ↗</span></span></a>').join("");
+ const verify=$("saveSocialVerified");
+ if(verify)verify.onclick=()=>{
+  const raw=$("socialVerifiedUrl").value.trim(),net=$("socialVerifiedNet").value;
+  if(!raw){toast("Collez le lien public du profil à vérifier.");$("socialVerifiedUrl").focus();return}
+  const domains={"Facebook":"facebook.com","Instagram":"instagram.com","TikTok":"tiktok.com","YouTube":"youtube.com","Snapchat":"snapchat.com"};
+  let url=raw;
+  if(/^@/.test(url))url="https://www."+domains[net]+"/"+url;
+  else if(!/^https?:\\/\\//i.test(url))url="https://"+url;
+  let parsed;try{parsed=new URL(url)}catch(e){toast("Lien invalide : vérifiez l’adresse du profil.");return}
+  const detected=netOf(parsed.hostname);
+  if(!detected||detected!==net||!profileOk(parsed.href)){toast("Le lien ne correspond pas à un profil "+net+".");return}
+  if(!state.data)state.data={};
+  if(!state.data.social)state.data.social={found:{},engine:"",checked:NETS.map(x=>x[0])};
+  if(!state.data.social.found)state.data.social.found={};
+  state.data.social.found[net]={url:parsed.href,src:"vérification manuelle",verified:true,confidence:"confirmé par l’utilisateur"};
+  state.data.socials=state.data.socials||[];
+  state.data.socials=state.data.socials.filter(x=>(x.net||netOf(hostOf(x.url)))!==net);
+  state.data.socials.push({net,url:parsed.href,src:"vérification manuelle",verified:true});
+  if(net==="TikTok")setAuto("2-1","ok","Compte TikTok confirmé manuellement : "+parsed.href,"Profil ouvert et vérifié manuellement");
+  if(net==="Facebook"||net==="Instagram")setAuto("2-0","ok","Compte "+net+" confirmé manuellement : "+parsed.href,"Profil ouvert et vérifié manuellement");
+  persistLocal();update();renderTools();toast(net+" ajouté au rapport comme profil vérifié.");
+ };
+
 }
 
 /* ---------- Visibilité IA ---------- */
