@@ -48,7 +48,7 @@ test("day/night theme overrides global forced backgrounds and keeps dark card te
 });
 
 test("static HTML contains no duplicate IDs", () => {
-  const ids = [...html.matchAll(/\bid=["\\x27]([^"\\x27]+)["\\x27]/g)].map(m => m[1]);
+  const ids = [...html.matchAll(/\\bid="([^"]+)"/g)].map(m => m[1]);
   const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   assert.deepEqual(duplicates, [], "duplicate IDs: " + duplicates.join(", "));
 });
