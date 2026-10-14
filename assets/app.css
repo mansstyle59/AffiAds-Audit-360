@@ -1121,7 +1121,7 @@ body::before{background:#fff!important}
  .tile .n{font-size:42px}
  .tile .d{bottom:12px}
  .metric{font-size:26px}
- .botpanel{right:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:calc(100vw - 16px);height:min(720px,calc(100dvh - 24px - env(safe-area-inset-bottom));border-radius:22px}
+ .botpanel{right:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:calc(100vw - 16px);height:min(720px,calc(100dvh - 24px - env(safe-area-inset-bottom)));border-radius:22px}
  .botfab{right:14px;bottom:calc(var(--tabbar) + 14px + env(safe-area-inset-bottom));width:54px;height:54px}
  .botfab img{width:54px;height:54px}
 }
