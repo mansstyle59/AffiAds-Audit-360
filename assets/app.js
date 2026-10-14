@@ -801,7 +801,7 @@ async function runAuto(){
   if(center){setStep("osm","run","Recherche OpenStreetMap");
    try{const o=await osmLookup(name,data.loc||center,type,!!place&&hasKey());data.osm=o;const t=o.me&&o.me.tags||{};
     if(!site&&(t.website||t["contact:website"]))site=t.website||t["contact:website"];
-    const socials=[["Facebook",t["contact:facebook"]||t.facebook],["Instagram",t["contact:instagram"]||t.instagram],["TikTok",t["contact:tiktok"]]].filter(x=>x[1]);data.socials=socials.map(s=>({net:s[0],url:s[1]}));
+    const socials=[["Facebook",t["contact:facebook"]||t.facebook],["Instagram",t["contact:instagram"]||t.instagram],["TikTok",t["contact:tiktok"]]].filter(x=>x[1]);data.socials=data.socials||[];socials.forEach(s=>{if(!data.socials.some(x=>(x.net||netOf(hostOf(x.url)))===s[0]))data.socials.push({net:s[0],url:s[1],src:"OpenStreetMap"});});
     if(!place&&o.me){state.biz.phone=state.biz.phone||t.phone||t["contact:phone"]||"";state.biz.address=state.biz.address||[t["addr:housenumber"],t["addr:street"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" ");if(t.opening_hours){data.hours=[t.opening_hours];setAuto("0-0","info","Horaires OpenStreetMap : "+t.opening_hours+". À comparer avec la fiche Google.","OpenStreetMap")}}
     if(socials.length)setAuto("2-0","info","Réseaux déclarés sur OpenStreetMap : "+socials.map(s=>s[0]).join(", ")+". Activité à vérifier.","OpenStreetMap");
     setStep("osm",o.me?"ok":"warn",o.me?"Commerce présent sur OpenStreetMap":"Commerce absent d'OpenStreetMap",(o.me?(o.me.tags&&(o.me.tags.website||o.me.tags["contact:website"])?"Site web trouvé. ":""):"Une fiche OpenStreetMap alimente Apple Plans et de nombreuses applis. ")+(o.compError?"Commerces voisins non chargés : serveur saturé, réessayez plus tard.":o.competitors.length+" commerce(s) similaire(s) à proximité."));
@@ -931,7 +931,7 @@ async function runAuto(){
     setAuto("1-5",local.length?"ok":"issue",local.length?"Données structurées présentes : "+local.join(", ")+".":"Aucune donnée structurée LocalBusiness (adresse, horaires) pour Google et les IA"+(H.ldTypes.length?" (types présents : "+H.ldTypes.slice(0,4).join(", ")+")":"")+".",srcH);
     if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins bien ses informations."});
     /* Réseaux sociaux */
-    const allSoc=[...(data.socials||[])];H.socials.forEach(s=>{if(!allSoc.some(x=>x.net===s.net))allSoc.push(s)});data.socials=allSoc;
+    const allSoc=[...(data.socials||[])];H.socials.forEach(s=>{const idx=allSoc.findIndex(x=>(x.net||netOf(hostOf(x.url)))===s.net);if(idx<0)allSoc.push({...s,src:"site officiel"});else if(allSoc[idx].src==="OpenStreetMap"||!allSoc[idx].src)allSoc[idx]={...s,src:"site officiel"};});data.socials=allSoc;
     const hasFbIg=allSoc.some(s=>/Facebook|Instagram/.test(s.net));
     setAuto("2-0",hasFbIg?"ok":"issue",hasFbIg?"Comptes liés : "+allSoc.map(s=>s.net).join(", ")+". Activité récente à vérifier.":"Aucun lien vers Facebook ou Instagram depuis le site.",srcH);
     if(!hasFbIg)findings.push({sev:2,text:"Le site ne renvoie vers aucun compte Facebook ou Instagram."});
@@ -948,10 +948,10 @@ async function runAuto(){
    const mine=data.psi&&data.psi.scores.perf;const faster=done.filter(c=>mine!=null&&c.perf>mine);if(mine!=null&&faster.length)findings.push({sev:2,text:faster.length+" concurrent"+(faster.length>1?"s":"")+" sur "+done.length+(faster.length>1?" ont":" a")+" un site plus rapide sur mobile ("+faster.map(c=>c.name+" : "+c.perf+"/100").join(", ")+", contre "+mine+"/100)."});}
   /* 5 bis. Réseaux sociaux */
   setStep("social","run","Présence sur les réseaux sociaux","Facebook, Instagram, TikTok, YouTube, Snapchat");
-  try{const known=[...(data.socials||[]).map(s=>({...s,src:s.src||"site ou OpenStreetMap"}))];const sc=await socialScan(name,city,known);data.social=sc;
+  try{const known=[...(data.socials||[]).map(s=>({...s,src:s.src||"source locale"}))];const sc=await socialScan(name,city,known);data.social=sc;
    const F=sc.found,list=NETS.map(n=>n[0]).filter(n=>F[n]);
-   const searched=!!sc.engine;
-   setAuto("2-0",F.Facebook&&F.Instagram?"ok":(F.Facebook||F.Instagram)?(searched?"issue":"info"):searched?"issue":"info",(F.Facebook&&F.Instagram)?"Comptes Facebook et Instagram trouvés. Fréquence des publications à vérifier.":(F.Facebook||F.Instagram)?(F.Facebook?"Facebook":"Instagram")+" trouvé, mais "+(F.Facebook?"Instagram":"Facebook")+" non trouvé (ni relié depuis le site, ni par recherche).":(searched?"Aucun compte Facebook ni Instagram détecté par les sources consultées ; vérifier manuellement avant de conclure.":"Aucun compte relié depuis le site ou OpenStreetMap ; la recherche web n’a pas répondu : à vérifier à la main."),"Recherche des réseaux, "+data.fetchedAt);
+   const searched=!!sc.engine;const searchUnavailable=!searched;
+   setAuto("2-0",F.Facebook&&F.Instagram?"ok":(F.Facebook||F.Instagram)?(searched?"issue":"info"):searched?"issue":"info",(F.Facebook&&F.Instagram)?"Comptes Facebook et Instagram trouvés. Fréquence des publications à vérifier.":(F.Facebook||F.Instagram)?(F.Facebook?"Facebook":"Instagram")+" trouvé, mais "+(F.Facebook?"Instagram":"Facebook")+" non trouvé (ni relié depuis le site, ni par recherche).":(searchUnavailable?"Recherche web indisponible : impossible de conclure sur la présence des comptes. Les liens connus sont conservés ; relancez la recherche ou vérifiez manuellement.":"Aucun compte Facebook ni Instagram détecté par les sources consultées ; vérifier manuellement avant de conclure."),"Recherche des réseaux, "+data.fetchedAt);
    setAuto("2-1",F.TikTok?"ok":"info",F.TikTok?"Compte TikTok détecté : "+F.TikTok.url+" (ouvrir le lien et confirmer qu’il s’agit du bon commerce).":"TikTok non détecté par les sources consultées. Cela ne prouve pas que le compte est absent : vérification manuelle recommandée.",F.TikTok?(F.TikTok.src||"Recherche web"):"Recherche web ciblée · "+data.fetchedAt);
    setAuto("2-4",list.length||!searched?"info":"issue",list.length?"Réseaux trouvés : "+list.join(", ")+". Vérifier nom, logo et coordonnées identiques.":"Aucun réseau trouvé : identité en ligne absente.","Recherche des réseaux, "+data.fetchedAt);
    if(!F.Facebook&&!F.Instagram){if(searched)findings.push({sev:3,text:"Aucun compte Facebook ni Instagram n’a été trouvé pour le commerce (ni sur son site, ni par recherche) : ce sont pourtant les premiers réseaux consultés avant de choisir un commerce local."})}
@@ -1105,7 +1105,7 @@ async function deepSocialSearch(net){
   '"'+name.replace(/["']/g,"")+'" profil officiel '+net+' '+city,
   '"'+name+'" '+(state.biz.phone||"")+' site:'+domain
  ].filter((q,i,a)=>a.indexOf(q)===i);
- const rejected=(S.rejected||[]).filter(x=>x.net===net).map(x=>x.url);
+ const canonical=url=>{try{const u=new URL(url);u.hash="";u.hostname=u.hostname.toLowerCase();if(u.hostname.startsWith("www."))u.hostname=u.hostname.slice(4);while(u.pathname.length>1&&u.pathname.endsWith("/"))u.pathname=u.pathname.slice(0,-1);return u.href}catch(e){return String(url||"")}};const rejected=(S.rejected||[]).filter(x=>x.net===net).map(x=>canonical(x.url));
  const all=[];for(const q of queries){try{const r=await bingSearch(q);all.push(...(r.rows||[]))}catch(e){}}
  const normText=v=>norm(String(v||""));
  const compact=v=>normText(v).replace(/[^a-z0-9]/g,"");
@@ -1114,7 +1114,7 @@ async function deepSocialSearch(net){
  for(const r of all){
   if(netOf(hostOf(r.url))!==net||!profileOk(r.url))continue;
   let u;try{u=new URL(r.url);u.hash="";}catch(e){continue}
-  const url=u.href;if(rejected.includes(url)||S.found[net]?.url===url)continue;
+  const url=u.href;if(rejected.includes(canonical(url))||S.found[net]?.url===url)continue;
   const title=String(r.title||"");let path="";try{path=decodeURIComponent(u.pathname)}catch(e){}
   const text=normText(title+" "+path.replace(/[-_./@]/g," ")),packed=compact(title+" "+path);
   const matched=tokens.filter(t=>text.split(" ").includes(t)).length;
