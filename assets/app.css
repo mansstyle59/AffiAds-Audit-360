@@ -2071,7 +2071,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-88 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-89 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2121,7 +2121,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-88 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-89 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
@@ -2171,7 +2171,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-88 • Accessibility pass: explicit readable text pairs in both themes.
+/* 2026-89 • Accessibility pass: explicit readable text pairs in both themes.
    Deliberately excludes the printable report, whose paper surface stays white. */
 :root[data-theme="dark"] .main .card:not(.onepage):not(.report) :is(
   h1,h2,h3,h4,p,label,small,strong,b,em,li,summary,legend,dt,dd,th,td,figcaption,
@@ -2236,7 +2236,7 @@ details.adv summary{color:#c7ccef}
 :root[data-theme="light"] .main .onepage :is(h1,h2,h3,h4,p,span,li,label,strong,b,small),
 :root[data-theme="light"] .main .report :is(h1,h2,h3,h4,p,span,li,label,strong,b,small){color:#202653!important}
 
-/* 2026-88 • Access settings: selectable lock policy and readable mobile control. */
+/* 2026-89 • Access settings: selectable lock policy and readable mobile control. */
 #pinDelay{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;min-height:52px!important;padding:12px 38px 12px 14px!important;font-size:16px!important;line-height:1.35!important;font-weight:650!important;border:1.5px solid var(--line-2)!important;border-radius:15px!important;opacity:1!important}
 :root[data-theme="dark"] #pinDelay{background:#0c1433!important;color:#f5f7ff!important;border-color:#6474ad!important}
 :root[data-theme="light"] #pinDelay{background:#fff!important;color:#20294a!important;border-color:#b9c4df!important}
@@ -2247,7 +2247,7 @@ details.adv summary{color:#c7ccef}
 .pin-delay-field{min-width:0}
 
 
-/* 2026-88 • Header actions replace the oversized duplicate CTA. */
+/* 2026-89 • Header actions replace the oversized duplicate CTA. */
 .topacts .top-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 13px;border-radius:14px;font:750 13px/1.1 var(--font);white-space:nowrap}
 .topacts .top-action svg{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .topacts #topClients{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
@@ -2271,7 +2271,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-88 • Compact, readable prospect composer on mobile and desktop. */
+/* 2026-89 • Compact, readable prospect composer on mobile and desktop. */
 #view-pitch .grid{gap:10px}
 #view-pitch .card{padding:clamp(12px,2vw,20px)}
 #view-pitch .card>h2{margin-bottom:5px}
@@ -2304,7 +2304,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-88 • Global contrast audit: notices and legal footer must remain readable in both themes. */
+/* 2026-89 • Global contrast audit: notices and legal footer must remain readable in both themes. */
 :root[data-theme="dark"] .main .notice,
 :root[data-theme="dark"] .main .card .notice,
 :root[data-theme="dark"] .main .audit-form-card .notice,
@@ -2355,7 +2355,7 @@ details.adv summary{color:#c7ccef}
 #navMore[aria-expanded="true"] svg{stroke:#fff!important}
 
 
-/* 2026-88 • Prevent Safari on iPhone from auto-zooming when form controls receive focus. */
+/* 2026-89 • Prevent Safari on iPhone from auto-zooming when form controls receive focus. */
 /* Keep pinch-to-zoom enabled for accessibility; use a 16px minimum control font size. */
 @media (max-width: 900px){
   .main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -2367,4 +2367,113 @@ details.adv summary{color:#c7ccef}
   #pinDelay{
     font-size:16px!important;
   }
+}
+
+
+/* 2026-89 • Assistant widget contrast: explicit colors prevent theme-variable collisions. */
+:root[data-theme="dark"] .botpanel{
+  --bot-panel-bg:#0c1230;
+  --bot-card-bg:#192348;
+  --bot-card-border:#3c4a7a;
+  --bot-text:#f5f7ff;
+  --bot-muted:#c6d0ef;
+  --bot-soft:#aebbe4;
+  background:var(--bot-panel-bg)!important;
+  color:var(--bot-text)!important;
+  border-color:#343f70!important;
+}
+:root[data-theme="dark"] .botpanel .botlog,
+:root[data-theme="dark"] .botpanel .botchips,
+:root[data-theme="dark"] .botpanel .botform{
+  background:var(--bot-panel-bg)!important;
+  color:var(--bot-text)!important;
+}
+:root[data-theme="dark"] .botpanel .bhero h3,
+:root[data-theme="dark"] .botpanel .bcard,
+:root[data-theme="dark"] .botpanel .bcard b,
+:root[data-theme="dark"] .botpanel .bbub,
+:root[data-theme="dark"] .botpanel .botfield textarea{
+  color:var(--bot-text)!important;
+}
+:root[data-theme="dark"] .botpanel .bhero p,
+:root[data-theme="dark"] .botpanel .bcard small,
+:root[data-theme="dark"] .botpanel .chipq,
+:root[data-theme="dark"] .botpanel .btime,
+:root[data-theme="dark"] .botpanel .bsub{
+  color:var(--bot-muted)!important;
+}
+:root[data-theme="dark"] .botpanel .bcard,
+:root[data-theme="dark"] .botpanel .bmsg.bot .bbub,
+:root[data-theme="dark"] .botpanel .chipq,
+:root[data-theme="dark"] .botpanel .botfield{
+  background:var(--bot-card-bg)!important;
+  border-color:var(--bot-card-border)!important;
+}
+:root[data-theme="dark"] .botpanel .bico{
+  background:#31366d!important;
+  color:#c4c8ff!important;
+}
+:root[data-theme="dark"] .botpanel .botfield textarea{
+  background:transparent!important;
+  -webkit-text-fill-color:var(--bot-text)!important;
+  caret-color:#fff!important;
+}
+:root[data-theme="dark"] .botpanel .botfield textarea::placeholder{
+  color:var(--bot-soft)!important;
+  opacity:1!important;
+}
+:root[data-theme="dark"] .botpanel .botmic{color:#c6d0ef!important}
+:root[data-theme="dark"] .botpanel .bact:not(.main){
+  background:#202b53!important;
+  color:#e4eaff!important;
+  border-color:#465486!important;
+}
+:root[data-theme="light"] .botpanel{
+  background:#ffffff!important;
+  color:#20264a!important;
+  border-color:#d8def0!important;
+}
+:root[data-theme="light"] .botpanel .botlog,
+:root[data-theme="light"] .botpanel .botchips,
+:root[data-theme="light"] .botpanel .botform{
+  background:#ffffff!important;
+  color:#20264a!important;
+}
+:root[data-theme="light"] .botpanel .bhero h3,
+:root[data-theme="light"] .botpanel .bcard,
+:root[data-theme="light"] .botpanel .bcard b,
+:root[data-theme="light"] .botpanel .bbub,
+:root[data-theme="light"] .botpanel .botfield textarea{
+  color:#20264a!important;
+}
+:root[data-theme="light"] .botpanel .bhero p,
+:root[data-theme="light"] .botpanel .bcard small,
+:root[data-theme="light"] .botpanel .chipq,
+:root[data-theme="light"] .botpanel .btime,
+:root[data-theme="light"] .botpanel .bsub{
+  color:#4e5879!important;
+}
+:root[data-theme="light"] .botpanel .bcard,
+:root[data-theme="light"] .botpanel .bmsg.bot .bbub,
+:root[data-theme="light"] .botpanel .chipq,
+:root[data-theme="light"] .botpanel .botfield{
+  background:#f7f8ff!important;
+  border-color:#d8def0!important;
+}
+:root[data-theme="light"] .botpanel .botfield textarea{
+  background:transparent!important;
+  -webkit-text-fill-color:#20264a!important;
+  caret-color:#20264a!important;
+}
+:root[data-theme="light"] .botpanel .botfield textarea::placeholder{
+  color:#687393!important;
+  opacity:1!important;
+}
+:root[data-theme="light"] .botpanel .bico{
+  background:#eeedff!important;
+  color:#5141df!important;
+}
+.botpanel .bcard:focus-visible,.botpanel .chipq:focus-visible,.botpanel .botx:focus-visible{
+  outline:3px solid #ffbf32!important;
+  outline-offset:2px!important;
 }
