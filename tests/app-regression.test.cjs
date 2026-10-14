@@ -96,9 +96,9 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
     assert.match(svg, /<circle[^>]+r="52" fill="url\(#affiads-gold\)"/);
     assert.doesNotMatch(svg, /<script|foreignObject|href=["']https?:\/\//i);
   }
-  assert.match(html, /assets\/logo-192\.png\?v=2026-63/);
+  assert.match(html, /assets\/logo-192\.png\?v=2026-64/);
   assert.match(html, /class="audit-form-card"/);
   assert.match(html, /AUDIT LOCAL/);
   assert.match(css, /\.ready-card\{/);
-  assert.match(sw, /affiads-audit-2026-63/);
+  assert.match(sw, /affiads-audit-2026-64/);
 });
