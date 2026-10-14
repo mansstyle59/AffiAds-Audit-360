@@ -15,7 +15,7 @@ const toks = source.match(/function toks\(s\)\{[^\n]+\}/)?.[0];
 assert.ok(nets && netOf && profileOk && norm && stop && toks, "social helper functions must be extractable");
 const helpers = vm.runInNewContext([nets, netOf, profileOk, norm, stop, toks,
   "({NETS,netOf,profileOk,norm,toks})"
-].join("\n"));
+].join("\n"), { URL });
 
 test("recognizes only supported social-network domains", () => {
   assert.equal(helpers.netOf("facebook.com"), "Facebook");
