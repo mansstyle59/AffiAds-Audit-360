@@ -26,6 +26,8 @@ jobs:
           enablement: true
       - name: Check JavaScript syntax
         run: node --check assets/app.js
+      - name: Test social search regressions
+        run: node --test tests/social-regression.test.cjs
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
