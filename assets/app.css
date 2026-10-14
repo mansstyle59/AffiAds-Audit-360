@@ -1958,3 +1958,99 @@ details.adv summary{color:#c7ccef}
 .pdfhold .pdfpage .cover{padding-left:0;padding-right:0}
 .pdfhold .pdfpage .sec>h2{break-after:avoid}
 .pdfhold .pdfpage .box,.pdfhold .pdfpage .kpi,.pdfhold .pdfpage .opact{break-inside:avoid}
+
+
+/* 2026-75 • Contrast and coherence: final theme-safe text rules */
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report),
+:root[data-theme="dark"] .main .ready-card{
+  color:#f3f5ff!important;
+}
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) h1,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) h2,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) h3,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) h4,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) p,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) label,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) strong,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) small,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) li,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) summary,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) .muted,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) .sidenote{
+  color:#edf1ff!important;
+}
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) .muted,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) small,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) .sidenote{
+  color:#c4cceb!important;
+}
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) input,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) textarea,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) select{
+  background:#0c1330!important;color:#f3f5ff!important;border-color:#526091!important;
+}
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) input::placeholder,
+:root[data-theme="dark"] .main .card:not(.onepage):not(.report) textarea::placeholder{
+  color:#aeb9dc!important;opacity:1!important;
+}
+/* The report is paper-white in both themes: never inherit the app's white-on-navy text. */
+:root[data-theme="dark"] .main .onepage,
+:root[data-theme="dark"] .main .report,
+:root[data-theme="light"] .main .onepage,
+:root[data-theme="light"] .main .report{
+  background:#fff!important;color:#202653!important;
+}
+:root[data-theme="dark"] .main .onepage .op h1,
+:root[data-theme="dark"] .main .onepage .op h2,
+:root[data-theme="dark"] .main .onepage .op h3,
+:root[data-theme="dark"] .main .onepage .op h4,
+:root[data-theme="dark"] .main .onepage .op p,
+:root[data-theme="dark"] .main .onepage .op li,
+:root[data-theme="dark"] .main .onepage .op span,
+:root[data-theme="dark"] .main .onepage .op strong,
+:root[data-theme="dark"] .main .onepage .op label,
+:root[data-theme="dark"] .main .onepage .op b,
+:root[data-theme="light"] .main .onepage .op h1,
+:root[data-theme="light"] .main .onepage .op h2,
+:root[data-theme="light"] .main .onepage .op h3,
+:root[data-theme="light"] .main .onepage .op h4,
+:root[data-theme="light"] .main .onepage .op p,
+:root[data-theme="light"] .main .onepage .op li,
+:root[data-theme="light"] .main .onepage .op span,
+:root[data-theme="light"] .main .onepage .op strong,
+:root[data-theme="light"] .main .onepage .op label,
+:root[data-theme="light"] .main .onepage .op b{
+  color:#202653!important;
+}
+:root[data-theme="dark"] .main .onepage .op .ophead,
+:root[data-theme="dark"] .main .onepage .op .ophead *,
+:root[data-theme="dark"] .main .onepage .op .opoffer,
+:root[data-theme="dark"] .main .onepage .op .opoffer *,
+:root[data-theme="dark"] .main .onepage .op .opnum,
+:root[data-theme="dark"] .main .onepage .op .opnum *,
+:root[data-theme="light"] .main .onepage .op .ophead,
+:root[data-theme="light"] .main .onepage .op .ophead *,
+:root[data-theme="light"] .main .onepage .op .opoffer,
+:root[data-theme="light"] .main .onepage .op .opoffer *,
+:root[data-theme="light"] .main .onepage .op .opnum,
+:root[data-theme="light"] .main .onepage .op .opnum *{
+  color:#fff!important;
+}
+:root[data-theme="dark"] .main .onepage .op .opcharthead,
+:root[data-theme="dark"] .main .onepage .op .opcharthead *,
+:root[data-theme="dark"] .main .onepage .op .opchartlabel,
+:root[data-theme="dark"] .main .onepage .op .opfoot,
+:root[data-theme="dark"] .main .onepage .op .opfoot *,
+:root[data-theme="light"] .main .onepage .op .opcharthead,
+:root[data-theme="light"] .main .onepage .op .opcharthead *,
+:root[data-theme="light"] .main .onepage .op .opchartlabel,
+:root[data-theme="light"] .main .onepage .op .opfoot,
+:root[data-theme="light"] .main .onepage .op .opfoot *{
+  color:#505979!important;
+}
+:root[data-theme="dark"] .main .onepage .op .opbox.good{background:#edf9f3!important}
+:root[data-theme="dark"] .main .onepage .op .opbox.bad{background:#fff3f3!important}
+:root[data-theme="dark"] .main .onepage .op .opbox.good *,
+:root[data-theme="dark"] .main .onepage .op .opbox.bad *,
+:root[data-theme="light"] .main .onepage .op .opbox.good *,
+:root[data-theme="light"] .main .onepage .op .opbox.bad *{color:#202653!important}
