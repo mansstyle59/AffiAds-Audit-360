@@ -1878,7 +1878,7 @@ function download(content,name,type){const blob=new Blob([content],{type});const
 
 
 /* ---------- 2026 : thème, installation, hors ligne, partage ---------- */
-function applyTheme(){const t=settings.theme||"auto";if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.themeSet===t)))}
+function applyTheme(){const t=settings.theme||"auto";if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",t==="dark"?"#080d2d":t==="light"?"#f6f7ff":"#0754f5");document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.themeSet===t)));document.documentElement.style.colorScheme=t==="dark"?"dark":t==="light"?"light":"light dark"}
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const b=$("installApp");if(b)b.classList.remove("hidden")});
 window.addEventListener("appinstalled",()=>{installEvt=null;const b=$("installApp");if(b)b.classList.add("hidden");toast("Appli installée sur l’écran d’accueil.")});
