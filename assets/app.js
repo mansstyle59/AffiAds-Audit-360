@@ -613,10 +613,13 @@ function netOf(host){host=String(host||"").replace(/^(www|m|fr-fr|fr)\./,"");con
 function profileOk(u){try{const x=new URL(u);return !/\/(sharer|share|intent|dialog|plugins|login|hashtag|explore|search|watch\?)/i.test(x.pathname+x.search)&&x.pathname.length>1}catch(e){return false}}
 async function socialScan(name,city,known){
  const found={}, candidates={};
+ const previous=(state.data&&state.data.social)||{};
+ const rejected=(previous.rejected||[]).filter(x=>x&&x.net&&x.url);
+ const isRejected=(net,url)=>rejected.some(x=>x.net===net&&x.url===url);
  /* Les liens déjà présents sur le site sont conservés comme sources, mais jamais présentés comme vérifiés automatiquement. */
  (known||[]).forEach(s=>{
   const n=netOf(hostOf(s.url))||s.net;
-  if(n&&NETS.some(x=>x[0]===n)&&!found[n]&&profileOk(s.url)){
+  if(n&&NETS.some(x=>x[0]===n)&&!found[n]&&profileOk(s.url)&&!isRejected(n,s.url)){
    found[n]={url:s.url,src:s.src||"site officiel",confidence:"lien trouvé sur le site — identité à confirmer",verified:false};
   }
  });
@@ -655,6 +658,7 @@ async function socialScan(name,city,known){
    if(netOf(r.host)!==net||!profileOk(r.url))return;
    let u;try{u=new URL(r.url);u.hash="";}catch(e){return}
    const url=u.href;
+   if(isRejected(net,url))return;
    const rank=scoreCandidate({...r,url});
    if(!rank.hasName)return;
    const old=unique.get(url);
@@ -672,7 +676,7 @@ async function socialScan(name,city,known){
    }
   }
  });
- return {found,candidates,engine:engines.join(", "),checked:NETS.map(n=>n[0]),queries:searches.length*3,verificationRequired:true};
+ return {found,candidates,rejected,engine:engines.join(", "),checked:NETS.map(n=>n[0]),queries:searches.length*3,verificationRequired:true};
 }
 /* ---------- Audit automatique ---------- */
 let steps=[];
