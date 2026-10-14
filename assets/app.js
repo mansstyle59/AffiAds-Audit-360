@@ -1942,7 +1942,7 @@ function showGate(mode){
  gateMsg("");renderDots();setTimeout(()=>{try{$("pinInput").focus({preventScroll:true})}catch(e){}},60);
 }
 function applyRemember(){const cb=$("rememberMe");if(!Lock.cfg||!cb||$("rememberWrap").hidden)return;if(cb.checked)Lock.cfg.delay=-1;else if(lockDelay()<0)Lock.cfg.delay=1440;Lock.cfg.forceLock=false;lockSave()}
-function hideGate(){setBarColor("#4a3aff");if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
+function hideGate(){setBarColor("#4a3aff");if(Lock.cfg){if(["unlock","create","change"].includes(Lock.mode))applyRemember();else{Lock.cfg.forceLock=false;lockSave()}if((matchMedia("(display-mode: standalone)").matches||navigator.standalone===true)&&Lock.mode==="unlock"){Lock.cfg.pwaTrusted=true;Lock.cfg.forceLock=false;lockSave()}}const cb=Lock.onVerify;Lock.onVerify=null;Lock.verifyWhy="";if(cb)setTimeout(cb,320);setSession(true);setTimeout(()=>{if(typeof syncHandlePending==="function")syncHandlePending()},400);Lock.lastActive=Date.now();const g=$("gate");g.classList.add("leaving");document.body.classList.remove("locked");setTimeout(()=>{g.classList.add("hidden");g.classList.remove("leaving")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:260);renderPinSettings()}
 async function pinKey(k){
  if(k==="del"){Lock.entry=Lock.entry.slice(0,-1);renderDots();return}
  if(k==="ok"){return pinSubmit()}
@@ -1994,8 +1994,8 @@ function initLock(){
  lockLoad();
  const previous=Lock.cfg||{};
  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
- let unlockedPwaSession=false;try{unlockedPwaSession=standalone&&sessionStorage.getItem(LOCK_SESSION)==="1"}catch(e){}
- Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:!unlockedPwaSession,v:4,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
+ const unlockedPwaSession=standalone&&previous.pwaTrusted===true;
+ Lock.cfg={salt:"WvBnvwkkNWY8vvBNaMjAtQ==",hash:"WyE3o7n321trIKqmY9nrK+tZpoNP588bJpc5ezs+fFY=",len:6,delay:0,forceLock:!unlockedPwaSession,v:5,pwaTrusted:unlockedPwaSession,fails:Math.max(0,Number(previous.fails)||0),until:Math.max(0,Number(previous.until)||0),bio:null};
  lockSave();buildPad();
  const pin=$("pinInput");
  pin.addEventListener("input",()=>{const v=pin.value.replace(/\D/g,"");pin.value="";for(const ch of v)pinKey(ch)});
