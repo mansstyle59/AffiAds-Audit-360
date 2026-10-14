@@ -399,8 +399,11 @@ input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.85}
 
 /* ---------- Téléphone : barre flottante effet verre ---------- */
 @media(max-width:900px){
- .side{position:sticky;top:0;z-index:45;background:transparent;border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
- .side::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--glass);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%)}
+ .side{position:sticky;top:0;z-index:45;background:#fff;border-bottom:1px solid #e7e4f3;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;box-shadow:0 4px 14px #20164a0a}
+ .side::before{content:none!important}
+ .side .brand{position:relative;z-index:1}
+ .side .brand img{filter:none}
+ .side .brand span{color:#6b6688}
  .nav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));padding:6px;border-radius:30px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);box-shadow:inset 0 1px 0 #ffffff59,0 18px 40px -14px #17134a66}
  .nav>.navgroup{display:none}
  .nav>button{border-radius:24px;min-height:52px;font-size:11px;gap:2px}
@@ -837,3 +840,11 @@ body:not(.rep-one) #report1{display:none}
 .soc-candidate-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid #efedf6}
 .soc-candidate-row a{font-size:11px;min-width:0;overflow-wrap:anywhere}
 @media(max-width:420px){.soc-actions{gap:4px}.soc-mini{font-size:9.5px;padding:4px 6px}.soc-candidate-row{align-items:flex-start}}
+
+/* En-tête mobile net et professionnel : fond opaque, aucun flou derrière le logo */
+@media(max-width:900px){
+  .side,.side::before{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .side{background:#fff!important}
+  body::before{background:#5141ed!important}
+  .nav{background:rgba(255,255,255,.98);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:#e5e1f3;box-shadow:0 12px 34px -16px #17134a55}
+}
