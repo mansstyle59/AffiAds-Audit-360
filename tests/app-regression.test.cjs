@@ -110,3 +110,14 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   assert.match(css, /\.ready-card\{/);
   assert.match(sw, /affiads-audit-2026-\d+/);
 });
+
+
+test("2026-75 fixes unreadable dark-theme cards and keeps report preview readable on white paper", () => {
+  assert.match(css, /2026-75 • Contrast and coherence/);
+  assert.match(css, /:root\[data-theme="dark"\] \.main \.card:not\(\.onepage\):not\(\.report\) h2[^\{]*\{[^}]*color:#edf1ff!important/);
+  assert.match(css, /:root\[data-theme="dark"\] \.main \.onepage \.op h1[^\{]*\{[^}]*color:#202653!important/);
+  assert.match(css, /\.main \.onepage \.op \.ophead \*/);
+  assert.match(html, /assets\/app\.css\?v=2026-75/);
+  assert.match(html, /assets\/app\.js\?v=2026-75/);
+  assert.match(sw, /affiads-audit-2026-75/);
+});
