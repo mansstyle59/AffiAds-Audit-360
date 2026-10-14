@@ -1187,3 +1187,36 @@ body::before{background:#fff!important}
   .topacts .chip{min-width:0;max-width:calc(100% - 60px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .main{padding-top:18px}
 }
+
+
+/* Correctif contraste : les cartes claires gardent une typographie foncée en thème sombre. */
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .card h1,
+:root[data-theme="dark"] .card h2,
+:root[data-theme="dark"] .card h3,
+:root[data-theme="dark"] .card h4,
+:root[data-theme="dark"] .card label,
+:root[data-theme="dark"] .card p,
+:root[data-theme="dark"] .card .muted,
+:root[data-theme="dark"] .card small,
+:root[data-theme="dark"] .card strong{
+  color:#211d50;
+}
+:root[data-theme="dark"] .card .pill,
+:root[data-theme="dark"] .card .badge,
+:root[data-theme="dark"] .card .b-ok,
+:root[data-theme="dark"] .card .b-bad,
+:root[data-theme="dark"] .card .b-mid,
+:root[data-theme="dark"] .card .b-auto{color:inherit}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .card,
+  :root:not([data-theme="light"]) .card h1,
+  :root:not([data-theme="light"]) .card h2,
+  :root:not([data-theme="light"]) .card h3,
+  :root:not([data-theme="light"]) .card h4,
+  :root:not([data-theme="light"]) .card label,
+  :root:not([data-theme="light"]) .card p,
+  :root:not([data-theme="light"]) .card .muted,
+  :root:not([data-theme="light"]) .card small,
+  :root:not([data-theme="light"]) .card strong{color:#211d50}
+}
