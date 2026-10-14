@@ -13,11 +13,11 @@
   "lang": "fr",
   "categories": ["business", "productivity"],
   "icons": [
-    {"src": "assets/app-icon.svg?v=2026-57", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+    {"src": "assets/app-icon.svg?v=2026-58", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
   ],
   "shortcuts": [
-    {"name": "Nouvel audit", "url": "./#auto", "icons": [{"src": "assets/app-icon.svg?v=2026-57", "sizes": "192x192"}]},
-    {"name": "Clients", "url": "./#clients", "icons": [{"src": "assets/app-icon.svg?v=2026-57", "sizes": "192x192"}]},
-    {"name": "Rapport", "url": "./#report", "icons": [{"src": "assets/app-icon.svg?v=2026-57", "sizes": "192x192"}]}
+    {"name": "Nouvel audit", "url": "./#auto", "icons": [{"src": "assets/app-icon.svg?v=2026-58", "sizes": "192x192"}]},
+    {"name": "Clients", "url": "./#clients", "icons": [{"src": "assets/app-icon.svg?v=2026-58", "sizes": "192x192"}]},
+    {"name": "Rapport", "url": "./#report", "icons": [{"src": "assets/app-icon.svg?v=2026-58", "sizes": "192x192"}]}
   ]
 }
