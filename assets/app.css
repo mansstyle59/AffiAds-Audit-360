@@ -2084,7 +2084,7 @@ details.adv summary{color:#c7ccef}
 }
 
 
-/* 2026-79 • Compact, safe-area-aware access screen for iPhone */
+/* 2026-80 • Compact, safe-area-aware access screen for iPhone */
 .gate{
   box-sizing:border-box;
   min-height:100vh;
@@ -2134,7 +2134,7 @@ details.adv summary{color:#c7ccef}
 @media(prefers-reduced-motion:reduce){.gate,.gatelock,.gatelogo,.gatebrand,.gatetag{animation:none!important;transition:none!important}}
 
 
-/* 2026-79 • Contrast repair: dark mode must override legacy light-theme colors. */
+/* 2026-80 • Contrast repair: dark mode must override legacy light-theme colors. */
 :root[data-theme="dark"] #view-auto .audit-form-card,
 :root[data-theme="dark"] #view-auto .ready-card{
   color:#f3f5ff!important;
