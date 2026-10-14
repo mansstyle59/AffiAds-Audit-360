@@ -1400,3 +1400,31 @@ details.adv summary{color:#c7ccef}
  .ophead,.opoffer,.opnum,.opbox{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .pdfhold .pdfpage{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+
+
+/* Correctifs iPhone : aperçu PDF papier, menu Plus lisible, superpositions maîtrisées */
+:root[data-theme="dark"] .onepage,
+:root[data-theme="dark"] .report{background:#fff!important;color:#202653!important;border-color:#e0e4f8!important}
+:root[data-theme="dark"] .onepage *,
+:root[data-theme="dark"] .report *{color:#202653!important}
+:root[data-theme="dark"] .onepage .ophead,
+:root[data-theme="dark"] .onepage .ophead *,
+:root[data-theme="dark"] .onepage .opoffer,
+:root[data-theme="dark"] .onepage .opoffer *,
+:root[data-theme="dark"] .onepage .opnum,
+:root[data-theme="dark"] .onepage .opnum *{color:#fff!important}
+:root[data-theme="dark"] .navmore{background:#11183b!important;border-color:#39436f!important;box-shadow:0 24px 52px -18px #000b!important}
+:root[data-theme="dark"] .navmore .navgroup{color:#aeb8e7!important}
+:root[data-theme="dark"] .navmore button{background:#1a234b!important;color:#f3f5ff!important}
+:root[data-theme="dark"] .navmore button .t,:root[data-theme="dark"] .navmore button .s{color:#f3f5ff!important}
+:root[data-theme="dark"] .navmore button svg{stroke:#aeb8ff!important}
+@media(max-width:900px){
+ .nav{z-index:80!important}
+ .nav.open .navmore{z-index:81!important;max-height:min(62dvh,560px)!important;overflow-y:auto!important;overscroll-behavior:contain;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
+ .main{padding-bottom:calc(var(--tabbar) + 64px + env(safe-area-inset-bottom))!important}
+ .botfab{z-index:70!important}.botpanel{z-index:90!important}
+}
+@media print{
+ :root[data-theme="dark"] body,:root[data-theme="dark"] .layout,:root[data-theme="dark"] .main{background:#fff!important;color:#202653!important}
+ :root[data-theme="dark"] .onepage,:root[data-theme="dark"] .report{box-shadow:none!important}
+}
