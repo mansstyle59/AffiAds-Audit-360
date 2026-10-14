@@ -8,8 +8,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#4b3af5",
-  "theme_color": "#4b3af5",
+  "background_color": "#315ff2",
+  "theme_color": "#315ff2",
   "lang": "fr",
   "categories": ["business", "productivity"],
   "icons": [
