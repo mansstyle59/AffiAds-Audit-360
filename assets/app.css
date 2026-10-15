@@ -2973,3 +2973,24 @@ body[data-view="auto"] .top{display:none!important}
   color: #d5ddf7 !important;
   -webkit-text-fill-color: #d5ddf7 !important;
 }
+
+
+/* 2026-113 — Keep the mobile navigation dock visible while the page scrolls (iOS Safari). */
+@media (max-width: 900px) {
+  html, body { scroll-padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .nav {
+    position: fixed !important;
+    inset: auto 10px calc(8px + env(safe-area-inset-bottom)) 10px !important;
+    top: auto !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 999 !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+    margin: 0 !important;
+  }
+  .nav > button { visibility: visible !important; opacity: 1 !important; }
+  .main { padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important; }
+}
