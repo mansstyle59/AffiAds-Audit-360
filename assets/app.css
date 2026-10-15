@@ -2853,3 +2853,55 @@ details.adv .field input,details.adv .field select,details.adv .field textarea{b
   .top .toptitle h1{font-size:19px!important}
   .top #pageSub{font-size:11px!important}
 }
+
+
+/* 2026-102 — Real fix: position the gold marker against the field label/input geometry and refine the actual mobile brand bar (.side). */
+@media (max-width: 900px) {
+  .askfields .bigfield { position: relative !important; }
+  .askfields .bigfield .dot {
+    left: 24px !important;
+    top: 32px !important;
+    transform: none !important;
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+    animation: none !important;
+    z-index: 3 !important;
+    box-shadow: 0 0 0 4px #17234e, 0 0 0 5px #445586 !important;
+  }
+  .side {
+    box-sizing: border-box !important;
+    padding: calc(env(safe-area-inset-top) + 2px) 16px 8px !important;
+    border-bottom: 1px solid #303d70 !important;
+    box-shadow: 0 5px 18px -14px #000a !important;
+  }
+  .side .brand {
+    min-height: 54px !important;
+    align-items: center !important;
+    gap: 11px !important;
+    padding: 0 2px !important;
+    font-size: 21px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -.035em !important;
+  }
+  .side .brand img {
+    width: 52px !important;
+    height: 52px !important;
+    flex: 0 0 52px !important;
+    object-fit: contain !important;
+  }
+  .side .brand span {
+    display: block !important;
+    margin: 3px 0 0 1px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    letter-spacing: .17em !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+  }
+}
+@media (max-width: 380px) {
+  .side { padding-left: 12px !important; padding-right: 12px !important; }
+  .side .brand { font-size: 19px !important; gap: 9px !important; }
+  .side .brand img { width: 48px !important; height: 48px !important; flex-basis: 48px !important; }
+}
