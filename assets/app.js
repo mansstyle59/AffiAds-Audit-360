@@ -2340,7 +2340,7 @@ async function botAsk(text){
 }
 function botGrow(){const t=$("botInput");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,120)+"px"}
 function initBot(){
- $("botFab").onclick=()=>botToggle();$("botClose").onclick=()=>botToggle(false);$("botNew").onclick=botReset;
+ $("botFab").onclick=()=>botToggle();$("brandAssistantBtn").onclick=()=>botToggle();$("botClose").onclick=()=>botToggle(false);$("botNew").onclick=botReset;
  $("botForm").onsubmit=e=>{e.preventDefault();botAsk($("botInput").value)};
  $("botInput").addEventListener("input",botGrow);
  $("botInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();botAsk($("botInput").value)}});
