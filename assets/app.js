@@ -1932,10 +1932,26 @@ function bind(){
  /* Réglages */
  $("saveKey").onclick=()=>{const k=$("googleKey").value.trim();if(k&&!keyLooksValid(k)){$("keyStatus").innerHTML='<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>';$("help-key").open=true;return}settings.googleKey=k;saveSettings();renderKeyNotice();toast(k?"Clé enregistrée.":"Clé retirée.")};
  $("removeKey").onclick=()=>{settings.googleKey="";saveSettings();renderKeyNotice();toast("Clé retirée de ce navigateur.")};
- $("testKey").onclick=async()=>{const k=$("googleKey").value.trim();if(k&&!keyLooksValid(k)){$("keyStatus").innerHTML='<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>';$("help-key").open=true;return}settings.googleKey=k;saveSettings();if(!hasKey()){$("keyStatus").innerHTML='<span class="keybad">Collez d’abord une clé.</span>';return}$("keyStatus").textContent="Test en cours…";
-  const res=[];try{const l=await placesSearch("Tour Eiffel Paris","places.id,places.displayName",1);res.push(l.length?'<span class="keyok">✓ Places API (New) fonctionne.</span>':'<span class="keybad">Places API : réponse vide.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ Places API (New) : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
-  try{await fetchJson("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&category=seo&url="+encodeURIComponent("https://example.com")+"&key="+encodeURIComponent(settings.googleKey),{},90000);res.push('<span class="keyok">✓ PageSpeed Insights API fonctionne.</span>')}catch(e){{const f=frErr(e);res.push('<span class="keybad">✕ PageSpeed Insights API : '+esc(f.text)+'</span>'+(f.link&&!f.link.href.startsWith("#")?' <a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label)+'</a>':''))}}
-  $("keyStatus").innerHTML=res.join("<br>");renderKeyNotice2()};
+ $("testKey").onclick=async()=>{
+  const k=$("googleKey").value.trim();
+  if(k&&!keyLooksValid(k)){$("keyStatus").innerHTML='<span class="keybad">✕ '+esc(WRONG_KEY_MSG)+'</span>';$("help-key").open=true;return}
+  settings.googleKey=k;saveSettings();
+  if(!hasKey()){$("keyStatus").innerHTML='<span class="keybad">Collez d’abord une clé API Google Cloud.</span>';return}
+  const button=$("testKey");button.disabled=true;button.textContent="Vérification…";
+  $("keyStatus").innerHTML='<span class="muted">Vérification des services Google. Cela peut prendre quelques secondes…</span>';
+  const check=async(label,task)=>{try{await task();return '<div class="key-result"><span class="keyok">✓</span><span><b>'+esc(label)+'</b><small>Accès confirmé.</small></span></div>'}catch(e){const f=frErr(e);return '<div class="key-result"><span class="keybad">✕</span><span><b>'+esc(label)+'</b><small>'+esc(f.text||e.message||"Vérification impossible")+'</small>'+(f.link&&f.link.href&&!f.link.href.startsWith("#")?'<a class="steplink" href="'+esc(f.link.href)+'" target="_blank" rel="noopener">'+esc(f.link.label||"Corriger dans Google Cloud")+' ↗</a>':"")+'</span></div>'}};
+  try{
+   const results=await Promise.all([
+    check("Places API (New)",async()=>{const l=await placesSearch("Tour Eiffel Paris","places.id,places.displayName",1);if(!l.length)throw new Error("Aucun résultat reçu. Vérifiez l’API et les restrictions de la clé.")}),
+    check("PageSpeed Insights",async()=>{await fetchJson("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?strategy=mobile&category=seo&url="+encodeURIComponent("https://example.com")+"&key="+encodeURIComponent(settings.googleKey),{},90000)}),
+    check("Gemini (IA)",async()=>{const model=GEMINI_MODELS[0];const r=await fetchJson("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify({contents:[{role:"user",parts:[{text:"Réponds uniquement OK."}]}],generationConfig:{temperature:0,maxOutputTokens:4}})},25000);if(!r.candidates||!r.candidates.length)throw new Error("Aucune réponse Gemini reçue.")}),
+    check("YouTube Data API v3",async()=>{const r=await fetchJson("https://www.googleapis.com/youtube/v3/videos?part=id&id=Ks-_Mh1QhMc&key="+encodeURIComponent(settings.googleKey.trim()),{},20000);if(r.error)throw new Error(r.error.message||"Erreur YouTube API")})
+   ]);
+   $("keyStatus").innerHTML='<div class="key-diagnostics"><b class="key-diagnostics-title">Résultat du diagnostic</b>'+results.join("")+'</div><p class="key-diagnostics-foot">Un service en échec ne bloque pas forcément les autres. Activez uniquement les API nécessaires et vérifiez les restrictions ainsi que la facturation dans Google Cloud.</p>';
+   renderKeyNotice2();
+  }catch(e){$("keyStatus").innerHTML='<span class="keybad">Le diagnostic n’a pas pu se terminer : '+esc(e.message||"erreur inconnue")+'</span>'}
+  finally{button.disabled=false;button.textContent="Vérifier les API"}
+ };
  function renderKeyNotice2(){const s=$("keyStatus").innerHTML;renderKeyNotice();$("keyStatus").innerHTML=s}
  $("senderName").value=settings.senderName;$("senderLine").value=settings.senderLine;$("senderContact").value=settings.senderContact;
  $("saveSender").onclick=()=>{settings.senderName=$("senderName").value.trim();settings.senderLine=$("senderLine").value.trim();settings.senderContact=$("senderContact").value.trim();saveSettings();toast("Signature enregistrée.")};
