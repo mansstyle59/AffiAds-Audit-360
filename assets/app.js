@@ -1721,7 +1721,17 @@ function closeMore(){const n=document.querySelector(".nav");n.classList.remove("
 let curView="auto";
 function nav(v){
  closeMore();if(!TITLES[v])v="auto";
- const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
+ const swap=()=>{VIEWS.forEach(x=>$("view-"+x).classList.toggle("hidden",x!==v));document.querySelectorAll(".nav button[data-view]").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("active",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$("navMore").classList.toggle("active",!["auto","clients","report"].includes(v));$("pageTitle").textContent=TITLES[v][0];$("pageSub").textContent=TITLES[v][1];
+// Enforce contrast directly on the real elements: prevents theme rules from making the mobile header unreadable.
+const pageTitle=$("pageTitle"),pageSub=$("pageSub"),pageHeader=pageTitle&&pageTitle.closest("header.top");
+if(pageHeader){
+  pageHeader.style.setProperty("background","linear-gradient(145deg,#151f46,#0e1735)","important");
+  pageHeader.style.setProperty("border-color","#303d70","important");
+  pageHeader.style.setProperty("color","#ffffff","important");
+  if(pageTitle){pageTitle.style.setProperty("color","#ffffff","important");pageTitle.style.setProperty("-webkit-text-fill-color","#ffffff","important");pageTitle.style.setProperty("opacity","1","important");pageTitle.style.setProperty("text-shadow","none","important");}
+  if(pageSub){pageSub.style.setProperty("color","#d5ddf7","important");pageSub.style.setProperty("-webkit-text-fill-color","#d5ddf7","important");pageSub.style.setProperty("opacity","1","important");pageSub.style.setProperty("text-shadow","none","important");}
+}
+document.body.dataset.view=v;if(v==="report")renderReport();if(v==="tools")renderTools();if(v==="clients")renderClientSelect();if(v==="pitch"&&!$("pitchText").value.trim()){$("pitchText").value=state.pitch=buildPitch()}};
  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
  if(document.startViewTransition&&!reduce&&v!==curView)document.startViewTransition(swap);else swap();
  if(v==="social")renderSocial();
