@@ -477,3 +477,9 @@ test("2026-128 loads mobile navigation theme fix and caches it offline", () => {
   assert.match(html, /assets\/nav-theme-fix\.css\?v=2026-128/);
   assert.match(sw, /"assets\/nav-theme-fix\.css"/);
 });
+
+
+test("page markup does not contain a visible escaped newline before navigation theme stylesheet", () => {
+  assert.ok(!html.includes(">\\\\n<link rel="));
+  assert.match(html, /assets\/app\.css\?v=2026-128">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
+});
