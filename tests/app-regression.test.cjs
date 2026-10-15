@@ -66,6 +66,14 @@ test("backup import is bounded, confirmed and avoids overwriting duplicate IDs",
   assert.match(js, /!confirm\("Importer "/);
   assert.match(js, /if\(db\.audits\[a\.id\]\)/);
   assert.match(js, /delete safeSettings\.googleKey/);
+  assert.match(js, /delete safeSettings\.tavilyKey/);
+  assert.match(js, /delete safeSettings\.braveKey/);
+  assert.match(js, /delete safeSettings\.serpApiKey/);
+  assert.match(js, /async function tavilySearch/);
+  assert.match(js, /async function braveSearch/);
+  assert.match(js, /async function serpApiSearch/);
+  assert.match(js, /recherche de secours activée/);
+  assert.match(js, /delete remoteSettings\.googleKey/);
 });
 
 test("AI visibility compares platforms using only explicit yes/no results", () => {
