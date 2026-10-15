@@ -496,6 +496,6 @@ test("axe-core audit integration is reachable and clearly scoped", () => {
   assert.match(js, /async function runAxeAudit\(\)/);
   assert.match(js, /axeButton\.onclick=runAxeAudit/);
   assert.match(js, /safePublicAuditUrl/);
-  assert.match(js, /r\.violations/);
+  assert.match(js, /report\.violations/);
   assert.match(sw, /affiads-audit-2026-130/);
  });
