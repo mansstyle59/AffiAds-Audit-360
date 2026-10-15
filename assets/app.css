@@ -3495,3 +3495,84 @@ body[data-view="auto"] .top{display:none!important}
   }
   .layout .side>.nav>button:active{filter:brightness(.97)}
 }
+
+/* 2026-154 — Identité sombre permanente, cohérente sur toute l’application.
+   Le rendu imprimé/PDF reste volontairement clair pour conserver sa lisibilité papier. */
+:root[data-theme="dark"] {
+ color-scheme:dark;
+ --ink:#f2f5ff;--ink-2:#c4cdeb;--ink-3:#9aa9d1;--paper:#080d20;--surface:#111a32;
+ --line:#293858;--line-2:#3a4b70;--royal:#7185ff;--royal-d:#5267f2;--violet:#a78bfa;
+ --gold:#ffd166;--gold-soft:#3a2d1b;--gold-ink:#ffe1a0;--good:#65d6ac;--good-soft:#153a35;
+ --bad:#ff899d;--bad-soft:#40212e;--mid:#ffd166;--tint:#1b2947;--shadow:0 12px 34px -18px #000b;
+}
+:root[data-theme="dark"] body,:root[data-theme="dark"] .layout,:root[data-theme="dark"] .main {background:#080d20!important;color:#f2f5ff!important}
+:root[data-theme="dark"] .side,:root[data-theme="dark"] .card,:root[data-theme="dark"] .ready-card,
+:root[data-theme="dark"] .audit-form-card,:root[data-theme="dark"] .clientrow,:root[data-theme="dark"] .navmore,
+:root[data-theme="dark"] .modal,:root[data-theme="dark"] dialog,:root[data-theme="dark"] .botpanel,
+:root[data-theme="dark"] .botbox,:root[data-theme="dark"] .quick-card,:root[data-theme="dark"] .priority,
+:root[data-theme="dark"] .report,:root[data-theme="dark"] .onepage {
+ background:#111a32!important;color:#f2f5ff!important;border-color:#293858!important;box-shadow:0 12px 34px -18px #0009;
+}
+:root[data-theme="dark"] h1,:root[data-theme="dark"] h2,:root[data-theme="dark"] h3,:root[data-theme="dark"] h4,
+:root[data-theme="dark"] label,:root[data-theme="dark"] strong,:root[data-theme="dark"] b,
+:root[data-theme="dark"] .brand,:root[data-theme="dark"] .brand span,:root[data-theme="dark"] .top h1,
+:root[data-theme="dark"] .top h2,:root[data-theme="dark"] .card h1,:root[data-theme="dark"] .card h2,
+:root[data-theme="dark"] .card h3,:root[data-theme="dark"] .card h4,:root[data-theme="dark"] .card p,
+:root[data-theme="dark"] .card label,:root[data-theme="dark"] .card small,:root[data-theme="dark"] .card strong {
+ color:#e8edff!important;-webkit-text-fill-color:currentColor;
+}
+:root[data-theme="dark"] .muted,:root[data-theme="dark"] .sidenote,:root[data-theme="dark"] .foot,
+:root[data-theme="dark"] #pageSub,:root[data-theme="dark"] .card .muted,
+:root[data-theme="dark"] .nav .s,:root[data-theme="dark"] .navmore .s,:root[data-theme="dark"] small {
+ color:#aebcdd!important;-webkit-text-fill-color:currentColor;
+}
+:root[data-theme="dark"] a {color:#a9b8ff!important}
+:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select,
+:root[data-theme="dark"] .field input,:root[data-theme="dark"] .field textarea,:root[data-theme="dark"] .field select {
+ background:#0a1227!important;color:#f3f6ff!important;border-color:#3a4c72!important;caret-color:#a9b8ff;
+}
+:root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder {color:#8292b8!important;opacity:1!important}
+:root[data-theme="dark"] .btn:not(.primary),:root[data-theme="dark"] .chip,
+:root[data-theme="dark"] .topacts button,:root[data-theme="dark"] .navmore button,
+:root[data-theme="dark"] .seg button,:root[data-theme="dark"] .tabbar button {
+ background:#192541!important;color:#e2e9ff!important;border-color:#34476b!important;
+}
+:root[data-theme="dark"] .btn.primary,:root[data-theme="dark"] .navmore button.active,
+:root[data-theme="dark"] .seg button[aria-checked="true"],:root[data-theme="dark"] .seg button.active {
+ background:linear-gradient(135deg,#315ff2,#7045ed)!important;color:#fff!important;border-color:transparent!important;
+}
+:root[data-theme="dark"] .nav,:root[data-theme="dark"] .layout .side > .nav {background:#080f23!important;border-color:#293858!important;border-top-color:#293858!important}
+:root[data-theme="dark"] .nav>button,:root[data-theme="dark"] .layout .side > .nav > button {background:transparent!important;color:#cbd6f5!important;-webkit-text-fill-color:#cbd6f5!important}
+:root[data-theme="dark"] .nav>button.active,:root[data-theme="dark"] .layout .side > .nav > button.active {background:#253762!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+:root[data-theme="dark"] .nav svg,:root[data-theme="dark"] .nav button svg {stroke:currentColor}
+:root[data-theme="dark"] .layout .side > .nav > #navNewClient .nav-new-icon {background:linear-gradient(140deg,#315fff,#7045ed)!important;border-color:#8ca1ff!important}
+:root[data-theme="dark"] .hero-kicker,:root[data-theme="dark"] .hero-points span,
+:root[data-theme="dark"] .key-setup-note,:root[data-theme="dark"] .help,:root[data-theme="dark"] details,
+:root[data-theme="dark"] .notice,:root[data-theme="dark"] .callout,:root[data-theme="dark"] .result,
+:root[data-theme="dark"] .empty,:root[data-theme="dark"] .metric,:root[data-theme="dark"] .stat,
+:root[data-theme="dark"] .audit-section,:root[data-theme="dark"] .checkrow {
+ background:#17223d!important;color:#e8edff!important;border-color:#304364!important;
+}
+:root[data-theme="dark"] table,:root[data-theme="dark"] th,:root[data-theme="dark"] td {border-color:#304364!important}
+:root[data-theme="dark"] th {background:#1a2947!important;color:#e8edff!important}
+:root[data-theme="dark"] td {background:#111a32!important;color:#dce5ff!important}
+:root[data-theme="dark"] hr {border-color:#293858!important}
+:root[data-theme="dark"] .badge,:root[data-theme="dark"] .pill {border-color:#40527a!important}
+:root[data-theme="dark"] .b-ok,:root[data-theme="dark"] .good {background:#153a35!important;color:#7ee3bd!important}
+:root[data-theme="dark"] .b-bad,:root[data-theme="dark"] .bad {background:#40212e!important;color:#ff9caf!important}
+:root[data-theme="dark"] .b-mid,:root[data-theme="dark"] .warning {background:#3a2d1b!important;color:#ffe1a0!important}
+:root[data-theme="dark"] .brand-actions .brand-action {background:linear-gradient(145deg,#202d61,#151f48)!important;color:#f5f7ff!important;border-color:#465a8c!important}
+:root[data-theme="dark"] .appearance-lock .theme-status {
+ display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;
+ border:1px solid #34476b;border-radius:999px;background:#192541;color:#dce5ff;font-size:13px;font-weight:750;
+}
+@media(max-width:900px) {
+ :root[data-theme="dark"] .layout > .side,:root[data-theme="dark"] .side {background:#0d1630!important;border-color:#293858!important;box-shadow:0 5px 20px #02081966!important}
+ :root[data-theme="dark"] .side .brand>div:not(.brand-actions),:root[data-theme="dark"] .side .brand>div:not(.brand-actions) span {color:#f2f5ff!important;-webkit-text-fill-color:currentColor!important}
+ :root[data-theme="dark"] .main {background:#080d20!important}
+}
+@media print {
+ :root[data-theme="dark"] body,:root[data-theme="dark"] .layout,:root[data-theme="dark"] .main {background:#fff!important;color:#202653!important}
+ :root[data-theme="dark"] .onepage,:root[data-theme="dark"] .report {background:#fff!important;color:#202653!important;box-shadow:none!important}
+ :root[data-theme="dark"] .onepage *,:root[data-theme="dark"] .report * {color:#202653!important;-webkit-text-fill-color:currentColor!important}
+}
