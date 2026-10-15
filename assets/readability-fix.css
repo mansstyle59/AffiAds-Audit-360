@@ -129,3 +129,53 @@
 }
 :root[data-theme="dark"] #view-clients .clientrow .who b { color: #f5f6ff !important; }
 :root[data-theme="dark"] #view-clients .clientrow .who span { color: #c5ccef !important; }
+
+/* 2026-109 — High-specificity overrides for the actual iPhone Clients screen. */
+@media (max-width: 900px) {
+  #pageTitle, .top #pageTitle, .top .toptitle h1, .top h1 {
+    color: #f7f8ff !important;
+    -webkit-text-fill-color: #f7f8ff !important;
+    opacity: 1 !important;
+  }
+  #pageSub, .top #pageSub, .top .toptitle p {
+    color: #cbd4f2 !important;
+    -webkit-text-fill-color: #cbd4f2 !important;
+    opacity: 1 !important;
+  }
+  #view-clients .clientrow .who b,
+  #view-clients .clientrow .open .who b {
+    color: #20294f !important;
+    -webkit-text-fill-color: #20294f !important;
+    opacity: 1 !important;
+  }
+  #view-clients .clientrow .who span,
+  #view-clients .clientrow .open .who span {
+    color: #536184 !important;
+    -webkit-text-fill-color: #536184 !important;
+    opacity: 1 !important;
+  }
+  #view-clients .clientrow .open {
+    background: #eef2ff !important;
+  }
+  #view-clients .clientrow .del {
+    background: #293466 !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+  .nav > #navNewClient .t {
+    color: #455174 !important;
+    -webkit-text-fill-color: #455174 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+}
+:root[data-theme="dark"] #view-clients .clientrow .who b,
+:root[data-theme="dark"] #view-clients .clientrow .open .who b {
+  color: #f7f8ff !important;
+  -webkit-text-fill-color: #f7f8ff !important;
+}
+:root[data-theme="dark"] #view-clients .clientrow .who span,
+:root[data-theme="dark"] #view-clients .clientrow .open .who span {
+  color: #cbd4f2 !important;
+  -webkit-text-fill-color: #cbd4f2 !important;
+}
