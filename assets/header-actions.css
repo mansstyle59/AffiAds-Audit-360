@@ -55,3 +55,27 @@
   .brand-actions .brand-action{flex-basis:38px!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;border-radius:12px!important}
   .brand-actions .brand-action svg{width:19px!important;height:19px!important}
 }
+
+
+/* 2026-107 — Two deliberate mobile header actions: settings + quick theme toggle. */
+@media(max-width:900px){
+  .brand-actions .brand-action{
+    flex-shrink:0!important;
+    border:1px solid #6171b2!important;
+    background:linear-gradient(145deg,#202d61,#151f48)!important;
+    color:#f5f7ff!important;
+    box-shadow:0 6px 16px #03091f40,inset 0 1px 0 #ffffff18!important;
+  }
+  .brand-actions .brand-action:hover{
+    background:linear-gradient(145deg,#30458c,#25205d)!important;
+    border-color:#8b9df0!important;
+  }
+  .brand-actions .brand-action--theme{
+    background:linear-gradient(145deg,#3b51df,#6037e9)!important;
+    border-color:#7d8aff!important;
+  }
+  .brand-actions .brand-action svg{
+    stroke:#fff!important;
+    stroke-width:1.9!important;
+  }
+}

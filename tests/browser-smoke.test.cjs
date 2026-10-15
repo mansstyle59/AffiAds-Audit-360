@@ -124,6 +124,19 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
       }
     }
 
+    // The compact brand actions should be styled, accessible and functional on mobile.
+    assert.equal(await page.locator("#themeQuickToggle").count(), 1);
+    assert.equal(await page.locator("#botFab").count(), 0, "the removed chat launcher must stay absent");
+    const beforeQuickTheme = await page.locator("html").getAttribute("data-theme");
+    await page.locator("#themeQuickToggle").click();
+    const afterQuickTheme = await page.locator("html").getAttribute("data-theme");
+    assert.notEqual(afterQuickTheme, beforeQuickTheme, "quick theme action should switch light/dark mode");
+    assert.ok((await page.locator("#themeQuickToggle").getAttribute("aria-label")).includes("Passer au thème"));
+    await page.locator('.nav button[data-view="auto"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === "auto");
+    assert.equal(await page.locator(".top").evaluate(el => getComputedStyle(el).display), "none",
+      "audit home should not repeat its heading in a second header card");
+
     // Exercise manual checklist updates, report preview, persistence and backup round-trip.
     await page.locator("#navMore").click();
     await page.locator('#navSheet button[data-view="audit"]').click();
