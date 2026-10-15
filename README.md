@@ -142,3 +142,16 @@ La checklist comprend désormais des contrôles SEO technique/contenu et GEO, av
 - Les tests IA sont des observations datées : les réponses varient selon la requête, le pays, la session et le produit.
 - La présence d'un fichier `llms.txt`, d'un balisage ou d'une FAQ n'assure pas à elle seule une meilleure visibilité. Il faut privilégier le contenu utile, l'exactitude, l'exploration possible et les preuves.
 - Les points qui ne peuvent pas être confirmés automatiquement doivent rester marqués comme à vérifier manuellement, avec une preuve ou une source quand elle est disponible.
+
+## Logo.dev : logos de marque dans les rapports (optionnel)
+
+AffiAds peut afficher le logo public du commerce dans le résumé de l'audit et sur la couverture du PDF grâce au dépôt officiel [logo-dev/logo-api](https://github.com/logo-dev/logo-api). L'intégration est facultative et n'interrompt jamais l'audit si elle n'est pas configurée.
+
+1. Créez une clé sur [Logo.dev](https://www.logo.dev/signup).
+2. Dans **Réglages → Logo.dev**, collez uniquement la clé publique qui commence par `pk_`, puis enregistrez-la.
+3. La clé publique reste dans le stockage local de ce navigateur. Les clés secrètes `sk_` sont rejetées. N'ajoutez aucune clé au dépôt GitHub.
+4. Les logos proviennent du CDN `img.logo.dev`. Si le logo ne peut pas être chargé, le bloc disparaît sans casser le rapport.
+
+Sur l'offre gratuite, l'utilisation commerciale peut nécessiter une attribution visible vers Logo.dev : vérifiez les conditions actuelles sur [les règles d'attribution](https://www.logo.dev/docs/platform/attribution) et conservez le lien/mention fourni dans l'interface. Le logo est un élément visuel, pas une preuve d'identité du commerce. Vérifiez la bonne correspondance avant de remettre le PDF au client.
+
+Tests : `node --test tests/logo-dev.test.cjs`. L'intégration n'ajoute aucun SDK, aucune dépendance npm et aucun appel de logo tant qu'une clé publique valide n'est pas enregistrée.
