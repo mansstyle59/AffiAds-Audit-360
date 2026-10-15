@@ -423,6 +423,16 @@ test("SearXNG retries through a CORS proxy when direct browser access fails", ()
 });
 
 
+test("city coordinates are prefetched during typing and cached for faster audit startup", () => {
+  assert.match(js, /CITY_CACHE_KEY="affiads-city-prefetch-v1"/);
+  assert.match(js, /CITY_CACHE_TTL=12\*60\*60\*1000/);
+  assert.match(js, /function prefetchCityCoordinates\(city\)/);
+  assert.match(js, /setTimeout\(\(\)=>prefetchCityCoordinates\(city\),1100\)/);
+  assert.match(js, /cityLookupPending\.has\(key\)/);
+  assert.match(sw, /affiads-audit-2026-125/);
+  assert.ok(html.includes("assets/app.js?v=2026-125"));
+});
+
 test("PDF reports include the AffiAds audit seal and audit page shows the three-step flow", () => {
   assert.match(js, /class="affiads-seal"/);
   assert.match(js, /AUDIT RÉALISÉ/);
@@ -431,7 +441,7 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /class="audit-flow"/);
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
-  assert.ok(html.includes("assets/app.js?v=2026-124"));
+  assert.ok(html.includes("assets/app.js?v=2026-125"));
   assert.ok(html.includes("assets/app.css?v=2026-124"));
 });
 
