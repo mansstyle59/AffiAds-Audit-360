@@ -156,7 +156,7 @@ test("2026-98 remembers trusted access in Safari and installed PWA without promp
 test("2026-98 keeps optional Google Fonts from blocking the first render", () => {
   assert.match(html, /fonts\.googleapis\.com[^"]+display=swap" media="print" onload="this\.media='all'"/);
   assert.match(html, /<noscript><link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
@@ -178,7 +178,7 @@ test("2026-98 enforces readable contrast for body copy, secondary text, forms an
   assert.match(css, /:root\[data-theme="light"\] \.main :is\(input,textarea,select\)/);
   assert.match(css, /:root\[data-theme="dark"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#b7c3ff!important/);
   assert.match(css, /:root\[data-theme="light"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#4335c9!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
@@ -194,7 +194,7 @@ test("2026-98 lets the owner choose and persist when the access code is requeste
   assert.match(js, /pinDelayDescription\(value\)/);
   assert.match(css, /#pinDelay\{[^}]*font-size:16px!important/);
   assert.match(css, /\.pin-delay-help/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
@@ -212,7 +212,7 @@ test("2026-98 removes the oversized duplicate new-client hero button", () => {
   assert.doesNotMatch(html, /id="heroNewClient"|class="new-client-hero"/);
   assert.doesNotMatch(js, /heroNewClient|new-client-hero/);
   assert.doesNotMatch(css, /\.new-client-hero\{/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
@@ -230,7 +230,7 @@ test("2026-98 mobile header removes duplicate Clients/New Audit actions while pr
 test("2026-98 removes all leftover styles for the deleted hero CTA", () => {
   assert.doesNotMatch(css, /new-client-hero|new-client-plus|new-client-copy|new-client-arrow/);
   assert.doesNotMatch(html, /heroNewClient|new-client-hero/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
@@ -254,7 +254,7 @@ test("2026-98 makes prospect composer compact and note readable in both themes",
   assert.match(css, /#view-pitch \.pitch-actions #pitchRegen\{grid-column:1\/-1\}/);
   assert.match(css, /:root\[data-theme="dark"\] #view-pitch \.pitch-note\{background:#222b55!important/);
   assert.match(css, /:root\[data-theme="light"\] #view-pitch \.pitch-note\{background:#f1f4ff!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
@@ -264,7 +264,7 @@ test("2026-98 uses a clear burger menu label instead of the ambiguous Plus tab",
   assert.match(html, /<span class="t">Menu<\/span><\/button>/);
   assert.match(html, /M4 6h16M4 12h16M4 18h16/);
   assert.match(js, /navMore.*aria-expanded/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
@@ -272,7 +272,7 @@ test("2026-98 enforces readable notice contrast and reserves footer space on mob
   assert.match(css, /:root\[data-theme="dark"\] \.main \.notice,[\s\S]*?background:#20294f!important;[\s\S]*?color:#f0f3ff!important/);
   assert.match(css, /:root\[data-theme="light"\] \.main \.notice,[\s\S]*?background:#f0f4ff!important;[\s\S]*?color:#253153!important/);
   assert.match(css, /\.main \.footer,.main footer\{[\s\S]*?padding:12px 76px 20px 10px!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
@@ -282,7 +282,7 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
   assert.match(css, /#pinDelay\{[\s\S]*?font-size:16px!important/);
   assert.match(html, /name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
-  assert.match(html, /assets\/app\.css\?v=2026-100/);
+  assert.match(html, /assets\/app\.css\?v=2026-101/);
   assert.match(sw, /affiads-audit-2026-101/);
 });
 
