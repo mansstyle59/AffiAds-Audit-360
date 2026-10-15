@@ -2027,8 +2027,7 @@ function bind(){
  document.querySelectorAll("[data-repfmt]").forEach(b=>b.onclick=()=>setReportFormat(b.dataset.repfmt));
  $("copy").onclick=()=>{read();const c=calc(),d=state.data||{};const txt="AUDIT AFFIADS 360°\nCommerce : "+(state.biz.name||"Non renseigné")+"\nVille : "+(state.biz.city||"Non renseignée")+"\nScore indicatif : "+(c.score===null?"non calculé":c.score+"/100")+"\nContrôles : "+c.n+"/"+keys.length+" · Points à améliorer : "+c.issues+((d.findings||[]).length?"\n\nCONSTATS\n"+d.findings.map(f=>"- "+f.text).join("\n"):"")+"\n\nPLAN D'ACTION\n"+issuesList().map((p,i)=>(i+1)+". "+p.it+" — "+p.reco).join("\n")+"\n\nNotes : "+(state.notes||"Aucune");copyText(txt,"Résumé copié.")};
  
- document.querySelectorAll("[data-theme-set]").forEach(b=>b.onclick=()=>{settings.theme=b.dataset.themeSet;saveSettings();applyTheme()});
- $("themeQuickToggle").onclick=()=>{settings.theme=document.documentElement.dataset.theme==="dark"?"light":"dark";saveSettings();applyTheme();toast(settings.theme==="dark"?"Thème sombre activé.":"Thème clair activé.")};
+ // Le thème est verrouillé en sombre : aucun contrôle ne permet de le basculer.
  $("installApp").onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$("installApp").classList.add("hidden")};
  $("shareReport").onclick=()=>shareText("Audit AffiAds",summaryText());
  $("pitchShare").onclick=()=>shareText("Message",$("pitchText").value);
@@ -2100,7 +2099,7 @@ function download(content,name,type){const blob=new Blob([content],{type});const
 
 
 /* ---------- 2026 : thème, installation, hors ligne, partage ---------- */
-function applyTheme(){const t=settings.theme||"auto";const effective=t==="auto"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.dataset.theme=effective;const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content",effective==="dark"?"#080d2d":"#f5f7ff");document.querySelectorAll("[data-theme-set]").forEach(b=>{b.setAttribute("aria-checked",String(b.dataset.themeSet===t));b.setAttribute("aria-pressed",String(b.dataset.themeSet===t))});document.documentElement.style.colorScheme=effective;const quick=document.getElementById("themeQuickToggle");if(quick){const label=effective==="dark"?"Passer au thème clair":"Passer au thème sombre";quick.setAttribute("aria-label",label);quick.title=label}}const systemTheme=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;if(systemTheme){const onSystemThemeChange=()=>{if((settings.theme||"auto")==="auto")applyTheme()};if(systemTheme.addEventListener)systemTheme.addEventListener("change",onSystemThemeChange);else if(systemTheme.addListener)systemTheme.addListener(onSystemThemeChange)}
+function applyTheme(){settings.theme="dark";const effective="dark";document.documentElement.dataset.theme=effective;document.documentElement.style.colorScheme="dark";const meta=document.getElementById("themeColor");if(meta)meta.setAttribute("content","#080d2d");document.querySelectorAll("[data-theme-set]").forEach(b=>{b.setAttribute("aria-checked","false");b.setAttribute("aria-pressed","false")})}const systemTheme=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;if(systemTheme){const onSystemThemeChange=()=>{applyTheme()};if(systemTheme.addEventListener)systemTheme.addEventListener("change",onSystemThemeChange);else if(systemTheme.addListener)systemTheme.addListener(onSystemThemeChange)}
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const b=$("installApp");if(b)b.classList.remove("hidden")});
 window.addEventListener("appinstalled",()=>{installEvt=null;const b=$("installApp");if(b)b.classList.add("hidden");toast("Appli installée sur l’écran d’accueil.")});
@@ -2268,7 +2267,7 @@ function syncMerge(remote){
  Object.keys(db.audits).forEach(id=>{const a=db.audits[id];if(db.deleted[id]&&String(db.deleted[id])>=String(a.updatedAt||a.createdAt||"")){delete db.audits[id];changed=true}});
  const isBlank=x=>!(x.biz&&x.biz.name)&&!(x.data&&x.data.fetchedAt)&&!Object.keys(x.checks||{}).length&&!(x.aiTests||[]).length;
  const ids=Object.keys(db.audits);if(ids.length>1)ids.forEach(id=>{if(isBlank(db.audits[id])&&Object.keys(db.audits).length>1){delete db.audits[id];changed=true}});
- if(remote.settings&&(remote.settingsAt||0)>(settings.updatedAt||0)){const theme=settings.theme;const remoteSettings={...remote.settings};delete remoteSettings.googleKey;delete remoteSettings.tavilyKey;delete remoteSettings.serpApiKey;settings={...settings,...remoteSettings,theme,updatedAt:remote.settingsAt};saveSettings();changed=true}
+ if(remote.settings&&(remote.settingsAt||0)>(settings.updatedAt||0)){const theme="dark";const remoteSettings={...remote.settings};delete remoteSettings.googleKey;delete remoteSettings.tavilyKey;delete remoteSettings.serpApiKey;settings={...settings,...remoteSettings,theme,updatedAt:remote.settingsAt};saveSettings();changed=true}
  return changed;
 }
 function syncSetStatus(t,bad){Sync.err=bad?t:"";const el=$("syncStatus");if(el){el.textContent=t;el.classList.toggle("keybad",!!bad)}const sv=$("savedState");if(sv&&Sync.secret&&!bad)sv.textContent="Synchronisé"}
@@ -2332,7 +2331,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme)
 try {
   const themeMedia = window.matchMedia("(prefers-color-scheme: dark)");
   const onThemeChange = () => {
-    if ((settings.theme || "auto") === "auto") applyTheme();
+    applyTheme();
   };
   if (themeMedia.addEventListener) themeMedia.addEventListener("change", onThemeChange);
   else if (themeMedia.addListener) themeMedia.addListener(onThemeChange);
