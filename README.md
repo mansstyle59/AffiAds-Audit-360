@@ -100,3 +100,45 @@ L’identifiant de bundle par défaut est `fr.affiads.audit360`. Si ton profil E
 ### Code d’accès et confidentialité
 
 Le code PIN est configuré dans l’application et son empreinte est stockée localement ; il n’est pas intégré comme texte en clair au dépôt public. Après l’installation, configure le code **1606** sur l’appareil si aucun code n’est déjà configuré, puis confirme ce même code. Une réinstallation peut effacer ce réglage local : le code devra alors être configuré de nouveau. Ne considère pas ce PIN local comme une authentification serveur : une véritable restriction à une seule personne nécessite une authentification côté serveur.
+
+
+## SEO + GEO : ce qu'AffiAds peut faire pour le client
+
+AffiAds Audit 360° vise à transformer un diagnostic en plan d'amélioration compréhensible, priorisé et vérifiable. **SEO** désigne la visibilité dans les moteurs de recherche ; **GEO** désigne ici le travail sur la clarté, la fiabilité et la découvrabilité des informations susceptibles d'être reprises dans les réponses des moteurs et assistants IA. Le terme GEO ne correspond pas à un classement officiel universel.
+
+### 1. Ce que l'application peut analyser automatiquement selon les données disponibles
+
+- **Fiche locale et présence publique** : identité, coordonnées, horaires, catégorie, photos, avis et concurrents lorsque la source et les autorisations/API le permettent.
+- **Site et performance** : HTTPS, performance Lighthouse/PageSpeed, signaux SEO, accessibilité et Core Web Vitals lorsqu'ils sont fournis par l'outil ; titre, description, liens, coordonnées et certains éléments techniques lorsque la lecture de page fonctionne.
+- **Recherche locale et concurrence** : résultats observés pour les requêtes choisies, concurrents visibles et comparaisons disponibles. Les positions sont indicatives et peuvent varier selon la localisation, l'appareil et la personnalisation.
+- **Présence sur le Web** : liens publics, profils sociaux et annuaires détectés dans les sources accessibles.
+- **Visibilité IA observée** : préparation de questions, ouverture des assistants, saisie de résultats datés et comparaison de présence/citations. Certains tests automatisés nécessitent une clé et restent soumis aux limites des API.
+
+### 2. Ce que le client peut améliorer avec le plan d'action
+
+- **SEO technique** : exploration et indexation, sitemap, robots.txt, canonicals, redirections, HTTPS, vitesse, stabilité et expérience mobile.
+- **SEO on-page** : titres uniques, méta-descriptions, structure H1/H2/H3, maillage interne, images, pages de services et contenu répondant à une intention de recherche.
+- **SEO local** : fiche Google et Bing complète, informations cohérentes, catégories adaptées, avis authentiques, pages de services/lieux réellement desservis et annuaires de référence.
+- **Données structurées** : balisage adapté au contenu réel et validation des erreurs ; elles aident les moteurs à comprendre une page mais ne garantissent pas un résultat enrichi.
+- **GEO / réponses IA** : réponses factuelles et faciles à citer, FAQ utile, informations d'entreprise cohérentes, expertise démontrable, références fiables, contenu lisible et vérification des robots d'exploration.
+- **Suivi** : répétition de questions IA, enregistrement de la date, de la formulation, de la présence, des sources citées et des erreurs constatées.
+
+### 3. Ce qu'AffiAds va fournir dans l'audit
+
+La checklist comprend désormais des contrôles SEO technique/contenu et GEO, avec une recommandation associée à chaque nouveau point. Le client peut marquer les points vérifiés et ceux à améliorer ; les recommandations alimentent le plan d'action priorisé et le rapport PDF existants. Les actions proposées sont des conseils à appliquer ou à confier à un prestataire : l'application ne modifie pas automatiquement le site, les fiches ou les paramètres du client.
+
+### 4. Méthode de mise en œuvre proposée
+
+1. **Diagnostic initial** : recueillir les URL, le métier, la zone réelle, les objectifs et les sources accessibles.
+2. **Corrections rapides (0–7 jours)** : coordonnées divergentes, titres évidents, liens cassés, informations manquantes et CTA.
+3. **Fondations (2–4 semaines)** : indexation, pages de services, structure du contenu, performance, données structurées et FAQ.
+4. **Autorité et GEO (mensuel)** : améliorer les preuves et les sources fiables, actualiser les informations et répéter les tests de visibilité IA.
+5. **Mesure** : comparer les données disponibles avant/après, en distinguant les métriques observées des recommandations et des contrôles manuels.
+
+### 5. Limites à annoncer clairement au client
+
+- Une analyse publique ne donne pas accès aux données privées de Google Search Console, aux statistiques de la fiche, ni aux comptes du client. Une connexion ou un export autorisé est nécessaire.
+- L'application ne peut pas garantir l'indexation, une position précise, l'apparition dans les aperçus IA, une citation par ChatGPT ou une hausse du chiffre d'affaires.
+- Les tests IA sont des observations datées : les réponses varient selon la requête, le pays, la session et le produit.
+- La présence d'un fichier `llms.txt`, d'un balisage ou d'une FAQ n'assure pas à elle seule une meilleure visibilité. Il faut privilégier le contenu utile, l'exactitude, l'exploration possible et les preuves.
+- Les points qui ne peuvent pas être confirmés automatiquement doivent rester marqués comme à vérifier manuellement, avec une preuve ou une source quand elle est disponible.
