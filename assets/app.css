@@ -2994,3 +2994,32 @@ body[data-view="auto"] .top{display:none!important}
   .nav > button { visibility: visible !important; opacity: 1 !important; }
   .main { padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important; }
 }
+
+
+/* 2026-114 — Clear, responsive Google API setup and per-service diagnostics. */
+.key-setup-card .key-setup-note{
+  display:flex;flex-direction:column;gap:4px;margin:14px 0;padding:13px 15px;
+  border:1px solid #b8c9f4;border-radius:14px;background:#eef3ff;color:#202b52;
+  line-height:1.45;font-size:13px;
+}
+.key-setup-card .key-setup-note span{color:#536183}
+.key-setup-actions,.key-cloud-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.key-setup-actions .btn,.key-cloud-actions .btn{flex:1 1 145px;min-width:0;justify-content:center;text-align:center;text-decoration:none}
+.key-cloud-actions .btn{font-size:13px;min-height:42px}
+.key-status{overflow-wrap:anywhere}
+.key-diagnostics{display:grid;gap:9px;margin-top:10px}
+.key-diagnostics-title{display:block;margin-bottom:2px;color:var(--ink)}
+.key-result{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.key-result>span:first-child{font-weight:900;font-size:16px}
+.key-result b,.key-result small{display:block}
+.key-result b{color:var(--ink);font-size:13px}
+.key-result small{margin-top:3px;color:var(--ink-2);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.key-result .steplink{display:inline-block;margin-top:5px;font-size:12px;font-weight:750}
+.key-diagnostics-foot{margin:10px 0 0!important;font-size:12px!important;line-height:1.5!important;color:var(--ink-2)!important}
+:root[data-theme="dark"] .key-setup-card .key-setup-note{background:#172347;border-color:#354777;color:#f3f6ff}
+:root[data-theme="dark"] .key-setup-card .key-setup-note span{color:#c2cbea}
+@media(max-width:480px){
+ .key-setup-actions{display:grid;grid-template-columns:1fr 1fr}
+ .key-setup-actions #saveKey{grid-column:1/-1}
+ .key-cloud-actions .btn{flex:1 1 100%}
+}
