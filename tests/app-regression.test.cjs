@@ -429,7 +429,7 @@ test("city coordinates are prefetched during typing and cached for faster audit 
   assert.match(js, /function prefetchCityCoordinates\(city\)/);
   assert.match(js, /setTimeout\(\(\)=>prefetchCityCoordinates\(city\),1100\)/);
   assert.match(js, /cityLookupPending\.has\(key\)/);
-  assert.match(sw, /affiads-audit-2026-125/);
+  assert.match(sw, /affiads-audit-2026-126/);
   assert.ok(html.includes("assets/app.js?v=2026-126"));
 });
 
@@ -450,7 +450,7 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /class="audit-flow"/);
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
-  assert.ok(html.includes("assets/app.js?v=2026-125"));
+  assert.ok(html.includes("assets/app.js?v=2026-126"));
   assert.ok(html.includes("assets/app.css?v=2026-124"));
 });
 
