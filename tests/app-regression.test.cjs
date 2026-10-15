@@ -298,7 +298,7 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
 test("mobile header has styled settings and working quick-theme controls without chat", () => {
   assert.match(html, /id="themeQuickToggle"/);
   assert.match(html, /aria-label="Ouvrir les réglages"/);
-  assert.match(html, /assets\/header-actions\.css\?v=2026-107/);
+  assert.match(html, /assets\\/header-actions\\.css\\?v=2026-117/);
   assert.match(js, /\$\("themeQuickToggle"\)\.onclick/);
   assert.match(js, /Passer au thème sombre/);
   assert.match(css, /body\[data-view="auto"\] \.top\{display:none!important\}/);
