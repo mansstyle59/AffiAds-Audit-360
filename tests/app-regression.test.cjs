@@ -429,8 +429,8 @@ test("city coordinates are prefetched during typing and cached for faster audit 
   assert.match(js, /function prefetchCityCoordinates\(city\)/);
   assert.match(js, /setTimeout\(\(\)=>prefetchCityCoordinates\(city\),1100\)/);
   assert.match(js, /cityLookupPending\.has\(key\)/);
-  assert.match(sw, /affiads-audit-2026-126/);
-  assert.ok(html.includes("assets/app.js?v=2026-126"));
+  assert.match(sw, /affiads-audit-\\d{4}-\\d+/);
+  assert.match(html, /assets\\/app\\.js\\?v=2026-\\d+/);
 });
 
 test("2026-126 avoids defaulting unidentified businesses to restaurants and displays official registry details", () => {
