@@ -1917,19 +1917,11 @@ async function runWebChecks(){
 }
 
 /* AFFIADS_AXE_CORE_AUDIT
- * axe-core: contrôle complémentaire WCAG sur une page publique rendue dans un navigateur distant.
- * L’outil est chargé uniquement après une action explicite. Le site cible et l’URL source
- * passent par validation stricte, les résultats sont échappés avant affichage.
+ * axe-core runs against the real DOM of the currently visible AffiAds screen.
+ * A static GitHub Pages app cannot inject scripts into an arbitrary cross-origin client site;
+ * use the PageSpeed/Lighthouse checks above for the client website.
  */
-const AXE_VERSION="4.10.3";
-function safePublicAuditUrl(raw){
- const u=normalizeUrl(String(raw||"").trim());
- if(!u)throw new Error("Entrez une URL valide, par exemple https://exemple.fr.");
- if(!/^https?:$/.test(u.protocol))throw new Error("Seules les adresses HTTP(S) sont prises en charge.");
- if(u.username||u.password)throw new Error("Retirez les identifiants présents dans l’URL.");
- if(["localhost","127.0.0.1","::1"].includes(u.hostname)||/^10\./.test(u.hostname)||/^192\.168\./.test(u.hostname)||/^172\.(1[6-9]|2\d|3[01])\./.test(u.hostname))throw new Error("Les adresses locales ou privées ne peuvent pas être auditées par cet outil.");
- return u;
-}
+const AXE_VERSION="4.14.0";
 function loadAxeCore(){
  if(window.axe&&typeof window.axe.run==="function")return Promise.resolve(window.axe);
  if(window.__affiadsAxePromise)return window.__affiadsAxePromise;
@@ -1948,39 +1940,30 @@ function axeSeverity(s){return s==="critical"?"Critique":s==="serious"?"Élevée
 async function runAxeAudit(){
  const btn=$("runAxeAudit"),status=$("axeAuditStatus"),results=$("axeAuditResults");
  if(!btn||btn.disabled)return;
- let target;
- try{target=safePublicAuditUrl($("webUrl").value||$("site").value)}catch(e){status.textContent=e.message;status.className="muted keybad";return}
- btn.disabled=true;status.className="muted";status.textContent="Chargement du moteur d’accessibilité…";
- results.innerHTML='<div class="step run"><span class="ico"><span class="spin">◌</span></span><div><b>Contrôle en cours</b><small>Le service distant ouvre la page et exécute axe-core. Cette analyse peut prendre une minute.</small></div></div>';
+ const viewId=document.body.dataset.view;
+ const scope=viewId?document.getElementById("view-"+viewId):null;
+ if(!scope||scope.classList.contains("hidden")){
+  status.className="muted keybad";status.textContent="Ouvrez un écran de l’application puis relancez le contrôle.";return;
+ }
+ btn.disabled=true;status.className="muted";status.textContent="Chargement du moteur axe-core…";
+ results.innerHTML='<div class="step run"><span class="ico"><span class="spin">◌</span></span><div><b>Contrôle en cours</b><small>Vérification de l’écran AffiAds actuellement ouvert.</small></div></div>';
  try{
   const axe=await loadAxeCore();
-  const endpoint="https://r.jina.ai/"+target.href;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),75000);
-  let response;
-  try{response=await fetch(endpoint,{signal:controller.signal,headers:{"Accept":"text/html"}})}finally{clearTimeout(timer)}
-  if(!response.ok)throw new Error("Le service de lecture distante a répondu HTTP "+response.status+".");
-  const remoteHtml=await response.text();
-  if(remoteHtml.length<100||!/<(?:html|!doctype)/i.test(remoteHtml))throw new Error("La page n’a pas pu être récupérée comme HTML. Le site bloque peut-être les lectures automatisées.");
-  const doc=new DOMParser().parseFromString(remoteHtml,"text/html");
-  if(!doc.body)throw new Error("Aucun contenu HTML exploitable n’a été reçu.");
-  // Avoid executing any page scripts or external assets in the local app origin.
-  doc.querySelectorAll("script,iframe,object,embed,base,link[rel=stylesheet],link[rel=preload],link[rel=prefetch]").forEach(n=>n.remove());
-  doc.querySelectorAll("*").forEach(el=>{for(const a of [...el.attributes])if(/^on/i.test(a.name)||["srcdoc","src","href","action","formaction"].includes(a.name.toLowerCase())&&/^javascript:/i.test(a.value))el.removeAttribute(a.name)});
-  const report=await axe.run(doc,{runOnly:{type:"tag",values:["wcag2a","wcag2aa","wcag21a","wcag21aa","wcag22aa","best-practice"]}});
+  const report=await axe.run(scope,{runOnly:{type:"tag",values:["wcag2a","wcag2aa","wcag21a","wcag21aa","wcag22aa","best-practice"]}});
   const violations=report.violations||[],passes=report.passes||[],incomplete=report.incomplete||[];
-  const counts={critical:0,serious:0,moderate:0,minor:0};
-  violations.forEach(v=>{counts[v.impact||"minor"]=(counts[v.impact||"minor"]||0)+v.nodes.length});
-  const heading='<div class="kpis">'+kpiBox(violations.length,"Règles en échec",violations.length?"#b42318":"#12805c")+kpiBox(report.passes.length,"Règles validées","#12805c")+kpiBox(report.incomplete.length,"À vérifier","#b7791f")+'</div>';
-  const summary='<div class="priority"><b>Résultat axe-core</b><small>'+htmlText(violations.length?("Défauts détectés sur "+violations.length+" règles, "+report.nodes+" éléments concernés."): "Aucune violation détectée par les règles exécutées.")+' L’absence de violation ne garantit pas une conformité complète WCAG.</small></div>';
+  const affected=violations.reduce((sum,v)=>sum+v.nodes.length,0);
+  const heading='<div class="kpis">'+kpiBox(violations.length,"Règles en échec",violations.length?"#b42318":"#12805c")+kpiBox(passes.length,"Règles validées","#12805c")+kpiBox(incomplete.length,"À vérifier","#b7791f")+'</div>';
+  const summary='<div class="priority"><b>Résultat axe-core · interface AffiAds</b><small>'+htmlText(violations.length?("Défauts détectés sur "+violations.length+" règles, touchant "+affected+" éléments."): "Aucune violation détectée par les règles exécutées.")+' Ce contrôle automatique ne garantit pas une conformité WCAG complète.</small></div>';
   const list=violations.sort((a,b)=>({critical:0,serious:1,moderate:2,minor:3}[a.impact]??4)-({critical:0,serious:1,moderate:2,minor:3}[b.impact]??4)).slice(0,30).map(v=>{
    const targets=v.nodes.slice(0,5).map(n=>'<code>'+htmlText((n.target||[]).join(", ").slice(0,220)||"sélecteur non disponible")+'</code>').join("<br>");
    const help=v.helpUrl?'<a href="'+htmlText(v.helpUrl)+'" target="_blank" rel="noopener noreferrer">Comprendre et corriger ↗</a>':"";
    return '<div class="priority"><b>'+htmlText(axeSeverity(v.impact)+" · "+v.help)+'</b><small>'+htmlText(v.description)+'<br>'+htmlText(v.nodes.length+" élément(s) · règle "+v.id)+'</small>'+targets+'<br>'+help+'</div>';
   }).join("");
   const uncertain=incomplete.slice(0,10).map(v=>'<div class="priority"><b>À vérifier · '+htmlText(v.help)+'</b><small>'+htmlText(v.description)+'</small></div>').join("");
-  results.innerHTML=heading+summary+(list||'<div class="priority"><b>Bravo, aucune violation automatiquement détectée.</b><small>Effectuez quand même une vérification humaine du clavier, des lecteurs d’écran, des formulaires et des parcours dynamiques.</small></div>')+(uncertain?'<h3>Contrôles nécessitant un examen humain</h3>'+uncertain:"")+'<p class="muted">Source : axe-core '+AXE_VERSION+' · cible : '+htmlText(target.href)+' · vérifié le '+htmlText(new Date().toLocaleString("fr-FR"))+'. L’analyse porte sur le HTML récupéré, pas nécessairement sur les scripts, le contenu connecté ou l’état visuel exact du site.</p>';
-  status.className="muted keyok";status.textContent="Analyse terminée · "+violations.length+" règle(s) en échec";
- }catch(e){status.className="muted keybad";status.textContent=e.name==="AbortError"?"Le contrôle a expiré. Réessayez plus tard.":(e.message||"Le contrôle a échoué.");
+  results.innerHTML=heading+summary+(list||'<div class="priority"><b>Aucune violation automatique détectée.</b><small>Vérifiez également le clavier, les lecteurs d’écran, les formulaires et les parcours dynamiques.</small></div>')+(uncertain?'<h3>Contrôles nécessitant un examen humain</h3>'+uncertain:"")+'<p class="muted">Source : axe-core '+AXE_VERSION+' · écran contrôlé : '+htmlText(viewId)+' · vérifié le '+htmlText(new Date().toLocaleString("fr-FR"))+'. Pour auditer le site client, utilisez Lighthouse/PageSpeed dans le panneau précédent.</p>';
+  status.className="muted keyok";status.textContent="Contrôle terminé · "+violations.length+" règle(s) en échec";
+ }catch(e){
+  status.className="muted keybad";status.textContent=e.message||"Le contrôle a échoué.";
   results.innerHTML='<div class="priority"><b>Contrôle non terminé</b><small>'+htmlText(e.message||e)+'</small><small>Les résultats Lighthouse déjà obtenus ne sont pas affectés.</small></div>';
  }finally{btn.disabled=false}
 }
