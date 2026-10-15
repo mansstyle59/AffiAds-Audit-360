@@ -3237,3 +3237,24 @@ body[data-view="auto"] .top{display:none!important}
     min-width: 42px !important; min-height: 42px !important; flex-basis: 42px !important;
   }
 }
+
+
+/* 2026-119 — Le libellé du bouton central déborde sous la barre sur iPhone. */
+@media (max-width: 900px) {
+  .layout .side .nav > #navNewClient .t,
+  .layout .side > .nav > #navNewClient .t {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  .layout .side .nav > #navNewClient,
+  .layout .side > .nav > #navNewClient {
+    align-self: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+}
