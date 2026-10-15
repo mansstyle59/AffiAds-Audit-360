@@ -2930,3 +2930,46 @@ body[data-view="auto"] .top{display:none!important}
   #view-auto .commerce-title h3{font-size:15px!important}
   .main{padding-bottom:calc(205px + env(safe-area-inset-bottom))!important}
 }
+
+
+/* 2026-110 — Definitive iPhone contrast fix: target the real DOM elements. */
+@media (max-width: 900px) {
+  header.top .toptitle h1#pageTitle {
+    color: #f7f8ff !important;
+    -webkit-text-fill-color: #f7f8ff !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+  header.top .toptitle p#pageSub {
+    color: #d5ddf7 !important;
+    -webkit-text-fill-color: #d5ddf7 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+  #view-clients #clientList .clientrow button.open span.who b {
+    color: #20294f !important;
+    -webkit-text-fill-color: #20294f !important;
+    opacity: 1 !important;
+  }
+  #view-clients #clientList .clientrow button.open span.who > span {
+    color: #536184 !important;
+    -webkit-text-fill-color: #536184 !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  #view-clients #clientList .clientrow button.open {
+    background: #eef2ff !important;
+  }
+  #view-clients #clientList .clientrow button.del {
+    background: #293466 !important;
+    color: #fff !important;
+  }
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who b {
+  color: #f7f8ff !important;
+  -webkit-text-fill-color: #f7f8ff !important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who > span {
+  color: #d5ddf7 !important;
+  -webkit-text-fill-color: #d5ddf7 !important;
+}
