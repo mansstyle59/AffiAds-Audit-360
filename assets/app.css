@@ -3633,3 +3633,41 @@ body[data-view="auto"] .top{display:none!important}
   #view-auto .audit-flow-step>small {font-size:10px!important;line-height:1.25!important}
   :root[data-theme="dark"] #view-auto .audit-form-card .field input::placeholder {font-size:14px!important}
 }
+
+
+/* 2026-156 — Contraste du client sélectionné : aucune carte blanche en mode sombre. */
+:root[data-theme="dark"] #view-clients #clientList .clientrow {
+  background:linear-gradient(145deg,#111a32,#172342)!important;
+  border:1px solid #35466e!important;
+  color:#eef2ff!important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open,
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open:hover,
+:root[data-theme="dark"] #view-clients #clientList .clientrow.cur button.open {
+  background:transparent!important;
+  color:#f4f6ff!important;
+  -webkit-text-fill-color:#f4f6ff!important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who,
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who b {
+  color:#f4f6ff!important;
+  -webkit-text-fill-color:#f4f6ff!important;
+  opacity:1!important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who > span,
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who time,
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.open span.who small {
+  color:#b9c7e6!important;
+  -webkit-text-fill-color:#b9c7e6!important;
+  opacity:1!important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow button.del {
+  background:#263663!important;
+  color:#f8faff!important;
+  -webkit-text-fill-color:#f8faff!important;
+  border:1px solid #465a8c!important;
+}
+:root[data-theme="dark"] #view-clients #clientList .clientrow .tile {
+  background:linear-gradient(145deg,#4058ff,#7138ed)!important;
+  color:#fff!important;
+}
