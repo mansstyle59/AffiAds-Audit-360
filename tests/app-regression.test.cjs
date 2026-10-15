@@ -430,7 +430,16 @@ test("city coordinates are prefetched during typing and cached for faster audit 
   assert.match(js, /setTimeout\(\(\)=>prefetchCityCoordinates\(city\),1100\)/);
   assert.match(js, /cityLookupPending\.has\(key\)/);
   assert.match(sw, /affiads-audit-2026-125/);
-  assert.ok(html.includes("assets/app.js?v=2026-125"));
+  assert.ok(html.includes("assets/app.js?v=2026-126"));
+});
+
+test("2026-126 avoids defaulting unidentified businesses to restaurants and displays official registry details", () => {
+  assert.match(js, /owners:\(e\.dirigeants\|\|\[\]\)\.map/);
+  assert.match(js, /Dirigeant déclaré \(registre public\)/);
+  assert.match(js, /Date administrative de création/);
+  assert.match(js, /BIZ_TYPES\[BIZ_TYPES\.length-1\]\.label/);
+  assert.match(html, /assets\/app\.js\?v=2026-126/);
+  assert.match(sw, /affiads-audit-2026-126/);
 });
 
 test("PDF reports include the AffiAds audit seal and audit page shows the three-step flow", () => {
