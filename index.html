@@ -237,13 +237,12 @@
 <li>Collez-la ici, puis « Tester la clé ».</li></ol>
 <p>Places API demande d’associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre un usage d’audit courant. Fixez une alerte de budget dans Google Cloud par sécurité.</p></details>
 </div>
-<div class="card s7 key-setup-card"><h2>Recherche web enrichie (facultatif)</h2><p class="muted">Ces fournisseurs peuvent améliorer les résultats web. Configurez-en un si vous le souhaitez : l’application essaie Tavily, puis Brave Search, puis SerpApi. Si une clé manque, est refusée ou dépasse son quota, AffiAds revient automatiquement à la recherche de secours et continue l’analyse.</p>
+<div class="card s7 key-setup-card"><h2>Recherche web enrichie (facultatif)</h2><p class="muted">Ces fournisseurs peuvent améliorer les résultats web. Configurez-en un si vous le souhaitez : l’application essaie Tavily, puis SerpApi. Si une clé manque, est refusée ou dépasse son quota, AffiAds revient automatiquement à la recherche de secours et continue l’analyse.</p>
 <div class="key-setup-note"><b>🔐 Clés enregistrées dans les réglages locaux</b><span>Les clés ne sont pas publiées dans le code et seront exclues des sauvegardes et de la synchronisation entre appareils. Une clé utilisée dans le navigateur reste visible par son propriétaire dans les outils de développement.</span></div>
 <div class="field"><label for="tavilyKey">Tavily Search API (quota gratuit mensuel)</label><input id="tavilyKey" type="password" placeholder="tvly-…" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-<div class="field"><label for="braveKey">Brave Search API (facultatif)</label><input id="braveKey" type="password" placeholder="Clé Brave Search" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
 <div class="field"><label for="serpApiKey">SerpApi (Google Search, facultatif)</label><input id="serpApiKey" type="password" placeholder="Clé SerpApi" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
 <div class="actions key-setup-actions"><button class="btn primary" id="saveSearchKeys">Enregistrer les clés</button><button class="btn" id="testSearchKeys">Tester les clés</button><button class="btn" id="removeSearchKeys">Retirer les clés</button></div>
-<div class="actions key-cloud-actions"><a class="btn" href="https://app.tavily.com/" target="_blank" rel="noopener">Créer une clé Tavily ↗</a><a class="btn" href="https://brave.com/search/api/" target="_blank" rel="noopener">Brave Search ↗</a><a class="btn" href="https://serpapi.com/manage-api-key" target="_blank" rel="noopener">SerpApi ↗</a></div>
+<div class="actions key-cloud-actions"><a class="btn" href="https://app.tavily.com/" target="_blank" rel="noopener">Créer une clé Tavily ↗</a><a class="btn" href="https://serpapi.com/manage-api-key" target="_blank" rel="noopener">SerpApi ↗</a></div>
 <div id="searchKeysStatus" class="muted key-status" role="status" aria-live="polite" style="margin-top:12px">Aucune clé de recherche supplémentaire : les recherches de secours restent actives.</div>
 </div>
 </div>
@@ -253,6 +252,6 @@
 
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-116&build=2026-116"></script>
+<script src="assets/app.js?v=2026-117&build=2026-117"></script>
 </body>
 </html>
