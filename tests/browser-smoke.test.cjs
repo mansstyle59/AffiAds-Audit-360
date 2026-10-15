@@ -124,6 +124,60 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
       }
     }
 
+    // Exercise manual checklist updates, report preview, persistence and backup round-trip.
+    await page.locator("#navMore").click();
+    await page.locator('#navSheet button[data-view="audit"]').click();
+    const firstCheck = page.locator('#checklist input[data-check]').first();
+    await firstCheck.check();
+    assert.equal(await firstCheck.isChecked(), true);
+    assert.match(await page.locator("#count").innerText(), /1\s*\/\s*\d+/);
+
+    await page.locator('#view-audit [data-go="report"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === "report");
+    assert.ok((await page.locator("#report1").innerText()).includes("Votre prochain audit"),
+      "empty report should render a useful preview");
+
+    // A fresh page load must restore the checked item from local storage.
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => {
+      const gate = document.querySelector("#gateLock");
+      return gate && !gate.hidden;
+    }, { timeout: 8000 });
+    await page.evaluate(() => {
+      document.body.classList.remove("locked");
+      document.querySelector("#gate")?.classList.add("hidden");
+      if (typeof nav === "function") nav("auto");
+    });
+    await page.locator("#navMore").click();
+    await page.locator('#navSheet button[data-view="audit"]').click();
+    assert.equal(await page.locator('#checklist input[data-check]').first().isChecked(), true,
+      "checklist state should persist after reload");
+
+    await page.locator("#navMore").click();
+    await page.locator('#navSheet button[data-view="settings"]').click();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.locator("#exportJson").click()
+    ]);
+    assert.match(download.suggestedFilename(), /^affiads-sauvegarde-.*\.json$/);
+    const backupPath = await download.path();
+    assert.ok(backupPath, "backup download should be available to the test");
+    const backupText = fs.readFileSync(backupPath, "utf8");
+    const backup = JSON.parse(backupText);
+    assert.equal(backup.app, "affiads-audit-360");
+    assert.ok(backup.auditCount >= 1, "backup should contain at least one audit");
+    assert.equal(backup.settings.googleKey, undefined, "API key must not be exported");
+
+    let importDialogMessage = "";
+    page.once("dialog", async dialog => {
+      importDialogMessage = dialog.message();
+      await dialog.accept();
+    });
+    await page.locator("#importJson").setInputFiles(backupPath);
+    await page.waitForFunction(() => /audit\(s\) importé\(s\)/i.test(document.querySelector("#toast")?.textContent || ""),
+      { timeout: 5000 });
+    assert.match(importDialogMessage, /^Importer \d+ audit/);
+
     // Return to the audit screen and verify the mobile page itself does not overflow horizontally.
     await page.locator('.nav button[data-view="auto"]').click();
     const dimensions = await page.evaluate(() => ({
