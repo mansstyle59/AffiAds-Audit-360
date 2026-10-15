@@ -410,3 +410,14 @@ test("Google key diagnostics only checks Places and never tests optional APIs", 
   assert.doesNotMatch(diagnostic, /check\("PageSpeed Insights"|check\("Gemini \(IA\)"|check\("YouTube Data API v3"/);
   assert.match(diagnostic, /ont été retirés de ce diagnostic/);
 });
+
+
+test("SearXNG retries through a CORS proxy when direct browser access fails", () => {
+  const start = js.indexOf("async function searxngSearch(q)");
+  const end = js.indexOf("async function bingSearch(q)", start);
+  assert.ok(start >= 0 && end > start, "SearXNG search function exists");
+  const fn = js.slice(start, end);
+  assert.match(fn, /api\.allorigins\.win\/raw\?url=/);
+  assert.match(fn, /fetchJson\(url,[\s\S]*?9000\)/);
+  assert.match(fn, /Le moteur de secours reste actif/);
+});
