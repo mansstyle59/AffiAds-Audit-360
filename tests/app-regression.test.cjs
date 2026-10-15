@@ -504,5 +504,5 @@ test("axe-core audits the visible AffiAds screen with the current engine", () =>
   assert.ok(js.includes('axeButton.onclick=runAxeAudit'));
   assert.ok(js.includes('axe.run(scope,'));
   assert.ok(html.includes('axe-core vérifie l’interface AffiAds actuellement ouverte'));
-  assert.ok(sw.includes('affiads-audit-2026-156'));
+  assert.ok(sw.includes('affiads-audit-2026-157'));
 });
