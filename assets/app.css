@@ -3392,3 +3392,106 @@ body[data-view="auto"] .top{display:none!important}
 :root[data-theme="dark"] #view-auto details.adv{border-top-color:#283557!important}
 :root[data-theme="dark"] #view-auto details.adv summary{color:#dce4ff!important}
 :root[data-theme="dark"] #view-auto details.adv .fields{background:#0c1530!important;border-color:#2c3b61!important}
+
+
+/* 2026-128 — Navigation mobile à contraste fiable en thème clair et sombre.
+   Évite le bouton actif violet avec texte sombre observé sur iPhone. */
+@media (max-width:900px){
+  .layout .side>.nav{
+    background:rgba(255,255,255,.97)!important;
+    color:#34405f!important;
+    border-top:1px solid #dfe5f5!important;
+    box-shadow:0 -8px 28px rgba(27,39,82,.10)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.25)!important;
+    backdrop-filter:blur(18px) saturate(1.25)!important;
+  }
+  .layout .side>.nav>button,
+  .layout .side>.nav>button.active{
+    color:#465273!important;
+    -webkit-text-fill-color:#465273!important;
+    background:transparent!important;
+    border:1px solid transparent!important;
+    box-shadow:none!important;
+  }
+  .layout .side>.nav>button svg{
+    color:currentColor!important;
+    stroke:currentColor!important;
+  }
+  .layout .side>.nav>button .t{
+    color:inherit!important;
+    -webkit-text-fill-color:currentColor!important;
+    font-weight:700!important;
+    letter-spacing:-.015em!important;
+  }
+  .layout .side>.nav>button.active{
+    background:#edf1ff!important;
+    border-color:#e2e8ff!important;
+    color:#2f4fe5!important;
+    -webkit-text-fill-color:#2f4fe5!important;
+  }
+  .layout .side>.nav>button.active svg{stroke:#2f4fe5!important}
+  .layout .side>.nav>#navNewClient,
+  .layout .side>.nav>#navNewClient.active{
+    color:#465273!important;
+    -webkit-text-fill-color:#465273!important;
+    background:transparent!important;
+    border-color:transparent!important;
+  }
+  .layout .side>.nav>#navNewClient .nav-new-icon{
+    background:linear-gradient(145deg,#315cff 0%,#5635e9 100%)!important;
+    border:2px solid #18244c!important;
+    color:#fff!important;
+    box-shadow:0 5px 13px rgba(58,65,225,.24)!important;
+  }
+  .layout .side>.nav>#navNewClient .nav-new-icon svg{stroke:#fff!important}
+  .layout .side>.nav>#navMore.active{
+    background:#edf1ff!important;
+    color:#2f4fe5!important;
+    -webkit-text-fill-color:#2f4fe5!important;
+    border-color:#e2e8ff!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav{
+    background:rgba(10,18,42,.98)!important;
+    color:#e2e9ff!important;
+    border-top-color:#29385f!important;
+    box-shadow:0 -8px 28px rgba(0,0,0,.34)!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav>button,
+  :root[data-theme="dark"] .layout .side>.nav>button.active{
+    color:#cbd5f5!important;
+    -webkit-text-fill-color:#cbd5f5!important;
+    background:transparent!important;
+    border-color:transparent!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav>button svg{stroke:currentColor!important}
+  :root[data-theme="dark"] .layout .side>.nav>button .t{
+    color:inherit!important;
+    -webkit-text-fill-color:currentColor!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav>button.active,
+  :root[data-theme="dark"] .layout .side>.nav>#navMore.active{
+    background:#263461!important;
+    border-color:#354878!important;
+    color:#fff!important;
+    -webkit-text-fill-color:#fff!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav>button.active svg,
+  :root[data-theme="dark"] .layout .side>.nav>#navMore.active svg{stroke:#fff!important}
+  :root[data-theme="dark"] .layout .side>.nav>#navNewClient,
+  :root[data-theme="dark"] .layout .side>.nav>#navNewClient.active{
+    background:transparent!important;
+    color:#dbe3ff!important;
+    -webkit-text-fill-color:#dbe3ff!important;
+    border-color:transparent!important;
+  }
+  :root[data-theme="dark"] .layout .side>.nav>#navNewClient .nav-new-icon{
+    background:linear-gradient(145deg,#315cff 0%,#5635e9 100%)!important;
+    border-color:#91a4ff!important;
+    color:#fff!important;
+  }
+  .layout .side>.nav>button:focus-visible{
+    outline:3px solid #8295ff!important;
+    outline-offset:-3px!important;
+  }
+  .layout .side>.nav>button:active{filter:brightness(.97)}
+}
