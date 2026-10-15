@@ -399,3 +399,14 @@ test("2026-107 positions the gold marker against its input and styles the mobile
   assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
   assert.ok(/affiads-audit-\d{4}-\d+/.test(sw));
 });
+
+
+test("Google key diagnostics only checks Places and never tests optional APIs", () => {
+  const start = js.indexOf('$("testKey").onclick=async()=>');
+  const end = js.indexOf('function renderKeyNotice2()', start);
+  assert.ok(start >= 0 && end > start, "Google key diagnostic handler exists");
+  const diagnostic = js.slice(start, end);
+  assert.match(diagnostic, /check\("Places API \(New\)"/);
+  assert.doesNotMatch(diagnostic, /check\("PageSpeed Insights"|check\("Gemini \(IA\)"|check\("YouTube Data API v3"/);
+  assert.match(diagnostic, /ont été retirés de ce diagnostic/);
+});
