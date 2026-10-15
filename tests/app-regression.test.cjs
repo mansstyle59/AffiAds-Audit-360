@@ -123,7 +123,10 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   }
   assert.match(html, /assets\/logo-192\.png\?v=2026-\d+/);
   assert.match(html, /class="audit-form-card"/);
-  assert.match(html, /AUDIT DE VISIBILITÉ 360°/);\n  assert.match(html, /France et à l’international/);\n  assert.match(html, /Ville ou pays/);\n  assert.match(html, /assets\\/app\\.css\\?v=2026-129/);
+  assert.match(html, /AUDIT DE VISIBILITÉ 360°/);
+  assert.match(html, /France et à l’international/);
+  assert.match(html, /Ville ou pays/);
+  assert.match(html, /assets\/app\.css\?v=2026-131/);
   assert.match(css, /\.ready-card\{/);
   assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
@@ -451,7 +454,7 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
   assert.match(html, /assets\/app\.js\?v=2026-\d+/);
-  assert.ok(html.includes("assets/app.css?v=2026-128"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
 });
 
 
@@ -481,5 +484,18 @@ test("2026-128 loads mobile navigation theme fix and caches it offline", () => {
 
 test("page markup does not contain a visible escaped newline before navigation theme stylesheet", () => {
   assert.ok(!html.includes(">\\\\n<link rel="));
-  assert.match(html, /assets\/app\.css\?v=2026-128">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
 });
+
+
+test("axe-core audit integration is reachable and clearly scoped", () => {
+  assert.match(html, /id="axeAuditCard"/);
+  assert.match(html, /id="runAxeAudit"/);
+  assert.match(html, /id="axeAuditResults"/);
+  assert.match(js, /const AXE_VERSION="4\.10\.3"/);
+  assert.match(js, /async function runAxeAudit\(\)/);
+  assert.match(js, /axeButton\.onclick=runAxeAudit/);
+  assert.match(js, /safePublicAuditUrl/);
+  assert.match(js, /report\.violations/);
+  assert.match(sw, /affiads-audit-2026-130/);
+ });

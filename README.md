@@ -39,6 +39,7 @@ Autres fonctions : plusieurs clients enregistrés, export/import des audits (fic
 | Jina Reader | Lecture complète du site : titre, description, boutons d'appel/WhatsApp/réservation, liens réseaux, Pixel Meta et Analytics, données structurées, cohérence téléphone/horaires/adresse | [jina-ai/reader](https://github.com/jina-ai/reader) |
 | Microlink | Capture du site sur téléphone, technologies (Wix, WordPress…), Lighthouse de secours | [microlinkhq](https://github.com/microlinkhq) |
 | Google Lighthouse / PageSpeed | Vitesse, SEO, accessibilité, Core Web Vitals | [GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) |
+| axe-core — contrôle complémentaire WCAG | Recherche des violations WCAG détectables sur une page publique ; résultats automatiques à valider humainement | [dequelabs/axe-core](https://github.com/dequelabs/axe-core) |
 | RDAP | Date d'enregistrement du nom de domaine | standard public de l'IETF |
 
 Les services gratuits ont des limites d'usage (par exemple environ 25 analyses Microlink par jour et par appareil) : largement suffisant pour des audits de prospection.
