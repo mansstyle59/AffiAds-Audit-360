@@ -42,6 +42,8 @@ jobs:
         run: node --check assets/logo-dev.js
       - name: Test Logo.dev integration
         run: node --test tests/logo-dev.test.cjs
+      - name: Test social search regressions
+        run: node --test tests/social-regression.test.cjs
       - name: Test app, PWA, themes and asset consistency
         run: node --test tests/app-regression.test.cjs
       - name: Install Chromium smoke-test dependencies
