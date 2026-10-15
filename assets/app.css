@@ -3023,3 +3023,6 @@ body[data-view="auto"] .top{display:none!important}
  .key-setup-actions #saveKey{grid-column:1/-1}
  .key-cloud-actions .btn{flex:1 1 100%}
 }
+
+/* 2026-115 search provider settings */
+.key-setup-card .key-result{display:flex;gap:9px;align-items:flex-start;margin-top:8px}.key-setup-card .key-result small{display:block;overflow-wrap:anywhere}@media(max-width:520px){.key-setup-card .key-setup-actions{display:grid;grid-template-columns:1fr 1fr}.key-setup-card .key-setup-actions #saveSearchKeys{grid-column:1/-1}}
