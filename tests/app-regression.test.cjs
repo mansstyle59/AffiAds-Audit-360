@@ -80,6 +80,11 @@ test("backup import is bounded, confirmed and avoids overwriting duplicate IDs",
   assert.match(js, /delete remoteSettings\.googleKey/);
 });
 
+test("social profile search builds its domain from the current network instead of an undefined match variable", () => {
+  assert.match(js, /const networkConfig=NETS\.find\(x=>x\[0\]===n\)/);
+  assert.doesNotMatch(js, /String\(state\.biz\.city\|\|""\)\.trim\(\)\+" site:"\+match\[1\]/);
+});
+
 test("AI visibility compares platforms using only explicit yes/no results", () => {
   assert.match(js, /Comparaison par assistant/);
   assert.match(js, /presence==="yes"\|\|t\.presence==="no"/);
