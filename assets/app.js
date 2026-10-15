@@ -159,6 +159,12 @@ let db={current:null,audits:{}};
 let settings={googleKey:"",tavilyKey:"",serpApiKey:"",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
 let state=blankState();
 function loadAll(){
+ // Nettoyage de compatibilité : retire aussi les champs Brave d’un ancien HTML/PWA encore en cache.
+ document.querySelectorAll('label[for="braveKey"], #braveKey').forEach(el=>{
+   const field=el.closest(".field");if(field)field.remove();else el.remove();
+ });
+ document.querySelectorAll('a[href*="brave.com/search/api"]').forEach(el=>el.remove());
+ document.querySelectorAll("a").forEach(el=>{if((el.textContent||"").trim()==="Brave Search ↗")el.remove()});
  try{const s=JSON.parse(localStorage.getItem(SETTINGS)||"null");if(s)settings={...settings,...s}}catch(e){}
  // Supprimer toute ancienne clé Brave Search sauvegardée localement.
  if(Object.prototype.hasOwnProperty.call(settings,"braveKey")){delete settings.braveKey;try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
