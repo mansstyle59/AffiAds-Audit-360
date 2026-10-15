@@ -421,3 +421,16 @@ test("SearXNG retries through a CORS proxy when direct browser access fails", ()
   assert.match(fn, /fetchJson\(url,[\s\S]*?9000\)/);
   assert.match(fn, /Le moteur de secours reste actif/);
 });
+
+
+test("PDF reports include the AffiAds audit seal and audit page shows the three-step flow", () => {
+  assert.match(js, /class="affiads-seal"/);
+  assert.match(js, /AUDIT RÉALISÉ/);
+  assert.match(js, /Cachet AffiAds, audit de visibilité réalisé/);
+  assert.match(css, /\.affiads-seal\{/);
+  assert.match(html, /class="audit-flow"/);
+  assert.match(html, /Sources publiques/);
+  assert.match(html, /Rapport PDF/);
+  assert.match(html, /assets\\/app\\.js\\?v=2026-123/);
+  assert.match(html, /assets\\/app\\.css\\?v=2026-123/);
+});
