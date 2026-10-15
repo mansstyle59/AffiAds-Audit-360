@@ -1,0 +1,111 @@
+/* 2026-108 — Global readability and mobile contrast corrections.
+   Keep this file last so older mobile patches cannot override the fixes. */
+:root {
+  --aa-text-strong: #20294f;
+  --aa-text-secondary: #586487;
+  --aa-text-muted: #687493;
+  --aa-border-soft: #d9e1f6;
+}
+/* Default/light theme: never use pale text on pale client tiles. */
+#view-clients .clientrow .who b,
+#view-clients .clientrow .open,
+#view-clients .clientrow .who strong {
+  color: var(--aa-text-strong) !important;
+}
+#view-clients .clientrow .who span,
+#view-clients .clientrow .who small,
+#view-clients .clientrow .who .muted {
+  color: var(--aa-text-secondary) !important;
+  opacity: 1 !important;
+}
+#view-clients .clientrow .open {
+  background: #eef2ff !important;
+}
+#view-clients .clientrow .open:focus-visible {
+  outline: 3px solid #536dfe !important;
+  outline-offset: 2px !important;
+}
+#view-clients .clientrow .del {
+  color: #fff !important;
+  background: #293466 !important;
+  border-color: #53619c !important;
+}
+/* Dark banner/card headings must remain bright, not inherit dark ink. */
+#view-clients .clientbar,
+#view-clients .clientbar h1,
+#view-clients .clientbar h2,
+#view-clients .clientbar h3,
+#view-clients .clientbar p,
+#view-clients .clients-hero,
+#view-clients .clients-hero h1,
+#view-clients .clients-hero h2,
+#view-clients .clients-hero p {
+  color: #f4f6ff !important;
+}
+#view-clients .clientbar p,
+#view-clients .clients-hero p {
+  color: #c7d1f1 !important;
+}
+/* Navigation: keep the central action label legible and clear of the plus button. */
+@media (max-width: 900px) {
+  .nav { isolation: isolate !important; }
+  .nav > button .t {
+    color: #455174 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    font-weight: 650 !important;
+  }
+  .nav > button.active .t { color: #3157ff !important; }
+  .nav > #navNewClient {
+    position: relative !important;
+    justify-content: flex-end !important;
+    gap: 5px !important;
+    padding-top: 0 !important;
+    padding-bottom: 5px !important;
+  }
+  .nav > #navNewClient .nav-new-icon {
+    margin-top: -7px !important;
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .nav > #navNewClient .t {
+    display: block !important;
+    color: #455174 !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+    position: static !important;
+  }
+  /* Secondary copy across every screen: readable against its actual surface. */
+  .muted, .foot, .clientrow .who span {
+    opacity: 1 !important;
+  }
+}
+:root[data-theme="dark"] #view-clients .clientrow .open,
+:root[data-theme="dark"] #view-clients .clientrow.cur .open {
+  background: #252b58 !important;
+}
+:root[data-theme="dark"] #view-clients .clientrow .who b,
+:root[data-theme="dark"] #view-clients .clientrow .open,
+:root[data-theme="dark"] #view-clients .clientrow .who strong {
+  color: #f5f6ff !important;
+}
+:root[data-theme="dark"] #view-clients .clientrow .who span,
+:root[data-theme="dark"] #view-clients .clientrow .who small,
+:root[data-theme="dark"] #view-clients .clientrow .who .muted {
+  color: #c5ccef !important;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #view-clients .clientrow .open {
+    background: #252b58 !important;
+  }
+  :root:not([data-theme="light"]) #view-clients .clientrow .who b,
+  :root:not([data-theme="light"]) #view-clients .clientrow .open {
+    color: #f5f6ff !important;
+  }
+  :root:not([data-theme="light"]) #view-clients .clientrow .who span,
+  :root:not([data-theme="light"]) #view-clients .clientrow .who small {
+    color: #c5ccef !important;
+  }
+}
