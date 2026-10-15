@@ -17,8 +17,8 @@ test("PWA manifest is valid and its icons exist", () => {
   }
 });
 
-test("home audit, chat and theme controls are present", () => {
-  for (const id of ["view-auto","autoName","autoCity","runAuto","autoToReport","keyNotice","botFab","botPanel","botClose","view-settings"]) {
+test("home audit and theme controls are present", () => {
+  for (const id of ["view-auto","autoName","autoCity","runAuto","autoToReport","keyNotice","view-settings"]) {
     assert.ok(new RegExp('id="' + id + '"' ).test(html), "missing element id=" + id);
   }
   for (const theme of ["auto","light","dark"]) assert.ok(html.includes('data-theme-set="' + theme + '"'));
@@ -287,31 +287,16 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
 });
 
 
-test("2026-98 assistant widget uses explicit readable colors in dark and light themes", () => {
-  assert.match(css, /:root\[data-theme="dark"\] \.botpanel \.bcard,[\s\S]*?background:var\(--bot-card-bg\)!important/);
-  assert.match(css, /:root\[data-theme="dark"\] \.botpanel \.bcard b,[\s\S]*?color:var\(--bot-text\)!important/);
-  assert.match(css, /:root\[data-theme="dark"\] \.botpanel \.botfield textarea::placeholder[\s\S]*?opacity:1!important/);
-  assert.match(css, /:root\[data-theme="light"\] \.botpanel \.bcard b,[\s\S]*?color:#20264a!important/);
-  assert.match(css, /:root\[data-theme="light"\] \.botpanel \.botfield textarea[\s\S]*?-webkit-text-fill-color:#20264a!important/);
-  assert.ok(html.includes("assets/app.css?v=2026-102"));
-  assert.match(sw, /affiads-audit-2026-102/);
+test("chat assistant interface and runtime have been removed", () => {
+  assert.equal(html.includes('id="botFab"'), false);
+  assert.equal(html.includes('id="botPanel"'), false);
+  assert.equal(html.includes('id="brandAssistantBtn"'), false);
+  assert.equal(js.includes("function botAsk("), false);
+  assert.equal(js.includes("function initBot("), false);
+  assert.equal(js.includes("BOT_GUIDE"), false);
 });
 
-
-test("2026-98 assistant prioritizes client lookup and shows stored client details", () => {
-  assert.match(js, /\["find","Trouver un client","Par nom, ville, téléphone ou site"\]/);
-  assert.match(js, /function botClientSearchText\(a\)/);
-  assert.match(js, /function botClientDetail\(a\)/);
-  assert.match(js, /\["Ouvrir la fiche",\(\)=>\{switchTo\(a\.id\)/);
-  assert.match(js, /\["Message prospect",\(\)=>\{switchTo\(a\.id\)/);
-  assert.match(js, /\["info","Fiche client","Coordonnées, audit, score et priorités"\]/);
-  assert.match(js, /Dossiers clients enregistrés \(recherche locale sur cet appareil\)/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-102/);
-});
-
-
-test("2026-98 report preview has a helpful empty state and avoids floating assistant overlap", () => {
+test("2026-98 report preview has a helpful empty state", () => {
   assert.ok(js.includes('b.name||"Votre prochain audit"'));
   assert.ok(js.includes("Renseignez le nom et la ville du commerce pour personnaliser ce rapport."));
   assert.ok(css.includes('body[data-view="report"] .botfab{display:none!important}'));
