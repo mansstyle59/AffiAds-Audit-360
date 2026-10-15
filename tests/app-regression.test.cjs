@@ -488,14 +488,14 @@ test("page markup does not contain a visible escaped newline before navigation t
 });
 
 
-test("axe-core audit integration is reachable and clearly scoped", () => {
+test("axe-core audits the visible AffiAds screen with the current engine", () => {
   assert.match(html, /id="axeAuditCard"/);
   assert.match(html, /id="runAxeAudit"/);
   assert.match(html, /id="axeAuditResults"/);
-  assert.match(js, /const AXE_VERSION="4\.10\.3"/);
-  assert.match(js, /async function runAxeAudit\(\)/);
-  assert.match(js, /axeButton\.onclick=runAxeAudit/);
-  assert.match(js, /safePublicAuditUrl/);
-  assert.match(js, /report\.violations/);
-  assert.match(sw, /affiads-audit-2026-130/);
- });
+  assert.match(html, /const AXE_VERSION="4\\.14\\.0"/);
+  assert.match(js, /async function runAxeAudit\\(\\)/);
+  assert.match(js, /axeButton\\.onclick=runAxeAudit/);
+  assert.match(js, /axe\\.run\\(scope,/);
+  assert.match(html, /axe-core vérifie l’interface AffiAds actuellement ouverte/);
+  assert.match(sw, /affiads-audit-2026-132/);
+});
