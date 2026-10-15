@@ -147,14 +147,11 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
     assert.equal(await page.evaluate(() => window.__axeAuditScope), "view-webcheck",
       "axe-core should inspect the real visible AffiAds screen");
 
-    // The compact brand actions should be styled, accessible and functional on mobile.
-    assert.equal(await page.locator("#themeQuickToggle").count(), 1);
+    // The app is intentionally dark-only; no control may switch it to light mode.
+    assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
+    assert.equal(await page.locator("#themeQuickToggle").count(), 0, "the theme toggle must stay removed");
+    assert.equal(await page.locator('[data-theme-set="light"]').count(), 0, "the light theme option must stay absent");
     assert.equal(await page.locator("#botFab").count(), 0, "the removed chat launcher must stay absent");
-    const beforeQuickTheme = await page.locator("html").getAttribute("data-theme");
-    await page.locator("#themeQuickToggle").click();
-    const afterQuickTheme = await page.locator("html").getAttribute("data-theme");
-    assert.notEqual(afterQuickTheme, beforeQuickTheme, "quick theme action should switch light/dark mode");
-    assert.ok((await page.locator("#themeQuickToggle").getAttribute("aria-label")).includes("Passer au thème"));
     await page.locator('.nav button[data-view="auto"]').click();
     await page.waitForFunction(() => document.body.dataset.view === "auto");
     assert.equal(await page.locator(".top").evaluate(el => getComputedStyle(el).display), "none",
