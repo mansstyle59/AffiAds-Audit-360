@@ -3026,3 +3026,108 @@ body[data-view="auto"] .top{display:none!important}
 
 /* 2026-115 search provider settings */
 .key-setup-card .key-result{display:flex;gap:9px;align-items:flex-start;margin-top:8px}.key-setup-card .key-result small{display:block;overflow-wrap:anywhere}@media(max-width:520px){.key-setup-card .key-setup-actions{display:grid;grid-template-columns:1fr 1fr}.key-setup-card .key-setup-actions #saveSearchKeys{grid-column:1/-1}}
+
+
+/* 2026-116 — Correctif définitif : dock mobile compact, aligné et bord à bord. */
+@media (max-width: 900px) {
+  :root { --tabbar: 82px !important; }
+  .layout .side .nav {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    width: 100% !important;
+    height: calc(82px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(82px + env(safe-area-inset-bottom)) !important;
+    max-height: calc(82px + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+    border: 0 !important;
+    border-top: 1px solid #e4e8f5 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    background: rgba(255,255,255,.98) !important;
+    box-shadow: 0 -6px 22px rgba(25,35,75,.09) !important;
+    z-index: 999 !important;
+    transform: none !important;
+  }
+  .layout .side .nav > button,
+  .layout .side .nav > button.active,
+  .layout .side .nav > #navNewClient {
+    position: relative !important;
+    flex: 1 1 0 !important;
+    width: 20% !important;
+    min-width: 0 !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    margin: 0 !important;
+    padding: 5px 1px !important;
+    align-self: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    line-height: 1.05 !important;
+    overflow: visible !important;
+  }
+  .layout .side .nav > button.active {
+    background: #eef1ff !important;
+    color: #3556ed !important;
+  }
+  .layout .side .nav > button svg {
+    display: block !important;
+    width: 27px !important;
+    height: 27px !important;
+    flex: 0 0 27px !important;
+  }
+  .layout .side .nav > button .t {
+    display: block !important;
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+  }
+  .layout .side .nav > #navNewClient .nav-new-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+    flex: 0 0 46px !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    transform: none !important;
+    box-shadow: 0 4px 10px rgba(75,63,230,.25) !important;
+  }
+  .layout .side .nav > #navNewClient .nav-new-icon svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  .layout .side .nav:not(.open) > .navmore { display: none !important; }
+  .layout .side .nav.open > .navmore {
+    position: fixed !important;
+    inset: auto 10px calc(82px + env(safe-area-inset-bottom) + 10px) 10px !important;
+    width: auto !important;
+    max-height: min(60dvh, 540px) !important;
+    overflow-y: auto !important;
+    border-radius: 20px !important;
+    z-index: 1001 !important;
+  }
+  .layout .main {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+  .layout .side .sidenote { display: none !important; }
+}
+@media (max-width: 380px) {
+  .layout .side .nav { gap: 2px !important; padding-left: 4px !important; padding-right: 4px !important; }
+  .layout .side .nav > button .t { font-size: 10px !important; }
+  .layout .side .nav > #navNewClient .nav-new-icon { width: 42px !important; height: 42px !important; min-width: 42px !important; min-height: 42px !important; flex-basis: 42px !important; }
+}
