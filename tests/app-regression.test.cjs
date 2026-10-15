@@ -71,7 +71,11 @@ test("backup import is bounded, confirmed and avoids overwriting duplicate IDs",
   assert.match(js, /async function tavilySearch/);
   assert.doesNotMatch(js, /async function braveSearch/);
   assert.match(js, /Supprimer toute ancienne clé Brave Search/);
-  assert.match(js, /async function serpApiSearch/);
+  assert.match(js, /async function searxngSearch/);
+  assert.doesNotMatch(js, /async function serpApiSearch/);
+  assert.match(js, /SearXNG \(open source\)/);
+  assert.match(html, /id="searxngUrl"/);
+  assert.match(html, /services Google \(Places et PageSpeed\) restent inchangés/);
   assert.match(js, /recherche de secours activée/);
   assert.match(js, /delete remoteSettings\.googleKey/);
 });
