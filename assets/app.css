@@ -3716,3 +3716,27 @@ body[data-view="auto"] .top{display:none!important}
  #view-clients .client-meta .client-place,#view-clients .client-meta .client-updated {font-size:10px!important}
  #view-clients .clientrow .del {flex-basis:32px!important;width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important}
 }
+
+
+/* 2026-158 — Restituer une carte client plus ample sans décompacter le reste de la page. */
+#view-clients .clientrow {padding:12px!important;gap:10px!important;border-radius:20px!important}
+#view-clients .clientrow .open {gap:14px!important;padding:10px!important;border-radius:15px!important}
+#view-clients .clientrow .tile.xs {width:54px!important;height:54px!important;flex:0 0 54px!important;border-radius:15px!important}
+#view-clients .clientrow .open .who {gap:8px!important}
+#view-clients .clientrow .open .who>b {font-size:18px!important;line-height:1.35!important}
+#view-clients .clientrow .open .who .client-meta {gap:6px 8px!important;font-size:13px!important;line-height:1.45!important}
+#view-clients .client-meta .client-place,#view-clients .client-meta .client-updated {font-size:13px!important}
+#view-clients .client-meta .client-status,#view-clients .client-meta .client-progress,#view-clients .client-meta .client-opportunities {min-height:28px!important;padding:5px 10px!important;font-size:12px!important}
+#view-clients .clientrow .del {flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;border-radius:15px!important}
+#view-clients .clientrow .del svg {width:19px!important;height:19px!important}
+@media(max-width:600px) {
+ #view-clients .clientrow {padding:10px!important;gap:8px!important;border-radius:18px!important}
+ #view-clients .clientrow .open {gap:11px!important;padding:7px!important}
+ #view-clients .clientrow .tile.xs {width:48px!important;height:48px!important;flex-basis:48px!important;border-radius:13px!important}
+ #view-clients .clientrow .open .who {gap:7px!important}
+ #view-clients .clientrow .open .who>b {font-size:16px!important;line-height:1.35!important}
+ #view-clients .clientrow .open .who .client-meta {gap:6px!important;font-size:12px!important;line-height:1.4!important}
+ #view-clients .client-meta .client-place,#view-clients .client-meta .client-updated {font-size:12px!important}
+ #view-clients .client-meta .client-status,#view-clients .client-meta .client-progress,#view-clients .client-meta .client-opportunities {min-height:25px!important;padding:4px 9px!important;font-size:11px!important}
+ #view-clients .clientrow .del {flex-basis:42px!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border-radius:13px!important}
+}

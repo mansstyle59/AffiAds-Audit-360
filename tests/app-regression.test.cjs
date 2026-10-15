@@ -130,7 +130,7 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   assert.match(html, /AUDIT DE VISIBILITÉ 360°/);
   assert.match(html, /France et à l’international/);
   assert.match(html, /Ville ou pays/);
-  assert.match(html, /assets\/app\.css\?v=2026-157/);
+  assert.match(html, /assets\/app\.css\?v=2026-158/);
   assert.match(css, /\.ready-card\{/);
   assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
@@ -504,5 +504,5 @@ test("axe-core audits the visible AffiAds screen with the current engine", () =>
   assert.ok(js.includes('axeButton.onclick=runAxeAudit'));
   assert.ok(js.includes('axe.run(scope,'));
   assert.ok(html.includes('axe-core vérifie l’interface AffiAds actuellement ouverte'));
-  assert.ok(sw.includes('affiads-audit-2026-157'));
+  assert.ok(sw.includes('affiads-audit-2026-158'));
 });
