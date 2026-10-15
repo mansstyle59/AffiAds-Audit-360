@@ -123,7 +123,7 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   }
   assert.match(html, /assets\/logo-192\.png\?v=2026-\d+/);
   assert.match(html, /class="audit-form-card"/);
-  assert.match(html, /AUDIT LOCAL/);
+  assert.match(html, /AUDIT DE VISIBILITÉ 360°/);\n  assert.match(html, /France et à l’international/);\n  assert.match(html, /Ville ou pays/);\n  assert.match(html, /assets\\/app\\.css\\?v=2026-129/);
   assert.match(css, /\.ready-card\{/);
   assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
