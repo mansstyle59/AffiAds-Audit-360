@@ -787,7 +787,7 @@ async function socialScan(name,city,known){
 }
 /* ---------- Audit automatique ---------- */
 let steps=[];
-function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||"",link:link||null});renderAutoSteps(steps)}
+function setStep(id,status,title,detail,link){let s=steps.find(x=>x.id===id);if(!s){s={id};steps.push(s)}Object.assign(s,{status,title,detail:detail||"",link:link||null});if(state&&state.data){state.data.steps=steps;state.data.auditInProgress=!!running;state.data.progressSavedAt=new Date().toISOString();persistLocal()}renderAutoSteps(steps)}
 /* Erreurs Google et réseau traduites en consignes claires */
 function frErr(e){
  const m=String(e&&e.message||e||"");const url=(m.match(/https:\/\/console\.(?:developers|cloud)\.google\.com\/[^\s"']+/)||[])[0]||"";
@@ -818,7 +818,7 @@ async function runAuto(){
  const name=$("autoName").value.trim(),city=$("autoCity").value.trim();let type=$("autoType").value;
  if(!name||!city){toast("Renseignez le nom du commerce et la ville.");($("autoName").value?$("autoCity"):$("autoName")).focus();return}
  running=true;document.body.classList.add("scanning");closeSuggest();$("runAuto").disabled=true;$("runAuto").textContent="Analyse en cours…";$("progDetails").open=true;$("progTitle").textContent="Analyse en cours…";$("progDetails").scrollIntoView({behavior:"smooth",block:"start"});
- steps=[];const data={fetchedAt:nowLabel(),steps};const findings=[];let googleBlocked=null;
+ steps=[];const data={fetchedAt:nowLabel(),steps,auditInProgress:true};state.data={...(state.data||{}),fetchedAt:data.fetchedAt,steps,auditInProgress:true};persistLocal();const findings=[];let googleBlocked=null;
  const backup=JSON.parse(JSON.stringify({auto:state.auto,checks:state.checks,issues:state.issues,data:state.data,biz:state.biz}));
  Object.keys(state.auto).forEach(k=>{const a=state.auto[k];if(a&&(a.status==="ok"||a.status==="issue")){delete state.checks[k];delete state.issues[k]}});state.auto={};
  state.biz.name=name;state.biz.city=city;state.biz.date=today();
@@ -1090,7 +1090,7 @@ async function runAuto(){
    else setStep("notfound","err","Commerce introuvable : « "+name+" » à "+city,"Aucune fiche Google ni OpenStreetMap ne correspond. Vérifiez l’orthographe et la ville, puis tapez le début du nom et choisissez le commerce dans la liste qui s’affiche.");
    toast(e.stop==="offline"?"Pas de connexion internet.":"Commerce introuvable : vérifiez le nom.");renderChecklist();update();renderAutoSummary();
   }else setStep("fatal","err","Erreur inattendue",frErr(e).text)}
- finally{running=false;document.body.classList.remove("scanning");$("runAuto").disabled=false;$("runAuto").textContent="Relancer l'audit";state.data.steps=steps;persistLocal()}
+ finally{running=false;document.body.classList.remove("scanning");$("runAuto").disabled=false;$("runAuto").textContent="Relancer l'audit";state.data.steps=steps;state.data.auditInProgress=false;state.data.progressSavedAt=new Date().toISOString();persistLocal()}
 }
 function hydrateBizFields(){fields.forEach(id=>{if(state.biz[id]!==undefined&&state.biz[id]!==null)$(id).value=state.biz[id]});$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||""}
 
