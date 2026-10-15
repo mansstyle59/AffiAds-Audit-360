@@ -431,8 +431,8 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /class="audit-flow"/);
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
-  assert.ok(html.includes("assets/app.js?v=2026-123"));
-  assert.ok(html.includes("assets/app.css?v=2026-123"));
+  assert.ok(html.includes("assets/app.js?v=2026-124"));
+  assert.ok(html.includes("assets/app.css?v=2026-124"));
 });
 
 
