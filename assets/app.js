@@ -1959,7 +1959,9 @@ function bind(){
  $("autoType").addEventListener("change",()=>{$("autoType").dataset.touched="1";if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords($("autoType").value)});
  $("autoKeyword").addEventListener("input",()=>$("autoKeyword").dataset.touched="1");
  $("autoName").addEventListener("input",()=>{if(state.biz.placeId||state.biz.osmPick)clearPick();queueSuggest()});
- let cityPrefetchTimer=null;\n $("autoCity").addEventListener("input",()=>{if(!state.biz.placeId&&!state.biz.osmPick)queueSuggest();clearTimeout(cityPrefetchTimer);const city=$("autoCity").value.trim();if(city.length>=2)cityPrefetchTimer=setTimeout(()=>prefetchCityCoordinates(city),1100)});\n $("autoCity").addEventListener("blur",()=>{clearTimeout(cityPrefetchTimer);prefetchCityCoordinates($("autoCity").value)});
+ let cityPrefetchTimer=null;
+ $("autoCity").addEventListener("input",()=>{if(!state.biz.placeId&&!state.biz.osmPick)queueSuggest();clearTimeout(cityPrefetchTimer);const city=$("autoCity").value.trim();if(city.length>=2)cityPrefetchTimer=setTimeout(()=>prefetchCityCoordinates(city),1100)});
+ $("autoCity").addEventListener("blur",()=>{clearTimeout(cityPrefetchTimer);prefetchCityCoordinates($("autoCity").value)});
  $("autoName").addEventListener("blur",()=>setTimeout(closeSuggest,150));
  $("autoName").addEventListener("keydown",e=>{const open=!$("suggest").classList.contains("hidden")&&suggestItems.length;
   if(open&&(e.key==="ArrowDown"||e.key==="ArrowUp")){e.preventDefault();suggestIdx=(suggestIdx+(e.key==="ArrowDown"?1:-1)+suggestItems.length)%suggestItems.length;renderSuggest();$("autoName").setAttribute("aria-activedescendant","sg"+suggestIdx);return}
