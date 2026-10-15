@@ -620,9 +620,22 @@ async function searxngSearch(q){
  const base=String(settings.searxngUrl||"").trim().replace(/\/+$/,"").replace(/\/search$/i,"");
  if(!/^https?:\/\//i.test(base))throw new Error("Adresse de l’instance SearXNG invalide");
  const url=base+"/search?format=json&language=fr&safesearch=1&q="+encodeURIComponent(q);
- const r=await fetchJson(url,{headers:{"Accept":"application/json"}},18000);
- const rows=(r.results||[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.content||x.snippet||""})).filter(x=>x.url&&/^https?:/.test(x.url));
- if(!rows.length)throw new Error("SearXNG n’a renvoyé aucun résultat exploitable");return {engine:"SearXNG (open source)",rows};
+ const parseRows=r=>(r&&Array.isArray(r.results)?r.results:[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.content||x.snippet||""})).filter(x=>x.url&&/^https?:/.test(x.url));
+ let lastError=null;
+ // Certains navigateurs mobiles bloquent les instances publiques SearXNG via CORS.
+ // Essayer d'abord en direct, puis via le proxy CORS si le navigateur refuse l'accès.
+ for(const attempt of [
+  ()=>fetchJson(url,{headers:{"Accept":"application/json"}},9000),
+  ()=>fetchJson("https://api.allorigins.win/raw?url="+encodeURIComponent(url),{headers:{"Accept":"application/json"}},25000)
+ ]){
+  try{
+   const r=await attempt(),rows=parseRows(r);
+   if(rows.length)return {engine:"SearXNG (open source)",rows};
+   lastError=new Error("L’instance SearXNG n’a pas renvoyé de résultats JSON exploitables");
+  }catch(e){lastError=e}
+ }
+ const reason=lastError&&lastError.message||"connexion impossible";
+ throw new Error("SearXNG inaccessible depuis ce navigateur ("+reason+"). Le moteur de secours reste actif.");
 }
 async function bingSearch(q){
  // Clés facultatives : une panne, un quota ou une clé invalide déclenche automatiquement la recherche de secours.
