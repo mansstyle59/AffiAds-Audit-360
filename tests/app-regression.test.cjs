@@ -118,7 +118,7 @@ test("2026-98 keeps dark-theme cards, report preview and compact access screen r
   assert.match(css, /color:#202653!important/);
   assert.ok(html.includes("assets/app.js?v=2026-98"));
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("mobile navigation matches the reference order and all primary actions are reachable", () => {
@@ -133,13 +133,13 @@ test("mobile navigation matches the reference order and all primary actions are 
 
 
 test("2026-98 compact iPhone access screen stays within small viewports", () => {
-  assert.ok(html.includes("assets/app.css?v=2026-100"));
+  assert.ok(html.includes("assets/app.css?v=2026-101"));
   assert.ok(html.includes("assets/app.js?v=2026-98"));
   assert.ok(css.includes("Finition cohérente mobile") || css.includes("2026-98 finishing") || css.includes("2026-98 final polish"));
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
-  assert.ok(sw.includes("affiads-audit-2026-100"));
+  assert.ok(sw.includes("affiads-audit-2026-101"));
 });
 
 
@@ -149,7 +149,7 @@ test("2026-98 remembers trusted access in Safari and installed PWA without promp
   assert.doesNotMatch(js, /if\(!standalone&&Lock\.cfg&&Lock\.cfg\.hash&&!document\.body\.classList\.contains\("locked"\)\)lockNow\(false\)/);
   assert.match(js, /Choisissez quand le code doit être redemandé/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -158,7 +158,7 @@ test("2026-98 keeps optional Google Fonts from blocking the first render", () =>
   assert.match(html, /<noscript><link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 keeps dark-mode audit form and readiness copy high contrast", () => {
@@ -180,7 +180,7 @@ test("2026-98 enforces readable contrast for body copy, secondary text, forms an
   assert.match(css, /:root\[data-theme="light"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#4335c9!important/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 lets the owner choose and persist when the access code is requested", () => {
@@ -196,7 +196,7 @@ test("2026-98 lets the owner choose and persist when the access code is requeste
   assert.match(css, /\.pin-delay-help/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 applies access-code delay when the app returns from background", () => {
@@ -204,7 +204,7 @@ test("2026-98 applies access-code delay when the app returns from background", (
   assert.match(js, /if\(lockDelay\(\)>0&&away>=lockDelay\(\)\*60000\)lockNow\(false\)/);
   assert.match(js, /const away=Lock\.hiddenAt\?Date\.now\(\)-Lock\.hiddenAt:0/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -213,7 +213,7 @@ test("2026-98 removes the oversized duplicate new-client hero button", () => {
   assert.doesNotMatch(js, /heroNewClient|new-client-hero/);
   assert.doesNotMatch(css, /\.new-client-hero\{/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 mobile header removes duplicate Clients/New Audit actions while preserving PDF", () => {
@@ -223,7 +223,7 @@ test("2026-98 mobile header removes duplicate Clients/New Audit actions while pr
   assert.match(css, /\.topacts\{display:none!important\}/);
   assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{nav\("auto"\);requestAnimationFrame\(\(\)=>\{\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}\)\}\)/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -231,7 +231,7 @@ test("2026-98 removes all leftover styles for the deleted hero CTA", () => {
   assert.doesNotMatch(css, /new-client-hero|new-client-plus|new-client-copy|new-client-arrow/);
   assert.doesNotMatch(html, /heroNewClient|new-client-hero/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -245,7 +245,7 @@ test("2026-98 builds a concise, personalized prospect message for each format", 
   assert.match(html, /id="pitchWhatsapp">WhatsApp/);
   assert.match(html, /id="pitchMail">E-mail/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 makes prospect composer compact and note readable in both themes", () => {
@@ -255,7 +255,7 @@ test("2026-98 makes prospect composer compact and note readable in both themes",
   assert.match(css, /:root\[data-theme="dark"\] #view-pitch \.pitch-note\{background:#222b55!important/);
   assert.match(css, /:root\[data-theme="light"\] #view-pitch \.pitch-note\{background:#f1f4ff!important/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -265,7 +265,7 @@ test("2026-98 uses a clear burger menu label instead of the ambiguous Plus tab",
   assert.match(html, /M4 6h16M4 12h16M4 18h16/);
   assert.match(js, /navMore.*aria-expanded/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 test("2026-98 enforces readable notice contrast and reserves footer space on mobile", () => {
@@ -273,7 +273,7 @@ test("2026-98 enforces readable notice contrast and reserves footer space on mob
   assert.match(css, /:root\[data-theme="light"\] \.main \.notice,[\s\S]*?background:#f0f4ff!important;[\s\S]*?color:#253153!important/);
   assert.match(css, /\.main \.footer,.main footer\{[\s\S]*?padding:12px 76px 20px 10px!important/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -283,7 +283,7 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
   assert.match(html, /name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
   assert.match(html, /assets\/app\.css\?v=2026-100/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -293,8 +293,8 @@ test("2026-98 assistant widget uses explicit readable colors in dark and light t
   assert.match(css, /:root\[data-theme="dark"\] \.botpanel \.botfield textarea::placeholder[\s\S]*?opacity:1!important/);
   assert.match(css, /:root\[data-theme="light"\] \.botpanel \.bcard b,[\s\S]*?color:#20264a!important/);
   assert.match(css, /:root\[data-theme="light"\] \.botpanel \.botfield textarea[\s\S]*?-webkit-text-fill-color:#20264a!important/);
-  assert.ok(html.includes("assets/app.css?v=2026-100"));
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.ok(html.includes("assets/app.css?v=2026-101"));
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -307,7 +307,7 @@ test("2026-98 assistant prioritizes client lookup and shows stored client detail
   assert.match(js, /\["info","Fiche client","Coordonnées, audit, score et priorités"\]/);
   assert.match(js, /Dossiers clients enregistrés \(recherche locale sur cet appareil\)/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -317,9 +317,9 @@ test("2026-98 report preview has a helpful empty state and avoids floating assis
   assert.ok(css.includes('body[data-view="report"] .botfab{display:none!important}'));
   assert.ok(css.includes("#view-report .onepage .op-emptyhint"));
   assert.ok(css.includes("#view-report .actions{display:grid!important;grid-template-columns:1fr 1fr!important"));
-  assert.ok(html.includes("assets/app.css?v=2026-100"));
+  assert.ok(html.includes("assets/app.css?v=2026-101"));
   assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.ok(sw.includes("affiads-audit-2026-100"));
+  assert.ok(sw.includes("affiads-audit-2026-101"));
 });
 
 
@@ -331,7 +331,7 @@ test("home screen removes redundant quick-action cards and keeps the audit form"
   assert.match(html, /id="autoCity"/);
   assert.match(html, /id="runAuto"/);
   assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -342,7 +342,7 @@ test("2026-98 social cards offer direct Google search and one-tap manual profile
   assert.match(js, /data-social-deep/);
   assert.ok(css.includes(".soc-actions .soc-mini{display:inline-flex"));
   assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.match(sw, /affiads-audit-2026-100/);
+  assert.match(sw, /affiads-audit-2026-101/);
 });
 
 
@@ -353,9 +353,9 @@ test("2026-98 keeps pills, checklist counters and social actions readable on mob
   assert.ok(css.includes('-webkit-text-fill-color:#28345f!important'));
   assert.ok(css.includes('flex:1 1 68px;width:auto;min-width:0;max-width:100%;min-height:32px'));
   assert.ok(css.includes('overflow-wrap:anywhere;word-break:normal;white-space:normal'));
-  assert.ok(html.includes("assets/app.css?v=2026-100"));
+  assert.ok(html.includes("assets/app.css?v=2026-101"));
   assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.ok(sw.includes("affiads-audit-2026-100"));
+  assert.ok(sw.includes("affiads-audit-2026-101"));
 });
 
 
@@ -376,4 +376,13 @@ test("mobile header avoids duplicate clients/new-audit controls and central acti
   assert.match(html, /id="navNewClient"/);
   assert.match(css, /\.topacts\{display:none!important\}/);
   assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{nav\("auto"\);requestAnimationFrame\(\(\)=>\{\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}\)\}\)/);
+});
+
+
+test("2026-101 centers the gold marker in the commerce name input and styles mobile header", () => {
+  assert.match(css, /\.bigfield \.dot\{[\s\S]*?top:calc\(50% \+ 14px\)!important[\s\S]*?transform:translateY\(-50%\)!important/);
+  assert.match(css, /\.top\{[\s\S]*?background:linear-gradient\(145deg,#151f46,#0e1735\)!important/);
+  assert.match(css, /\.top #pageSub\{[\s\S]*?display:block!important/);
+  assert.ok(html.includes("assets/app.css?v=2026-101"));
+  assert.ok(sw.includes("affiads-audit-2026-101"));
 });
