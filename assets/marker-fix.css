@@ -1,0 +1,7 @@
+/* 2026-103 — Align the gold marker with the vertical centre of the commerce-name input on mobile. */
+@media (max-width: 900px) {
+  .askfields .bigfield .dot {
+    top: 48px !important;
+    transform: none !important;
+  }
+}
