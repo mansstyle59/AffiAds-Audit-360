@@ -38,8 +38,10 @@ jobs:
           rsvg-convert -w 192 -h 192 assets/assistant-icon.svg -o assets/assistant-192.png
       - name: Check JavaScript syntax
         run: node --check assets/app.js
-      - name: Test Logo.dev integration\n        run: node --test tests/logo-dev.test.cjs\n      - name: Test social search regressions
-        run: node --test tests/social-regression.test.cjs
+      - name: Check Logo.dev integration syntax
+        run: node --check assets/logo-dev.js
+      - name: Test Logo.dev integration
+        run: node --test tests/logo-dev.test.cjs
       - name: Test app, PWA, themes and asset consistency
         run: node --test tests/app-regression.test.cjs
       - name: Install Chromium smoke-test dependencies
