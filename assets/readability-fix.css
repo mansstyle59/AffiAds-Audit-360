@@ -109,3 +109,23 @@
     color: #c5ccef !important;
   }
 }
+
+/* The dark mobile page header is .top (not a clients-specific banner). */
+@media (max-width: 900px) {
+  body:not([data-view="auto"]) .top {
+    background: linear-gradient(145deg, #151f46, #0e1735) !important;
+    border-color: #303d70 !important;
+  }
+  body:not([data-view="auto"]) .top .toptitle h1,
+  body:not([data-view="auto"]) .top #pageTitle {
+    color: #f4f6ff !important;
+  }
+  body:not([data-view="auto"]) .top .toptitle p,
+  body:not([data-view="auto"]) .top #pageSub {
+    color: #c7d1f1 !important;
+  }
+  #view-clients .clientrow .who b { color: #20294f !important; }
+  #view-clients .clientrow .who span { color: #586487 !important; }
+}
+:root[data-theme="dark"] #view-clients .clientrow .who b { color: #f5f6ff !important; }
+:root[data-theme="dark"] #view-clients .clientrow .who span { color: #c5ccef !important; }
