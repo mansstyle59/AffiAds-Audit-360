@@ -116,13 +116,14 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
         `view ${view} should be visible after navigation`);
     }
 
-    // Verify the theme controls change the effective document theme.
-    for (const theme of ["dark", "light", "auto"]) {
-      await page.locator(`[data-theme-set="${theme}"]`).click();
-      if (theme !== "auto") {
-        assert.equal(await page.locator("html").getAttribute("data-theme"), theme);
-      }
-    }
+    // The application now intentionally uses a permanent dark theme.
+    assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
+    assert.equal(await page.locator('[data-theme-set="light"]').count(), 0);
+    assert.equal(await page.locator("#themeQuickToggle").count(), 0);
+    await page.locator("#navMore").click();
+    await page.locator('#navSheet button[data-view="settings"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === "settings");
+    assert.ok(await page.locator("#view-settings").innerText().then(text => text.includes("Mode sombre permanent")));
 
     // axe-core audits the real visible AffiAds DOM rather than a text-only remote proxy.
     await page.route("https://cdn.jsdelivr.net/npm/axe-core@4.14.0/axe.min.js", route => route.fulfill({
