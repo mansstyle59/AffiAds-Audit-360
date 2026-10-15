@@ -519,7 +519,7 @@ async function photonSuggest(input){
 }
 function cityFromSecondary(sec){const parts=String(sec||"").split(",").map(x=>x.trim()).filter(Boolean);if(parts.length>=2&&/france|belgique|suisse|luxembourg|monaco/i.test(parts[parts.length-1]))parts.pop();const last=parts[parts.length-1]||"";return last.replace(/^\d{4,5}\s*/,"").trim()}
 function closeSuggest(){$("suggest").classList.add("hidden");$("autoName").setAttribute("aria-expanded","false");suggestIdx=-1}
-function sgType(s){return (s.src==="google"?typeFromGoogle(s.types):typeFromOsm(s.key,s.value))||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1])||null}
+function sgType(s){return (s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1])||(s.src==="google"?typeFromGoogle(s.types):typeFromOsm(s.key,s.value))||null}
 function sgMeta(s){const t=s.reg&&nafInfo(s.reg.naf)?nafInfo(s.reg.naf)[0]:sgType(s);const y=s.reg&&s.reg.date?s.reg.date.slice(0,4):"";if(!t&&!y)return s.regPending?'<em class="sgmeta"><i class="sgdot"></i>Recherche du type et de l’année d’ouverture…</em>':"";return '<em class="sgmeta">'+(t?'<i class="sgtag">'+esc(t)+'</i>':'')+(y?'<i class="sgtag yr">Ouvert en '+esc(y)+'</i>':'')+'</em>'}
 async function enrichSuggest(seq,typed){
  const city=$("autoCity").value.trim();let list=[];
@@ -568,8 +568,8 @@ function pickSuggestion(s){
  const city=s.city||cityFromSecondary(s.secondary);if(city)$("autoCity").value=city;
  state.biz.pickLabel=s.main+(s.secondary?" — "+s.secondary:"");
  state.biz.reg=s.reg||null;
- if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType(typeFromGoogle(s.types)||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1]))}
- else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType(typeFromOsm(s.key,s.value)||(s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1]))}
+ if(s.src==="google"){state.biz.placeId=s.id;applyDetectedType((s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1])||typeFromGoogle(s.types))}
+ else{state.biz.osmPick={lat:s.lat,lng:s.lng,key:s.key,value:s.value,osmType:s.osmType,osmId:s.osmId};applyDetectedType((s.reg&&nafInfo(s.reg.naf)&&nafInfo(s.reg.naf)[1])||typeFromOsm(s.key,s.value))}
  setPickInfo();persistLocal();
  if($("autoCity").value.trim()){try{$("runAuto").focus({preventScroll:true})}catch(e){}toast("Établissement choisi : touchez « Lancer l’audit » quand vous êtes prêt.")}else $("autoCity").focus();
 }
@@ -826,7 +826,7 @@ async function runAuto(){
    if(!reg&&state.biz.reg&&similar(state.biz.reg.names[0]||"",name))reg=state.biz.reg;
    state.biz.reg=reg||null;
    if(reg){const ni=nafInfo(reg.naf);setStep("reg","ok",(ni?ni[0]:"Activité "+reg.naf)+(reg.date?" · ouvert en "+fmtOpen(reg.date):""),"Établissement inscrit au registre SIRENE"+(reg.dateEnt&&reg.dateEnt!==reg.date?" · entreprise créée en "+reg.dateEnt.slice(0,4):"")+". Date d’inscription de cet établissement, qui peut différer de l’ouverture au public (reprise, déménagement).");
-    if(ni&&!place&&!$("autoType").dataset.touched&&ni[1]!==type){type=ni[1];state.biz.type=type;$("autoType").value=type;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(type)}}
+    if(ni&&!$("autoType").dataset.touched&&ni[1]!==type){type=ni[1];state.biz.type=type;$("autoType").value=type;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(type);setStep("reg","ok","Catégorie corrigée selon le registre officiel","Type retenu : "+ni[1]+". Le type officiel SIRENE est prioritaire sur une catégorie Google contradictoire.")}}
    else setStep("reg","skip","Registre des entreprises : établissement non identifié","Nom commercial différent du nom déclaré, entreprise individuelle ou commerce hors de France.");
   }catch(e){setStep("reg","skip","Registre des entreprises non consulté",frErr(e).text)}
   if(place){
