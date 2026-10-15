@@ -472,3 +472,8 @@ test("2026-127 polishes audit form spacing, marker alignment, focus states and d
   assert.match(html, /assets\/app\.js\?v=2026-\d+/);
   assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
+
+test("2026-128 loads mobile navigation theme fix and caches it offline", () => {
+  assert.match(html, /assets\/nav-theme-fix\.css\?v=2026-128/);
+  assert.match(sw, /"assets\/nav-theme-fix\.css"/);
+});
