@@ -451,7 +451,7 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
   assert.ok(html.includes("assets/app.js?v=2026-126"));
-  assert.ok(html.includes("assets/app.css?v=2026-124"));
+  assert.ok(html.includes("assets/app.css?v=2026-127"));
 });
 
 
@@ -460,4 +460,15 @@ test("Official SIRENE activity takes priority over Google place category", () =>
   assert.match(js, /applyDetectedType\(\(s\.reg&&nafInfo\(s\.reg\.naf\)&&nafInfo\(s\.reg\.naf\)\[1\]\)\|\|typeFromGoogle\(s\.types\)\)/);
   assert.match(js, /if\(ni&&!\$\("autoType"\)\.dataset\.touched&&ni\[1\]!==type\)/);
   assert.match(js, /Catégorie corrigée selon le registre officiel/);
+});
+
+
+test("2026-127 polishes audit form spacing, marker alignment, focus states and dark mode", () => {
+  assert.match(css, /#view-auto \.audit-form-card \.field input[^}]*height:58px!important/);
+  assert.match(css, /#view-auto \.askfields \.bigfield \.dot[^}]*width:12px!important/);
+  assert.match(css, /#view-auto \.askactions #runAuto[^}]*min-height:60px!important/);
+  assert.match(css, /#view-auto details\.adv summary[^}]*min-height:30px!important/);
+  assert.match(css, /:root\[data-theme="dark"\] #view-auto \.audit-form-card/);
+  assert.match(html, /assets\/app\.css\?v=2026-127/);
+  assert.match(sw, /affiads-audit-2026-127/);
 });
