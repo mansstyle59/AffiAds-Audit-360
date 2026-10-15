@@ -79,3 +79,27 @@
     stroke-width:1.9!important;
   }
 }
+
+
+/* 2026-117 — En-tête mobile persistant pendant le défilement, y compris sur iOS Safari. */
+@media (max-width: 900px) {
+  .layout > .side {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
+    z-index: 120 !important;
+    height: auto !important;
+    min-height: calc(env(safe-area-inset-top) + 66px) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex-direction: row !important;
+    padding-top: calc(env(safe-area-inset-top) + 9px) !important;
+    padding-bottom: 12px !important;
+    background: #fff !important;
+    isolation: isolate;
+  }
+  .layout > .side .brand { min-height: 44px; }
+  .layout > .main { min-width: 0; scroll-margin-top: 12px; }
+  .layout > .main section { scroll-margin-top: 12px; }
+}
