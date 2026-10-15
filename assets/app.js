@@ -156,10 +156,12 @@ async function fetchJson(url,opts={},timeout=90000){const ctl=new AbortControlle
 const STORE="affiads-audits-v2", OLD="affiads-audit-360", SETTINGS="affiads-settings";
 function blankState(){return {id:uid(),createdAt:today(),checks:{},issues:{},auto:{},notes:"",biz:{date:today()},aiTests:[],campaign:{},campaignPrompts:[],data:{},pitch:""}}
 let db={current:null,audits:{}};
-let settings={googleKey:"",tavilyKey:"",braveKey:"",serpApiKey:"",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
+let settings={googleKey:"",tavilyKey:"",serpApiKey:"",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
 let state=blankState();
 function loadAll(){
  try{const s=JSON.parse(localStorage.getItem(SETTINGS)||"null");if(s)settings={...settings,...s}}catch(e){}
+ // Supprimer toute ancienne clé Brave Search sauvegardée localement.
+ if(Object.prototype.hasOwnProperty.call(settings,"braveKey")){delete settings.braveKey;try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
  try{const d=JSON.parse(localStorage.getItem(STORE)||"null");if(d&&d.audits)db=d}catch(e){}
  if(!Object.keys(db.audits).length){
   try{const old=JSON.parse(localStorage.getItem(OLD)||"null");if(old){const s={...blankState(),...old};s.id=uid();db.audits[s.id]=s;db.current=s.id}}catch(e){}
@@ -265,7 +267,6 @@ function hasKey(){return keyLooksValid(settings.googleKey)}
 const WRONG_KEY_MSG="Ce n’est pas une clé API Google Maps : une bonne clé commence par « AIza ». Celle-ci ressemble à un identifiant Vertex AI ou Gemini, refusé par Places API. Créez une « Clé API » dans Google Cloud → Identifiants (voir l’aide ci-dessous).";
 function renderKeyNotice(){
  if($("tavilyKey"))$("tavilyKey").value=settings.tavilyKey||"";
- if($("braveKey"))$("braveKey").value=settings.braveKey||"";
  if($("serpApiKey"))$("serpApiKey").value=settings.serpApiKey||"";
  $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Gratuit</span> Site, réseaux, concurrents à proximité et IA analysés sans clé. <a href="#" data-goto="settings">Ajouter les avis Google</a>';
  const a=$("keyNotice").querySelector("[data-goto]");if(a)a.onclick=e=>{e.preventDefault();nav("settings")};
@@ -607,12 +608,6 @@ async function tavilySearch(q){
  const rows=(r.results||[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.content||""})).filter(x=>x.url&&/^https?:/.test(x.url));
  if(!rows.length)throw new Error("Tavily n’a renvoyé aucun résultat exploitable");return {engine:"Tavily",rows};
 }
-async function braveSearch(q){
- const url="https://api.search.brave.com/res/v1/web/search?q="+encodeURIComponent(q)+"&count=8&country=FR&search_lang=fr";
- const r=await fetchJson(url,{headers:{"Accept":"application/json","X-Subscription-Token":settings.braveKey.trim()}},25000);
- const rows=(((r||{}).web||{}).results||[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.description||""})).filter(x=>x.url&&/^https?:/.test(x.url));
- if(!rows.length)throw new Error("Brave Search n’a renvoyé aucun résultat exploitable");return {engine:"Brave Search",rows};
-}
 async function serpApiSearch(q){
  const url="https://serpapi.com/search.json?engine=google&google_domain=google.fr&hl=fr&gl=fr&num=8&q="+encodeURIComponent(q)+"&api_key="+encodeURIComponent(settings.serpApiKey.trim());
  const r=await fetchJson(url,{},25000);
@@ -621,7 +616,7 @@ async function serpApiSearch(q){
 }
 async function bingSearch(q){
  // Clés facultatives : une panne, un quota ou une clé invalide déclenche automatiquement la recherche de secours.
- const providers=[["Tavily",()=>settings.tavilyKey.trim(),()=>tavilySearch(q)],["Brave Search",()=>settings.braveKey.trim(),()=>braveSearch(q)],["SerpApi",()=>settings.serpApiKey.trim(),()=>serpApiSearch(q)]];
+ const providers=[["Tavily",()=>settings.tavilyKey.trim(),()=>tavilySearch(q)],["SerpApi",()=>settings.serpApiKey.trim(),()=>serpApiSearch(q)]];
  for(const [name,has,search] of providers){if(!has())continue;try{const result=await search();if(result.rows&&result.rows.length)return result}catch(e){console.warn("[AffiAds] "+name+" indisponible, recherche de secours activée:",e&&e.message||e)}}
  const bing="https://www.bing.com/search?q="+encodeURIComponent(q)+"&mkt=fr-FR&setlang=fr&cc=FR&count=20";
  try{
@@ -1953,12 +1948,12 @@ function bind(){
  $("pitchWhatsapp").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent($("pitchText").value),"_blank","noopener");
  $("pitchMail").onclick=()=>{let t=$("pitchText").value,sub="Audit de visibilité";const m=t.match(/^Objet : (.*)\n+/);if(m){sub=m[1];t=t.slice(m[0].length)}location.href="mailto:?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(t)};
  /* Réglages */
- $("saveSearchKeys").onclick=()=>{settings.tavilyKey=$("tavilyKey").value.trim();settings.braveKey=$("braveKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();$("searchKeysStatus").textContent="Clés enregistrées sur cet appareil. En cas d’erreur ou de quota dépassé, l’analyse utilisera automatiquement la recherche de secours.";toast("Clés de recherche enregistrées.")};
- $("removeSearchKeys").onclick=()=>{settings.tavilyKey="";settings.braveKey="";settings.serpApiKey="";saveSettings();$("tavilyKey").value="";$("braveKey").value="";$("serpApiKey").value="";$("searchKeysStatus").textContent="Clés retirées. Les recherches de secours restent actives.";toast("Clés de recherche retirées de cet appareil.")};
+ $("saveSearchKeys").onclick=()=>{settings.tavilyKey=$("tavilyKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();$("searchKeysStatus").textContent="Clés enregistrées sur cet appareil. En cas d’erreur ou de quota dépassé, l’analyse utilisera automatiquement la recherche de secours.";toast("Clés de recherche enregistrées.")};
+ $("removeSearchKeys").onclick=()=>{settings.tavilyKey="";settings.serpApiKey="";saveSettings();$("tavilyKey").value="";$("serpApiKey").value="";$("searchKeysStatus").textContent="Clés retirées. Les recherches de secours restent actives.";toast("Clés de recherche retirées de cet appareil.")};
  $("testSearchKeys").onclick=async()=>{
-  settings.tavilyKey=$("tavilyKey").value.trim();settings.braveKey=$("braveKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();
+  settings.tavilyKey=$("tavilyKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();
   const button=$("testSearchKeys");button.disabled=true;button.textContent="Vérification…";
-  const checks=[["Tavily",settings.tavilyKey,()=>tavilySearch("visibilité locale commerces France")],["Brave Search",settings.braveKey,()=>braveSearch("visibilité locale commerces France")],["SerpApi",settings.serpApiKey,()=>serpApiSearch("visibilité locale commerces France")]];
+  const checks=[["Tavily",settings.tavilyKey,()=>tavilySearch("visibilité locale commerces France")],["SerpApi",settings.serpApiKey,()=>serpApiSearch("visibilité locale commerces France")]];
   try{const results=await Promise.all(checks.map(async([name,key,task])=>{
    if(!key)return '<div class="key-result"><span class="muted">—</span><span><b>'+esc(name)+'</b><small>Non configuré : ignoré sans bloquer l’analyse.</small></span></div>';
    try{const r=await task();return '<div class="key-result"><span class="keyok">✓</span><span><b>'+esc(name)+'</b><small>Connexion confirmée · '+r.rows.length+' résultat(s).</small></span></div>'}
@@ -1991,7 +1986,7 @@ function bind(){
  function renderKeyNotice2(){const s=$("keyStatus").innerHTML;renderKeyNotice();$("keyStatus").innerHTML=s}
  $("senderName").value=settings.senderName;$("senderLine").value=settings.senderLine;$("senderContact").value=settings.senderContact;
  $("saveSender").onclick=()=>{settings.senderName=$("senderName").value.trim();settings.senderLine=$("senderLine").value.trim();settings.senderContact=$("senderContact").value.trim();saveSettings();toast("Signature enregistrée.")};
- $("exportJson").onclick=()=>{read();const saved=persistLocal();const safeSettings={...settings};delete safeSettings.googleKey;delete safeSettings.tavilyKey;delete safeSettings.braveKey;delete safeSettings.serpApiKey;const audits=Object.values(db.audits);const payload={app:"affiads-audit-360",schemaVersion:4,exportedAt:new Date().toISOString(),current:state.id,auditCount:audits.length,integrity:{auditsWithId:audits.filter(a=>a&&a.id).length,auditsWithBusiness:audits.filter(a=>a&&a.biz&&typeof a.biz==="object").length},settings:safeSettings,audits:db.audits,deleted:db.deleted||{},note:"Sauvegarde locale. La clé API Google est volontairement exclue."};download(JSON.stringify(payload,null,2),"affiads-sauvegarde-"+today()+".json","application/json");toast(saved?"Sauvegarde exportée : "+audits.length+" audit(s). Clé API exclue.":"Sauvegarde exportée depuis la mémoire, mais l’enregistrement local a échoué. Conservez ce fichier immédiatement.")};
+ $("exportJson").onclick=()=>{read();const saved=persistLocal();const safeSettings={...settings};delete safeSettings.googleKey;delete safeSettings.tavilyKey;delete safeSettings.serpApiKey;const audits=Object.values(db.audits);const payload={app:"affiads-audit-360",schemaVersion:4,exportedAt:new Date().toISOString(),current:state.id,auditCount:audits.length,integrity:{auditsWithId:audits.filter(a=>a&&a.id).length,auditsWithBusiness:audits.filter(a=>a&&a.biz&&typeof a.biz==="object").length},settings:safeSettings,audits:db.audits,deleted:db.deleted||{},note:"Sauvegarde locale. La clé API Google est volontairement exclue."};download(JSON.stringify(payload,null,2),"affiads-sauvegarde-"+today()+".json","application/json");toast(saved?"Sauvegarde exportée : "+audits.length+" audit(s). Clé API exclue.":"Sauvegarde exportée depuis la mémoire, mais l’enregistrement local a échoué. Conservez ce fichier immédiatement.")};
  $("importJson").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>25*1024*1024)throw new Error("fichier trop volumineux (maximum 25 Mo)");const backup=JSON.parse(await f.text());if(!backup||typeof backup!=="object"||Array.isArray(backup))throw new Error("format JSON invalide");if(backup.app&&backup.app!=="affiads-audit-360")throw new Error("cette sauvegarde ne provient pas d’AffiAds Audit");if(Number(backup.schemaVersion||1)>4)throw new Error("version de sauvegarde plus récente : mettez l’application à jour avant l’import");const list=backup.audits?(Array.isArray(backup.audits)?backup.audits:Object.values(backup.audits)):(backup.checks?[backup]:[]);if(!Array.isArray(list)||!list.length)throw new Error("aucun audit trouvé");if(list.length>500)throw new Error("plus de 500 audits : import refusé par sécurité");const valid=list.filter(a=>a&&typeof a==="object"&&!Array.isArray(a)&&a.biz&&typeof a.biz==="object");if(!valid.length)throw new Error("aucun audit valide avec fiche commerce");if(!confirm("Importer "+valid.length+" audit(s) en les fusionnant avec les données actuelles ? Les réglages et la clé Google actuels seront conservés. Les identifiants déjà utilisés seront dupliqués, sans écraser les audits existants."))return;read();const imported=[],idMap={};for(const raw of valid){const a=fixState(raw),original=String(a.id||"");if(db.audits[a.id]){a.id=uid();a.importedFrom=original}idMap[original]=a.id;db.audits[a.id]=a;imported.push(a.id)}const preferred=backup.current&&idMap[String(backup.current)]&&db.audits[idMap[String(backup.current)]]?idMap[String(backup.current)]:imported[0];state=fixState(db.audits[preferred]);db.current=state.id;if(!persistLocal())throw new Error("stockage insuffisant : exportez les données et libérez de l’espace avant de réessayer");hydrate();renderClientSelect();toast(imported.length+" audit(s) importé(s), sans écraser les audits existants.")}catch(err){toast("Import impossible : "+(err&&err.message||"fichier invalide"))}finally{e.target.value=""}};
 }
 function download(content,name,type){const blob=new Blob([content],{type});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -2156,7 +2151,7 @@ async function syncEncrypt(obj){const iv=crypto.getRandomValues(new Uint8Array(1
 async function syncDecrypt(data,iv){const p=await crypto.subtle.decrypt({name:"AES-GCM",iv:Uint8Array.from(atob(iv),c=>c.charCodeAt(0))},Sync.key,Uint8Array.from(atob(data),c=>c.charCodeAt(0)));return JSON.parse(new TextDecoder().decode(p))}
 function syncSnapshot(){
  const audits={};Object.values(db.audits).forEach(a=>{const c=JSON.parse(JSON.stringify(a));if(c.data&&c.data.psi)delete c.data.psi.shot;audits[c.id]=c});
- const {theme,googleKey,tavilyKey,braveKey,serpApiKey,...shared}=settings;
+ const {theme,googleKey,tavilyKey,serpApiKey,...shared}=settings;
  return {v:1,audits,deleted:db.deleted||{},settings:shared,settingsAt:settings.updatedAt||0};
 }
 function syncMerge(remote){
@@ -2166,7 +2161,7 @@ function syncMerge(remote){
  Object.keys(db.audits).forEach(id=>{const a=db.audits[id];if(db.deleted[id]&&String(db.deleted[id])>=String(a.updatedAt||a.createdAt||"")){delete db.audits[id];changed=true}});
  const isBlank=x=>!(x.biz&&x.biz.name)&&!(x.data&&x.data.fetchedAt)&&!Object.keys(x.checks||{}).length&&!(x.aiTests||[]).length;
  const ids=Object.keys(db.audits);if(ids.length>1)ids.forEach(id=>{if(isBlank(db.audits[id])&&Object.keys(db.audits).length>1){delete db.audits[id];changed=true}});
- if(remote.settings&&(remote.settingsAt||0)>(settings.updatedAt||0)){const theme=settings.theme;const remoteSettings={...remote.settings};delete remoteSettings.googleKey;delete remoteSettings.tavilyKey;delete remoteSettings.braveKey;delete remoteSettings.serpApiKey;settings={...settings,...remoteSettings,theme,updatedAt:remote.settingsAt};saveSettings();changed=true}
+ if(remote.settings&&(remote.settingsAt||0)>(settings.updatedAt||0)){const theme=settings.theme;const remoteSettings={...remote.settings};delete remoteSettings.googleKey;delete remoteSettings.tavilyKey;delete remoteSettings.serpApiKey;settings={...settings,...remoteSettings,theme,updatedAt:remote.settingsAt};saveSettings();changed=true}
  return changed;
 }
 function syncSetStatus(t,bad){Sync.err=bad?t:"";const el=$("syncStatus");if(el){el.textContent=t;el.classList.toggle("keybad",!!bad)}const sv=$("savedState");if(sv&&Sync.secret&&!bad)sv.textContent="Synchronisé"}
