@@ -349,7 +349,8 @@ test("home screen removes redundant quick-action cards and keeps the audit form"
 
 test("2026-98 social cards offer direct Google search and one-tap manual profile linking", () => {
   assert.match(js, /data-social-manual=/);
-  assert.ok(js.includes('" site:"+match[1]'));
+  assert.match(js, /const networkConfig=NETS\.find\(x=>x\[0\]===n\)/);
+  assert.doesNotMatch(js, /" site:"\+match\[1\]/);
   assert.match(js, /Collez le lien public de /);
   assert.match(js, /data-social-deep/);
   assert.ok(css.includes(".soc-actions .soc-mini{display:inline-flex"));
