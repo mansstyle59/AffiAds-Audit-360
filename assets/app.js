@@ -1954,7 +1954,7 @@ async function runAxeAudit(){
  results.innerHTML='<div class="step run"><span class="ico"><span class="spin">◌</span></span><div><b>Contrôle en cours</b><small>Le service distant ouvre la page et exécute axe-core. Cette analyse peut prendre une minute.</small></div></div>';
  try{
   const axe=await loadAxeCore();
-  const endpoint="https://r.jina.ai/http://"+target.host+target.pathname+target.search;
+  const endpoint="https://r.jina.ai/"+target.href;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),75000);
   let response;
   try{response=await fetch(endpoint,{signal:controller.signal,headers:{"Accept":"text/html"}})}finally{clearTimeout(timer)}
@@ -1964,7 +1964,7 @@ async function runAxeAudit(){
   const doc=new DOMParser().parseFromString(remoteHtml,"text/html");
   if(!doc.body)throw new Error("Aucun contenu HTML exploitable n’a été reçu.");
   // Avoid executing any page scripts or external assets in the local app origin.
-  doc.querySelectorAll("script,iframe,object,embed,base,link[rel=stylesheet],link[rel=preload],link[rel=prefetch").forEach(n=>n.remove());
+  doc.querySelectorAll("script,iframe,object,embed,base,link[rel=stylesheet],link[rel=preload],link[rel=prefetch]").forEach(n=>n.remove());
   doc.querySelectorAll("*").forEach(el=>{for(const a of [...el.attributes])if(/^on/i.test(a.name)||["srcdoc","src","href","action","formaction"].includes(a.name.toLowerCase())&&/^javascript:/i.test(a.value))el.removeAttribute(a.name)});
   const report=await axe.run(doc,{runOnly:{type:"tag",values:["wcag2a","wcag2aa","wcag21a","wcag21aa","wcag22aa","best-practice"]}});
   const violations=report.violations||[],passes=report.passes||[],incomplete=report.incomplete||[];
