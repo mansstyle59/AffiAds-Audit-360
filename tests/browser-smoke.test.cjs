@@ -124,6 +124,28 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
       }
     }
 
+    // axe-core audits the real visible AffiAds DOM rather than a text-only remote proxy.
+    await page.route("https://cdn.jsdelivr.net/npm/axe-core@4.14.0/axe.min.js", route => route.fulfill({
+      status: 200,
+      contentType: "text/javascript",
+      body: `window.axe = { run: async function(scope, options) {
+        window.__axeAuditScope = scope && scope.id;
+        return {
+          violations: [{ impact: "serious", help: "Image needs alternative text", description: "Accessible names should be provided", id: "image-alt", helpUrl: "https://dequeuniversity.com/rules/axe/4.14/image-alt", nodes: [{ target: ["img.logo"] }] }],
+          passes: [{ id: "landmark-one-main" }],
+          incomplete: [],
+          inapplicable: []
+        };
+      } };`
+    }));
+    await page.locator("#navMore").click();
+    await page.locator('#navSheet button[data-view="webcheck"]').click();
+    await page.locator("#runAxeAudit").click();
+    await page.waitForFunction(() => /Contrôle terminé/.test(document.querySelector("#axeAuditStatus")?.textContent || ""));
+    assert.match(await page.locator("#axeAuditResults").innerText(), /Image needs alternative text/);
+    assert.equal(await page.evaluate(() => window.__axeAuditScope), "view-webcheck",
+      "axe-core should inspect the real visible AffiAds screen");
+
     // The compact brand actions should be styled, accessible and functional on mobile.
     assert.equal(await page.locator("#themeQuickToggle").count(), 1);
     assert.equal(await page.locator("#botFab").count(), 0, "the removed chat launcher must stay absent");

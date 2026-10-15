@@ -184,10 +184,10 @@
 </div>
 <div class="grid">
 <div class="card s7" id="axeAuditCard">
-<h2>Contrôle d’accessibilité approfondi</h2>
-<p class="muted">Audit complémentaire via axe-core, moteur open source. Il recherche des violations WCAG détectables dans la page publique. Il ne remplace pas un audit manuel et ne vérifie pas les espaces privés, formulaires nécessitant une connexion ou parcours interactifs complets.</p>
-<div class="actions" style="margin-top:12px"><button class="btn" type="button" id="runAxeAudit">Lancer le contrôle axe-core</button><span class="muted" id="axeAuditStatus" role="status" aria-live="polite">Prêt · nécessite une connexion internet</span></div>
-<div id="axeAuditResults" style="margin-top:16px"><p class="muted">Saisissez une URL ci-dessus et lancez d’abord l’analyse Lighthouse, ou utilisez l’adresse déjà renseignée.</p></div>
+<h2>Contrôle d’accessibilité de l’application</h2>
+<p class="muted">axe-core vérifie l’interface AffiAds actuellement ouverte : titres, libellés, contrastes détectables et règles WCAG automatisables. Pour le site client renseigné, utilisez Lighthouse/PageSpeed dans le panneau précédent : une application web ne peut pas injecter axe-core dans un autre domaine depuis GitHub Pages.</p>
+<div class="actions" style="margin-top:12px"><button class="btn" type="button" id="runAxeAudit">Contrôler cet écran</button><span class="muted" id="axeAuditStatus" role="status" aria-live="polite">Prêt · connexion requise pour charger axe-core</span></div>
+<div id="axeAuditResults" style="margin-top:16px"><p class="muted">Ce contrôle analyse l’interface AffiAds, pas l’adresse du site client.</p></div>
 </div>
 </div>
 </div>
@@ -265,6 +265,6 @@
 
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-131&build=2026-131"></script>
+<script src="assets/app.js?v=2026-132&build=2026-132"></script>
 </body>
 </html>
