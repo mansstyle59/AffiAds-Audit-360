@@ -130,7 +130,7 @@ test("official AffiAds SVG logo and generated PNGs stay consistent", () => {
   assert.match(html, /AUDIT DE VISIBILITÉ 360°/);
   assert.match(html, /France et à l’international/);
   assert.match(html, /Ville ou pays/);
-  assert.match(html, /assets\/app\.css\?v=2026-131/);
+  assert.match(html, /assets\/app\.css\?v=2026-154/);
   assert.match(css, /\.ready-card\{/);
   assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
@@ -311,12 +311,15 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
 });
 
 
-test("mobile header has styled settings and working quick-theme controls without chat", () => {
-  assert.match(html, /id="themeQuickToggle"/);
+test("mobile header has styled settings and permanently dark theme without chat", () => {
+  assert.match(html, /data-theme="dark"/);
+  assert.doesNotMatch(html, /id="themeQuickToggle"/);
+  assert.doesNotMatch(html, /data-theme-set="light"/);
   assert.match(html, /aria-label="Ouvrir les réglages"/);
   assert.match(html, /assets\/header-actions\.css\?v=2026-\d+/);
-  assert.match(js, /\$\("themeQuickToggle"\)\.onclick/);
-  assert.match(js, /Passer au thème sombre/);
+  assert.match(js, /settings\.theme="dark"/);
+  assert.match(js, /function applyTheme\(\)\{settings\.theme="dark"/);
+  assert.match(css, /2026-154 — Identité sombre permanente/);
   assert.match(css, /body\[data-view="auto"\] \.top\{display:none!important\}/);
   assert.match(css, /padding-bottom:calc\(205px \+ env\(safe-area-inset-bottom\)\)!important/);
 });
@@ -501,5 +504,5 @@ test("axe-core audits the visible AffiAds screen with the current engine", () =>
   assert.ok(js.includes('axeButton.onclick=runAxeAudit'));
   assert.ok(js.includes('axe.run(scope,'));
   assert.ok(html.includes('axe-core vérifie l’interface AffiAds actuellement ouverte'));
-  assert.ok(sw.includes('affiads-audit-2026-132'));
+  assert.ok(sw.includes('affiads-audit-2026-154'));
 });
