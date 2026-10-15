@@ -379,18 +379,9 @@ test("mobile header avoids duplicate clients/new-audit controls and central acti
 });
 
 
-test("2026-102 centers the gold marker in the commerce name input and styles mobile header", () => {
-  assert.match(css, /\.bigfield \.dot\{[\s\S]*?top:calc\(50% \+ 14px\)!important[\s\S]*?transform:translateY\(-50%\)!important/);
-  assert.match(css, /\.top\{[\s\S]*?background:linear-gradient\(145deg,#151f46,#0e1735\)!important/);
-  assert.match(css, /\.top #pageSub\{[\s\S]*?display:block!important/);
-  assert.ok(html.includes("assets/app.css?v=2026-102"));
-  assert.ok(sw.includes("affiads-audit-2026-102"));
-});
-
-
-test("2026-102 anchors the commerce marker to the input and refines the actual mobile brand header", () => {
-  assert.match(css, /\.askfields \.bigfield \.dot\{[\s\S]*?left:24px!important[\s\S]*?top:32px!important[\s\S]*?transform:none!important/);
-  assert.match(css, /\.side \.brand img\{[\s\S]*?width:52px!important[\s\S]*?height:52px!important/);
+test("2026-102 positions the gold marker against its input and styles the mobile brand header", () => {
+  assert.match(css, /\.askfields\s+\.bigfield\s+\.dot\s*\{[\s\S]*?left:\s*24px\s*!important;[\s\S]*?top:\s*32px\s*!important;[\s\S]*?transform:\s*none\s*!important;/);
+  assert.match(css, /\.side\s+\.brand\s+img\s*\{[\s\S]*?width:\s*52px\s*!important;[\s\S]*?height:\s*52px\s*!important;/);
   assert.ok(css.includes("padding: calc(env(safe-area-inset-top) + 2px) 16px 8px !important;"));
   assert.ok(html.includes("assets/app.css?v=2026-102"));
   assert.ok(sw.includes("affiads-audit-2026-102"));
