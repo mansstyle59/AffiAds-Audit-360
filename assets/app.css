@@ -3335,3 +3335,60 @@ body[data-view="auto"] .top{display:none!important}
  .ophead .affiads-seal .seal-mid{font-size:4.5px}
  .ophead .affiads-seal small{font-size:4px}
 }
+
+
+/* 2026-127 — Audit d’accueil : alignements, respiration et contrôles tactiles précis. */
+#view-auto .audit-form-card{box-sizing:border-box!important;padding:clamp(16px,2.4vw,24px)!important;border:1px solid #e2e7f7!important;border-radius:24px!important;background:#fff!important;box-shadow:0 16px 36px -28px #19244c55!important}
+#view-auto .commerce-title{display:flex!important;align-items:center!important;gap:12px!important;margin:0 0 22px!important;padding:0 0 17px!important;border-bottom:1px solid #edf0fa!important}
+#view-auto .commerce-icon{width:44px!important;height:44px!important;flex:0 0 44px!important;border-radius:14px!important;box-shadow:0 5px 12px #3157ff20!important}
+#view-auto .commerce-icon svg{width:23px!important;height:23px!important}
+#view-auto .commerce-title h3{margin:0!important;font-size:clamp(17px,2vw,22px)!important;line-height:1.2!important;letter-spacing:-.025em!important;font-weight:800!important;color:#20294f!important}
+#view-auto .askfields{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:18px!important;max-width:none!important}
+#view-auto .askfields .field{position:relative!important;min-width:0!important}
+#view-auto .audit-form-card .field label{position:static!important;display:block!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important;margin:0 0 8px!important;font-size:14px!important;line-height:1.3!important;letter-spacing:-.01em!important;color:#283354!important;font-weight:750!important}
+#view-auto .audit-form-card .field input,#view-auto .audit-form-card .field select{box-sizing:border-box!important;width:100%!important;height:58px!important;min-height:58px!important;padding:0 16px!important;border:1.5px solid #cfd6ea!important;border-radius:17px!important;background:#fff!important;color:#20294f!important;font-size:16px!important;font-weight:550!important;line-height:1.2!important;box-shadow:inset 0 1px 2px #18244b06!important;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease!important}
+#view-auto .audit-form-card .bigfield input{padding-left:48px!important}
+#view-auto .audit-form-card .field input::placeholder{color:#78819d!important;opacity:1!important;font-weight:500!important}
+#view-auto .audit-form-card .field input:focus,#view-auto .audit-form-card .field select:focus{outline:none!important;border-color:#5264ff!important;box-shadow:0 0 0 4px #4d5eff1c!important;background:#fff!important}
+#view-auto .askfields .bigfield .dot{position:absolute!important;left:17px!important;top:calc(8px + 14px + 29px)!important;width:12px!important;height:12px!important;margin:0!important;transform:none!important;border-radius:50%!important;background:#ffba24!important;box-shadow:0 0 0 3px #fff,0 0 0 4.5px #354477!important;z-index:2!important;pointer-events:none!important}
+#view-auto .pickinfo{margin:6px 2px 0!important;font-size:12px!important;line-height:1.4!important}
+#view-auto .askactions{display:block!important;margin:20px 0 0!important;max-width:none!important}
+#view-auto .askactions #runAuto{position:relative!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:12px!important;width:100%!important;min-height:60px!important;padding:14px 52px 14px 18px!important;border:0!important;border-radius:18px!important;background:linear-gradient(110deg,#315cff 0%,#3547ed 58%,#5735e8 100%)!important;color:#fff!important;font-size:17px!important;font-weight:800!important;letter-spacing:-.02em!important;box-shadow:0 10px 20px -12px #3548ecb8!important;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease!important}
+#view-auto .askactions #runAuto svg{width:22px!important;height:22px!important;flex:0 0 22px!important;stroke:#fff!important}
+#view-auto .askactions #runAuto span{position:absolute!important;right:20px!important;top:50%!important;margin:0!important;transform:translateY(-50%)!important;font-size:26px!important;line-height:1!important;font-weight:500!important}
+#view-auto .askactions #runAuto:active{transform:translateY(1px)!important;box-shadow:0 5px 12px -9px #3548ecb8!important}
+#view-auto .askactions #runAuto:focus-visible{outline:3px solid #8ea1ff!important;outline-offset:3px!important}
+#view-auto details.adv{max-width:none!important;margin:18px 0 0!important;padding-top:17px!important;border-top:1px solid #edf0fa!important}
+#view-auto details.adv summary{min-height:30px!important;display:flex!important;align-items:center!important;gap:10px!important;font-size:15px!important;font-weight:750!important;color:#38466f!important}
+#view-auto details.adv summary::before{width:8px!important;height:8px!important;flex:0 0 8px!important;border-right:2px solid currentColor!important;border-bottom:2px solid currentColor!important}
+#view-auto details.adv .fields{margin-top:12px!important;padding:14px!important;border-radius:16px!important;background:#f8f9ff!important}
+#view-auto #keyNotice{overflow-wrap:anywhere!important;font-size:13px!important;line-height:1.5!important}
+#view-auto .ready-card{margin-top:18px!important;border-radius:20px!important}
+@media(max-width:520px){
+ #view-auto .audit-form-card{padding:17px!important;border-radius:22px!important}
+ #view-auto .commerce-title{gap:10px!important;margin-bottom:19px!important;padding-bottom:15px!important}
+ #view-auto .commerce-icon{width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:13px!important}
+ #view-auto .commerce-title h3{font-size:17px!important;line-height:1.25!important}
+ #view-auto .askfields{gap:16px!important}
+ #view-auto .audit-form-card .field label{font-size:13px!important;margin-bottom:7px!important}
+ #view-auto .audit-form-card .field input,#view-auto .audit-form-card .field select{height:56px!important;min-height:56px!important;border-radius:16px!important;padding:0 14px!important;font-size:16px!important}
+ #view-auto .audit-form-card .bigfield input{padding-left:44px!important}
+ #view-auto .askfields .bigfield .dot{left:16px!important;top:calc(7px + 13px + 28px)!important;width:11px!important;height:11px!important;box-shadow:0 0 0 3px #fff,0 0 0 4px #354477!important}
+ #view-auto .askactions{margin-top:18px!important}
+ #view-auto .askactions #runAuto{min-height:58px!important;border-radius:16px!important;font-size:16px!important;padding-left:16px!important;padding-right:48px!important}
+ #view-auto .askactions #runAuto span{right:17px!important}
+ #view-auto details.adv{margin-top:16px!important;padding-top:14px!important}
+ #view-auto details.adv summary{font-size:14px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #view-auto .audit-form-card *{transition:none!important}
+}
+:root[data-theme="dark"] #view-auto .audit-form-card{background:#111a36!important;border-color:#29375f!important;color:#f3f5ff!important}
+:root[data-theme="dark"] #view-auto .commerce-title{border-bottom-color:#283557!important}
+:root[data-theme="dark"] #view-auto .commerce-title h3{color:#f3f5ff!important}
+:root[data-theme="dark"] #view-auto .audit-form-card .field label{color:#e3e8ff!important}
+:root[data-theme="dark"] #view-auto .audit-form-card .field input,:root[data-theme="dark"] #view-auto .audit-form-card .field select{background:#0d1530!important;border-color:#354366!important;color:#f5f7ff!important}
+:root[data-theme="dark"] #view-auto .audit-form-card .field input::placeholder{color:#aab5d4!important}
+:root[data-theme="dark"] #view-auto details.adv{border-top-color:#283557!important}
+:root[data-theme="dark"] #view-auto details.adv summary{color:#dce4ff!important}
+:root[data-theme="dark"] #view-auto details.adv .fields{background:#0c1530!important;border-color:#2c3b61!important}
