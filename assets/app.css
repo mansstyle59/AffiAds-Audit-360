@@ -2809,3 +2809,47 @@ details.adv .field input,details.adv .field select,details.adv .field textarea{b
   .nav { padding-left: 4px !important; padding-right: 4px !important; }
   .nav > button .t { font-size: 9px !important; }
 }
+
+
+/* 2026-101 — Align gold marker to the input; polish mobile top header. */
+.bigfield{position:relative}
+.bigfield .dot{
+  left:18px!important;
+  top:calc(50% + 14px)!important;
+  transform:translateY(-50%)!important;
+  width:14px!important;height:14px!important;
+  margin:0!important;
+  z-index:2;
+  box-shadow:0 0 0 4px #17234e,0 0 0 5px #445586!important;
+}
+@media(max-width:900px){
+  .top{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    min-width:0!important;
+    margin:0 0 18px!important;
+    padding:12px 14px!important;
+    border:1px solid #303d70!important;
+    border-radius:18px!important;
+    background:linear-gradient(145deg,#151f46,#0e1735)!important;
+    box-shadow:0 8px 24px -20px #000b!important;
+  }
+  .top>div:first-child,.top .toptitle{
+    display:block!important;flex:1 1 auto!important;width:auto!important;min-width:0!important;
+  }
+  .top .toptitle h1{
+    margin:0!important;font-size:clamp(20px,5vw,26px)!important;line-height:1.12!important;
+    letter-spacing:-.03em!important;color:#f4f6ff!important;
+  }
+  .top #pageSub{
+    display:block!important;margin:5px 0 0!important;font-size:12px!important;line-height:1.4!important;color:#bdc9ec!important;
+  }
+}
+@media(max-width:380px){
+  .top{padding:10px 11px!important;gap:8px!important}
+  .top .toptitle h1{font-size:19px!important}
+  .top #pageSub{font-size:11px!important}
+}
