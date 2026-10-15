@@ -483,3 +483,16 @@ test("page markup does not contain a visible escaped newline before navigation t
   assert.ok(!html.includes(">\\\\n<link rel="));
   assert.match(html, /assets\/app\.css\?v=2026-128">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
 });
+
+
+test("axe-core audit integration is reachable and clearly scoped", () => {
+  assert.match(html, /id="axeAuditCard"/);
+  assert.match(html, /id="runAxeAudit"/);
+  assert.match(html, /id="axeAuditResults"/);
+  assert.match(js, /const AXE_VERSION="4\.10\.3"/);
+  assert.match(js, /async function runAxeAudit\(\)/);
+  assert.match(js, /axeButton\.onclick=runAxeAudit/);
+  assert.match(js, /safePublicAuditUrl/);
+  assert.match(js, /r\.violations/);
+  assert.match(sw, /affiads-audit-2026-130/);
+ });
