@@ -93,7 +93,7 @@ const RECO={
 "6-6":["Mettre à jour tarifs, services, horaires, équipe et contenus obsolètes. Afficher une date de mise à jour uniquement lorsqu'une révision réelle a eu lieu.",2,1,"Maintenance SEO/GEO"],
 "6-7":["Tester régulièrement des questions réalistes et non orientées dans ChatGPT, Gemini, Perplexity, Copilot et d'autres assistants pertinents. Enregistrer date, formulation, réponse, présence et sources.",3,2,"Suivi de visibilité IA"],
 "6-8":["Comparer les citations et sources des réponses observées, corriger les erreurs sur les sources contrôlées et suivre les évolutions dans le temps. Les réponses IA varient et ne sont pas garanties.",2,2,"Suivi GEO et sources"]
-};
+,
 "0-0":["Compléter et harmoniser adresse, téléphone et horaires (y compris exceptionnels) sur la fiche Google, le site et les réseaux.",3,1,"Optimisation de la fiche Google"],
 "0-1":["Choisir la catégorie principale la plus précise et ajouter les catégories secondaires pertinentes.",3,1,"Optimisation de la fiche Google"],
 "0-2":["Rédiger une description claire avec l'activité et la ville, lister les services et ajouter le lien de réservation ou de commande.",2,1,"Optimisation de la fiche Google"],
