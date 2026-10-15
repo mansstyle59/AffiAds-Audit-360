@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=2026-98">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap"></noscript>
-<link rel="stylesheet" href="assets/app.css?v=2026-129">
+<link rel="stylesheet" href="assets/app.css?v=2026-130">
 <link rel="stylesheet" href="assets/nav-theme-fix.css?v=2026-128">
 <link rel="stylesheet" href="assets/header-actions.css?v=2026-121">
 <link rel="stylesheet" href="assets/marker-fix.css?v=2026-104">
@@ -179,6 +179,14 @@
 <div class="field"><label for="webUrl">Adresse du site à contrôler</label><input id="webUrl" type="url" placeholder="https://exemple.fr"></div>
 <div class="actions" style="margin-top:12px"><button class="btn primary" id="runWebChecks">Lancer l’analyse réelle</button><button class="btn" id="openPageSpeed">Ouvrir PageSpeed</button></div>
 <div id="webResults" style="margin-top:16px"><p class="muted">Renseignez une adresse puis lancez les contrôles.</p></div>
+
+<!-- AFFIADS_AXE_AUDIT_PANEL -->
+<div class="card s7" id="axeAuditCard">
+<h2>Contrôle d’accessibilité approfondi</h2>
+<p class="muted">Audit complémentaire via axe-core, moteur open source. Il recherche des violations WCAG détectables dans la page publique. Il ne remplace pas un audit manuel et ne vérifie pas les espaces privés, formulaires nécessitant une connexion ou parcours interactifs complets.</p>
+<div class="actions" style="margin-top:12px"><button class="btn" type="button" id="runAxeAudit">Lancer le contrôle axe-core</button><span class="muted" id="axeAuditStatus" role="status" aria-live="polite">Prêt · nécessite une connexion internet</span></div>
+<div id="axeAuditResults" style="margin-top:16px"><p class="muted">Saisissez une URL ci-dessus et lancez d’abord l’analyse Lighthouse, ou utilisez l’adresse déjà renseignée.</p></div>
+</div>
 </div>
 <div class="card s5"><h2>Sources utilisées</h2><p class="muted">Des outils libres et des services publics, sans compte ni clé.</p>
 <div class="priority"><b>Lighthouse</b><small>Moteur d’audit de Google Chrome : vitesse, SEO, accessibilité.</small><br><a href="https://github.com/GoogleChrome/lighthouse" target="_blank" rel="noopener">Voir le projet</a></div>
@@ -253,6 +261,6 @@
 
 <div class="foot">AffiAds Audit 360°, version 2026. Données publiques datées : un outil d’aide à l’audit, pas un classement officiel Google.</div>
 </main></div>
-<script src="assets/app.js?v=2026-126&build=2026-126"></script>
+<script src="assets/app.js?v=2026-130&build=2026-130"></script>
 </body>
 </html>
