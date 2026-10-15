@@ -139,7 +139,7 @@ test("2026-98 compact iPhone access screen stays within small viewports", () => 
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
-  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
+  assert.ok(/affiads-audit-\d{4}-\d+/.test(sw));
 });
 
 
@@ -314,7 +314,7 @@ test("2026-98 report preview has a helpful empty state", () => {
   assert.ok(css.includes("#view-report .actions{display:grid!important;grid-template-columns:1fr 1fr!important"));
   assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
   assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
-  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
+  assert.ok(/affiads-audit-\d{4}-\d+/.test(sw));
 });
 
 
@@ -350,7 +350,7 @@ test("2026-98 keeps pills, checklist counters and social actions readable on mob
   assert.ok(css.includes('overflow-wrap:anywhere;word-break:normal;white-space:normal'));
   assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
   assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
-  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
+  assert.ok(/affiads-audit-\d{4}-\d+/.test(sw));
 });
 
 
@@ -379,5 +379,5 @@ test("2026-107 positions the gold marker against its input and styles the mobile
   assert.match(css, /\.side\s+\.brand\s+img\s*\{[\s\S]*?width:\s*52px\s*!important;[\s\S]*?height:\s*52px\s*!important;/);
   assert.ok(css.includes("padding: calc(env(safe-area-inset-top) + 2px) 16px 8px !important;"));
   assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
-  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
+  assert.ok(/affiads-audit-\d{4}-\d+/.test(sw));
 });
