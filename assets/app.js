@@ -156,7 +156,7 @@ async function fetchJson(url,opts={},timeout=90000){const ctl=new AbortControlle
 const STORE="affiads-audits-v2", OLD="affiads-audit-360", SETTINGS="affiads-settings";
 function blankState(){return {id:uid(),createdAt:today(),checks:{},issues:{},auto:{},notes:"",biz:{date:today()},aiTests:[],campaign:{},campaignPrompts:[],data:{},pitch:""}}
 let db={current:null,audits:{}};
-let settings={googleKey:"",tavilyKey:"",serpApiKey:"",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
+let settings={googleKey:"",tavilyKey:"",searxngUrl:"https://searx.be",senderName:"",senderLine:"AffiAds — Votre visibilité, notre expertise.",senderContact:""};
 let state=blankState();
 function loadAll(){
  // Nettoyage de compatibilité : retire aussi les champs Brave d’un ancien HTML/PWA encore en cache.
@@ -167,7 +167,9 @@ function loadAll(){
  document.querySelectorAll("a").forEach(el=>{if((el.textContent||"").trim()==="Brave Search ↗")el.remove()});
  try{const s=JSON.parse(localStorage.getItem(SETTINGS)||"null");if(s)settings={...settings,...s}}catch(e){}
  // Supprimer toute ancienne clé Brave Search sauvegardée localement.
- if(Object.prototype.hasOwnProperty.call(settings,"braveKey")){delete settings.braveKey;try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
+ let cleanedLegacyKeys=false;
+ for(const legacyKey of ["braveKey","serpApiKey"]){if(Object.prototype.hasOwnProperty.call(settings,legacyKey)){delete settings[legacyKey];cleanedLegacyKeys=true}}
+ if(cleanedLegacyKeys){try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){}}
  try{const d=JSON.parse(localStorage.getItem(STORE)||"null");if(d&&d.audits)db=d}catch(e){}
  if(!Object.keys(db.audits).length){
   try{const old=JSON.parse(localStorage.getItem(OLD)||"null");if(old){const s={...blankState(),...old};s.id=uid();db.audits[s.id]=s;db.current=s.id}}catch(e){}
@@ -273,7 +275,7 @@ function hasKey(){return keyLooksValid(settings.googleKey)}
 const WRONG_KEY_MSG="Ce n’est pas une clé API Google Maps : une bonne clé commence par « AIza ». Celle-ci ressemble à un identifiant Vertex AI ou Gemini, refusé par Places API. Créez une « Clé API » dans Google Cloud → Identifiants (voir l’aide ci-dessous).";
 function renderKeyNotice(){
  if($("tavilyKey"))$("tavilyKey").value=settings.tavilyKey||"";
- if($("serpApiKey"))$("serpApiKey").value=settings.serpApiKey||"";
+ if($("searxngUrl"))$("searxngUrl").value=settings.searxngUrl||"https://searx.be";
  $("keyNotice").innerHTML=hasKey()?'<span class="badge b-ok">Mode complet</span> Fiche Google, avis, concurrents, positions et vitesse comparée inclus.':'<span class="badge b-ok">Gratuit</span> Site, réseaux, concurrents à proximité et IA analysés sans clé. <a href="#" data-goto="settings">Ajouter les avis Google</a>';
  const a=$("keyNotice").querySelector("[data-goto]");if(a)a.onclick=e=>{e.preventDefault();nav("settings")};
  $("googleKey").value=settings.googleKey||"";
@@ -614,15 +616,17 @@ async function tavilySearch(q){
  const rows=(r.results||[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.content||""})).filter(x=>x.url&&/^https?:/.test(x.url));
  if(!rows.length)throw new Error("Tavily n’a renvoyé aucun résultat exploitable");return {engine:"Tavily",rows};
 }
-async function serpApiSearch(q){
- const url="https://serpapi.com/search.json?engine=google&google_domain=google.fr&hl=fr&gl=fr&num=8&q="+encodeURIComponent(q)+"&api_key="+encodeURIComponent(settings.serpApiKey.trim());
- const r=await fetchJson(url,{},25000);
- const rows=(r.organic_results||[]).map(x=>({title:x.title||x.link,url:x.link,host:hostOf(x.link),snippet:x.snippet||""})).filter(x=>x.url&&/^https?:/.test(x.url));
- if(!rows.length)throw new Error("SerpApi n’a renvoyé aucun résultat exploitable");return {engine:"Google via SerpApi",rows};
+async function searxngSearch(q){
+ const base=String(settings.searxngUrl||"").trim().replace(/\/+$/,"").replace(/\/search$/i,"");
+ if(!/^https?:\/\//i.test(base))throw new Error("Adresse de l’instance SearXNG invalide");
+ const url=base+"/search?format=json&language=fr&safesearch=1&q="+encodeURIComponent(q);
+ const r=await fetchJson(url,{headers:{"Accept":"application/json"}},18000);
+ const rows=(r.results||[]).map(x=>({title:x.title||x.url,url:x.url,host:hostOf(x.url),snippet:x.content||x.snippet||""})).filter(x=>x.url&&/^https?:/.test(x.url));
+ if(!rows.length)throw new Error("SearXNG n’a renvoyé aucun résultat exploitable");return {engine:"SearXNG (open source)",rows};
 }
 async function bingSearch(q){
  // Clés facultatives : une panne, un quota ou une clé invalide déclenche automatiquement la recherche de secours.
- const providers=[["Tavily",()=>settings.tavilyKey.trim(),()=>tavilySearch(q)],["SerpApi",()=>settings.serpApiKey.trim(),()=>serpApiSearch(q)]];
+ const providers=[["Tavily",()=>settings.tavilyKey.trim(),()=>tavilySearch(q)],["SearXNG",()=>settings.searxngUrl.trim(),()=>searxngSearch(q)]];
  for(const [name,has,search] of providers){if(!has())continue;try{const result=await search();if(result.rows&&result.rows.length)return result}catch(e){console.warn("[AffiAds] "+name+" indisponible, recherche de secours activée:",e&&e.message||e)}}
  const bing="https://www.bing.com/search?q="+encodeURIComponent(q)+"&mkt=fr-FR&setlang=fr&cc=FR&count=20";
  try{
@@ -1954,12 +1958,12 @@ function bind(){
  $("pitchWhatsapp").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent($("pitchText").value),"_blank","noopener");
  $("pitchMail").onclick=()=>{let t=$("pitchText").value,sub="Audit de visibilité";const m=t.match(/^Objet : (.*)\n+/);if(m){sub=m[1];t=t.slice(m[0].length)}location.href="mailto:?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(t)};
  /* Réglages */
- $("saveSearchKeys").onclick=()=>{settings.tavilyKey=$("tavilyKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();$("searchKeysStatus").textContent="Clés enregistrées sur cet appareil. En cas d’erreur ou de quota dépassé, l’analyse utilisera automatiquement la recherche de secours.";toast("Clés de recherche enregistrées.")};
- $("removeSearchKeys").onclick=()=>{settings.tavilyKey="";settings.serpApiKey="";saveSettings();$("tavilyKey").value="";$("serpApiKey").value="";$("searchKeysStatus").textContent="Clés retirées. Les recherches de secours restent actives.";toast("Clés de recherche retirées de cet appareil.")};
+ $("saveSearchKeys").onclick=()=>{settings.tavilyKey=$("tavilyKey").value.trim();settings.searxngUrl=$("searxngUrl").value.trim().replace(/\/+$/,"")||"https://searx.be";saveSettings();$("searchKeysStatus").textContent="Réglages enregistrés. Tavily est prioritaire ; SearXNG et les moteurs de secours prennent le relais si nécessaire.";toast("Réglages de recherche enregistrés.")};
+ $("removeSearchKeys").onclick=()=>{settings.tavilyKey="";settings.searxngUrl="https://searx.be";saveSettings();$("tavilyKey").value="";$("searxngUrl").value=settings.searxngUrl;$("searchKeysStatus").textContent="Clé Tavily retirée. SearXNG gratuit et les recherches de secours restent disponibles.";toast("Clé Tavily retirée de cet appareil.")};
  $("testSearchKeys").onclick=async()=>{
-  settings.tavilyKey=$("tavilyKey").value.trim();settings.serpApiKey=$("serpApiKey").value.trim();saveSettings();
+  settings.tavilyKey=$("tavilyKey").value.trim();settings.searxngUrl=$("searxngUrl").value.trim().replace(/\/+$/,"")||"https://searx.be";saveSettings();
   const button=$("testSearchKeys");button.disabled=true;button.textContent="Vérification…";
-  const checks=[["Tavily",settings.tavilyKey,()=>tavilySearch("visibilité locale commerces France")],["SerpApi",settings.serpApiKey,()=>serpApiSearch("visibilité locale commerces France")]];
+  const checks=[["Tavily",settings.tavilyKey,()=>tavilySearch("visibilité locale commerces France")],["SearXNG",settings.searxngUrl,()=>searxngSearch("visibilité locale commerces France")]];
   try{const results=await Promise.all(checks.map(async([name,key,task])=>{
    if(!key)return '<div class="key-result"><span class="muted">—</span><span><b>'+esc(name)+'</b><small>Non configuré : ignoré sans bloquer l’analyse.</small></span></div>';
    try{const r=await task();return '<div class="key-result"><span class="keyok">✓</span><span><b>'+esc(name)+'</b><small>Connexion confirmée · '+r.rows.length+' résultat(s).</small></span></div>'}
