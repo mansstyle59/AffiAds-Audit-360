@@ -3239,22 +3239,52 @@ body[data-view="auto"] .top{display:none!important}
 }
 
 
-/* 2026-119 — Le libellé du bouton central déborde sous la barre sur iPhone. */
+
+/* 2026-120 — Garder le libellé « Nouveau » visible dans la barre mobile. */
 @media (max-width: 900px) {
-  .layout .side .nav > #navNewClient .t,
-  .layout .side > .nav > #navNewClient .t {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
+  .layout .side > .nav {
+    height: calc(92px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(92px + env(safe-area-inset-bottom)) !important;
+    padding-top: 5px !important;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
   }
-  .layout .side .nav > #navNewClient,
   .layout .side > .nav > #navNewClient {
+    height: 70px !important;
+    min-height: 70px !important;
+    max-height: 70px !important;
     align-self: center !important;
     justify-content: center !important;
-    gap: 0 !important;
+    gap: 2px !important;
+    margin: 0 !important;
+    padding: 2px 1px !important;
     overflow: visible !important;
+    color: #465274 !important;
+    background: transparent !important;
+  }
+  .layout .side > .nav > #navNewClient .nav-new-icon {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex: 0 0 40px !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+  .layout .side > .nav > #navNewClient .t {
+    display: block !important;
+    visibility: visible !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 10px !important;
+    line-height: 12px !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+  .layout .main {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important;
   }
 }
