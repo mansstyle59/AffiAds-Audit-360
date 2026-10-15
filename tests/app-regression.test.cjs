@@ -434,3 +434,11 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.ok(html.includes("assets/app.js?v=2026-123"));
   assert.ok(html.includes("assets/app.css?v=2026-123"));
 });
+
+
+test("Official SIRENE activity takes priority over Google place category", () => {
+  assert.match(js, /function sgType\(s\)\{return \(s\.reg&&nafInfo\(s\.reg\.naf\)&&nafInfo\(s\.reg\.naf\)\[1\]\)\|\|/);
+  assert.match(js, /applyDetectedType\(\(s\.reg&&nafInfo\(s\.reg\.naf\)&&nafInfo\(s\.reg\.naf\)\[1\]\)\|\|typeFromGoogle\(s\.types\)\)/);
+  assert.match(js, /if\(ni&&!\$\("autoType"\)\.dataset\.touched&&ni\[1\]!==type\)/);
+  assert.match(js, /Catégorie corrigée selon le registre officiel/);
+});
