@@ -133,6 +133,7 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
     assert.notEqual(afterQuickTheme, beforeQuickTheme, "quick theme action should switch light/dark mode");
     assert.ok((await page.locator("#themeQuickToggle").getAttribute("aria-label")).includes("Passer au thème"));
     await page.locator('.nav button[data-view="auto"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === "auto");
     assert.equal(await page.locator(".top").evaluate(el => getComputedStyle(el).display), "none",
       "audit home should not repeat its heading in a second header card");
 
