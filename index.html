@@ -228,6 +228,14 @@
 <div class="actions key-setup-actions"><button class="btn primary" id="saveKey">Enregistrer la clé</button><button class="btn" id="testKey">Vérifier les API</button><button class="btn" id="removeKey">Retirer la clé</button></div>
 <div class="actions key-cloud-actions"><a class="btn" href="https://console.cloud.google.com/apis/dashboard" target="_blank" rel="noopener">Ouvrir Google Cloud ↗</a><a class="btn" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Gérer la clé ↗</a></div>
 <div id="keyStatus" class="muted key-status" role="status" aria-live="polite" style="margin-top:12px"></div>
+<details class="help" id="help-key"><summary>Comment obtenir la bonne clé (5 minutes)</summary><ol>
+<li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> et créez un projet « AffiAds Audit » (ou gardez le vôtre).</li>
+<li>Activez <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a> puis <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">PageSpeed Insights API</a> : bouton « Activer » sur chaque page.</li>
+<li>Ouvrez <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">API et services → Identifiants</a>, touchez « Créer des identifiants », puis <b>« Clé API »</b>. N’utilisez pas Vertex AI, Gemini ou AI Studio : leurs clés ne fonctionnent pas ici.</li>
+<li>Vérifiez que la clé commence par <b>AIza</b>.</li>
+<li>Restreignez-la : « Sites web » → <code>https://mansstyle59.github.io/*</code>, et « Restreindre la clé » → Places API (New) et PageSpeed Insights API.</li>
+<li>Collez-la ici, puis « Tester la clé ».</li></ol>
+<p>Places API demande d’associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre un usage d’audit courant. Fixez une alerte de budget dans Google Cloud par sécurité.</p></details>
 </div>
 <div class="card s7 key-setup-card"><h2>Recherche web enrichie (facultatif)</h2><p class="muted">Ces fournisseurs peuvent améliorer les résultats web. Configurez-en un si vous le souhaitez : l’application essaie Tavily, puis Brave Search, puis SerpApi. Si une clé manque, est refusée ou dépasse son quota, AffiAds revient automatiquement à la recherche de secours et continue l’analyse.</p>
 <div class="key-setup-note"><b>🔐 Clés enregistrées dans les réglages locaux</b><span>Les clés ne sont pas publiées dans le code et seront exclues des sauvegardes et de la synchronisation entre appareils. Une clé utilisée dans le navigateur reste visible par son propriétaire dans les outils de développement.</span></div>
@@ -238,14 +246,6 @@
 <div class="actions key-cloud-actions"><a class="btn" href="https://app.tavily.com/" target="_blank" rel="noopener">Créer une clé Tavily ↗</a><a class="btn" href="https://brave.com/search/api/" target="_blank" rel="noopener">Brave Search ↗</a><a class="btn" href="https://serpapi.com/manage-api-key" target="_blank" rel="noopener">SerpApi ↗</a></div>
 <div id="searchKeysStatus" class="muted key-status" role="status" aria-live="polite" style="margin-top:12px">Aucune clé de recherche supplémentaire : les recherches de secours restent actives.</div>
 </div>
-<details class="help" id="help-key"><summary>Comment obtenir la bonne clé (5 minutes)</summary><ol>
-<li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> et créez un projet « AffiAds Audit » (ou gardez le vôtre).</li>
-<li>Activez <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a> puis <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">PageSpeed Insights API</a> : bouton « Activer » sur chaque page.</li>
-<li>Ouvrez <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">API et services → Identifiants</a>, touchez « Créer des identifiants », puis <b>« Clé API »</b>. N’utilisez pas Vertex AI, Gemini ou AI Studio : leurs clés ne fonctionnent pas ici.</li>
-<li>Vérifiez que la clé commence par <b>AIza</b>.</li>
-<li>Restreignez-la : « Sites web » → <code>https://mansstyle59.github.io/*</code>, et « Restreindre la clé » → Places API (New) et PageSpeed Insights API.</li>
-<li>Collez-la ici, puis « Tester la clé ».</li></ol>
-<p>Places API demande d’associer un compte de facturation ; Google accorde un volume mensuel gratuit qui couvre un usage d’audit courant. Fixez une alerte de budget dans Google Cloud par sécurité.</p></details>
 </div>
 <div class="card s5"><h2>Signature des messages</h2><div class="field"><label for="senderName">Votre prénom</label><input id="senderName" placeholder="Denis"></div><div class="field" style="margin-top:10px"><label for="senderLine">Signature</label><input id="senderLine" placeholder="AffiAds — Votre visibilité, notre expertise."></div><div class="field" style="margin-top:10px"><label for="senderContact">Contact (facultatif)</label><input id="senderContact" placeholder="e-mail ou téléphone"></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="saveSender">Enregistrer</button></div></div>
 <div class="card"><h2>Sauvegarde des audits</h2><p class="muted">Les audits sont enregistrés dans ce navigateur. Exportez régulièrement un fichier JSON pour garder une copie transférable. L’export exclut la clé API Google. À l’import, les audits sont fusionnés sans écraser silencieusement ceux déjà présents.</p><div class="actions"><button class="btn" id="exportJson">Exporter tous les audits</button><label class="btn" for="importJson" style="display:inline-flex;align-items:center">Importer un fichier<input id="importJson" type="file" accept="application/json,.json" hidden></label></div></div>
