@@ -497,5 +497,5 @@ test("axe-core audits the visible AffiAds screen with the current engine", () =>
   assert.ok(js.includes('axeButton.onclick=runAxeAudit'));
   assert.ok(js.includes('axe.run(scope,'));
   assert.ok(html.includes('axe-core vérifie l’interface AffiAds actuellement ouverte'));
-  assert.match(sw, /affiads-audit-\\d{4}-\\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
