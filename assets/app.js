@@ -1304,7 +1304,7 @@ function renderReport(){
  const [vt,vsub]=verdict(totals.score);
  const sender=settings.senderName||"",line=settings.senderLine||"AffiAds",contact=settings.senderContact||"";
  const top3=(d.findings||[]).slice(0,3);
- const cover='<div class="cover"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div>'
+ const cover='<div class="cover"><div class="cover-brandrow"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div><div class="affiads-seal" aria-label="Cachet AffiAds, audit de visibilité réalisé"><span class="seal-top">AFFIADS</span><b>✓</b><span class="seal-mid">AUDIT RÉALISÉ</span><small>'+esc(frDate(b.date||today()))+'</small></div></div>'
   +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Votre prochain audit")+'</h1>'
   +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+(b.reg&&b.reg.date?'<br>Établissement ouvert en '+esc(fmtOpen(b.reg.date))+' (registre SIRENE)':'')+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
   +scoreTile(totals.score)+partialNote()+kpiRow()
@@ -1618,7 +1618,7 @@ function renderOnePage(){
  const ok='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#13915b"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
  const ko='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#d1344b"/><path d="M8 4.2v5M8 11.4v.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg>';
  box.innerHTML='<div class="op">'
-  +'<div class="ophead"><span class="opbrand"><span class="oplogo"><img src="assets/logo-64.png" alt="" width="26" height="26"></span>AffiAds Audit 360°</span><span class="opdate">Audit de visibilité en ligne<br>'+esc(frDate(b.date||today()))+'</span></div>'
+  +'<div class="ophead"><span class="opbrand"><span class="oplogo"><img src="assets/logo-64.png" alt="" width="26" height="26"></span>AffiAds Audit 360°</span><span class="opdate">Audit de visibilité en ligne<br>'+esc(frDate(b.date||today()))+'</span><div class="affiads-seal" aria-label="Cachet AffiAds, audit de visibilité réalisé"><span class="seal-top">AFFIADS</span><b>✓</b><span class="seal-mid">AUDIT RÉALISÉ</span><small>'+esc(frDate(b.date||today()))+'</small></div></div>'
   +'<div class="optitle'+(!String(b.name||"").trim()?' op-emptytitle':'')+'"><h1>'+esc(b.name||"Votre prochain audit")+'</h1>'+(sub?'<p class="opsub">'+esc(sub)+'</p>':'')+(!String(b.name||"").trim()?'<p class="op-emptyhint">Renseignez le nom et la ville du commerce pour personnaliser ce rapport.</p>':'')+'</div>'
   +'<div class="oprow"><div class="opscore">'+ring+'<div><b>'+esc(vt)+'</b><span>'+esc(vsub)+'</span></div></div><div class="opk">'+kp+'</div></div>'
   +(d.partial&&d.fetchedAt?'<p class="opnote">Audit partiel : la fiche Google n’a pas été analysée, les chiffres Google ne sont pas inclus.</p>':'')
