@@ -130,7 +130,7 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
     const firstCheck = page.locator('#checklist input[data-check]').first();
     await firstCheck.check();
     assert.equal(await firstCheck.isChecked(), true);
-    assert.match(await page.locator("#count").innerText(), /1\\s*\\/\\s*\\d+/);
+    assert.match(await page.locator("#count").innerText(), /1\s*\/\s*\d+/);
 
     await page.locator('#view-audit [data-go="report"]').click();
     await page.waitForFunction(() => document.body.dataset.view === "report");
@@ -159,7 +159,7 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
       page.waitForEvent("download"),
       page.locator("#exportJson").click()
     ]);
-    assert.match(download.suggestedFilename(), /^affiads-sauvegarde-.*\\.json$/);
+    assert.match(download.suggestedFilename(), /^affiads-sauvegarde-.*\.json$/);
     const backupPath = await download.path();
     assert.ok(backupPath, "backup download should be available to the test");
     const backupText = fs.readFileSync(backupPath, "utf8");
@@ -174,9 +174,9 @@ test("browser smoke: startup, navigation, themes, audit form, mobile layout and 
       await dialog.accept();
     });
     await page.locator("#importJson").setInputFiles(backupPath);
-    await page.waitForFunction(() => /audit\\(s\\) importé\\(s\\)/i.test(document.querySelector("#toast")?.textContent || ""),
+    await page.waitForFunction(() => /audit\(s\) importé\(s\)/i.test(document.querySelector("#toast")?.textContent || ""),
       { timeout: 5000 });
-    assert.match(importDialogMessage, /^Importer \\d+ audit/);
+    assert.match(importDialogMessage, /^Importer \d+ audit/);
 
     // Return to the audit screen and verify the mobile page itself does not overflow horizontally.
     await page.locator('.nav button[data-view="auto"]').click();
