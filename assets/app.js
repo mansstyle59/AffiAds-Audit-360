@@ -293,9 +293,41 @@ async function placesSearch(textQuery,fieldMask,size,bias,radius){
  catch(e){if(e.status===400){const b2={textQuery,languageCode:"fr",regionCode:"FR",maxResultCount:size};return (await fetchJson("https://places.googleapis.com/v1/places:searchText",opts(b2),30000)).places||[]}throw e}
 }
 function pickPlace(list,name,city){if(!list.length)return null;const ok=list.find(p=>similar(p.displayName&&p.displayName.text,name)&&(!city||norm(p.formattedAddress).includes(norm(city))));return ok||list.find(p=>similar(p.displayName&&p.displayName.text,name))||list[0]}
+/* Petit cache de coordonnées de villes : préchargé pendant la saisie, réutilisé au lancement.
+   Données publiques uniquement, taille plafonnée et durée de vie de 12 h. */
+const CITY_CACHE_KEY="affiads-city-prefetch-v1",CITY_CACHE_TTL=12*60*60*1000;
+const cityLookupPending=new Map();
+function cityCacheRead(city){
+ const key=norm(String(city||"").trim());if(!key)return null;
+ try{const all=JSON.parse(localStorage.getItem(CITY_CACHE_KEY)||"{}");const item=all[key];
+  if(item&&item.value&&Date.now()-item.at<CITY_CACHE_TTL)return item.value;
+ }catch(e){}
+ return null;
+}
+function cityCacheWrite(city,value){
+ const key=norm(String(city||"").trim());if(!key||!value)return;
+ try{const all=JSON.parse(localStorage.getItem(CITY_CACHE_KEY)||"{}");all[key]={at:Date.now(),value};
+  const sorted=Object.entries(all).sort((a,b)=>b[1].at-a[1].at).slice(0,25);
+  localStorage.setItem(CITY_CACHE_KEY,JSON.stringify(Object.fromEntries(sorted)));
+ }catch(e){}
+}
 async function nominatimCity(city){
- const r=await fetchJson("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=fr,be,ch,lu,mc&accept-language=fr&q="+encodeURIComponent(city),{},20000);
- return r&&r[0]?{lat:+r[0].lat,lng:+r[0].lon,label:r[0].display_name}:null;
+ const clean=String(city||"").trim(),key=norm(clean);if(!key)return null;
+ const cached=cityCacheRead(clean);if(cached)return cached;
+ if(cityLookupPending.has(key))return cityLookupPending.get(key);
+ const request=(async()=>{
+  try{
+   const r=await fetchJson("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=fr,be,ch,lu,mc&accept-language=fr&q="+encodeURIComponent(clean),{},12000);
+   const value=r&&r[0]?{lat:+r[0].lat,lng:+r[0].lon,label:r[0].display_name}:null;
+   if(value)cityCacheWrite(clean,value);return value;
+  }catch(e){const fallback=cityCacheRead(clean);if(fallback)return fallback;throw e}
+  finally{cityLookupPending.delete(key)}
+ })();
+ cityLookupPending.set(key,request);return request;
+}
+function prefetchCityCoordinates(city){
+ const clean=String(city||"").trim();if(clean.length<2||cityCacheRead(clean))return;
+ nominatimCity(clean).catch(()=>{});
 }
 const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 async function overpass(q){
@@ -1927,7 +1959,7 @@ function bind(){
  $("autoType").addEventListener("change",()=>{$("autoType").dataset.touched="1";if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords($("autoType").value)});
  $("autoKeyword").addEventListener("input",()=>$("autoKeyword").dataset.touched="1");
  $("autoName").addEventListener("input",()=>{if(state.biz.placeId||state.biz.osmPick)clearPick();queueSuggest()});
- $("autoCity").addEventListener("input",()=>{if(!state.biz.placeId&&!state.biz.osmPick)queueSuggest()});
+ let cityPrefetchTimer=null;\n $("autoCity").addEventListener("input",()=>{if(!state.biz.placeId&&!state.biz.osmPick)queueSuggest();clearTimeout(cityPrefetchTimer);const city=$("autoCity").value.trim();if(city.length>=2)cityPrefetchTimer=setTimeout(()=>prefetchCityCoordinates(city),1100)});\n $("autoCity").addEventListener("blur",()=>{clearTimeout(cityPrefetchTimer);prefetchCityCoordinates($("autoCity").value)});
  $("autoName").addEventListener("blur",()=>setTimeout(closeSuggest,150));
  $("autoName").addEventListener("keydown",e=>{const open=!$("suggest").classList.contains("hidden")&&suggestItems.length;
   if(open&&(e.key==="ArrowDown"||e.key==="ArrowUp")){e.preventDefault();suggestIdx=(suggestIdx+(e.key==="ArrowDown"?1:-1)+suggestItems.length)%suggestItems.length;renderSuggest();$("autoName").setAttribute("aria-activedescendant","sg"+suggestIdx);return}
