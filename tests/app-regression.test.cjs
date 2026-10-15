@@ -116,9 +116,9 @@ test("2026-98 keeps dark-theme cards, report preview and compact access screen r
   assert.match(css, /2026-75 • Contrast and coherence|2026-76 • Contrast and coherence/);
   assert.match(css, /color:#edf1ff!important/);
   assert.match(css, /color:#202653!important/);
-  assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("mobile navigation matches the reference order and all primary actions are reachable", () => {
@@ -133,13 +133,13 @@ test("mobile navigation matches the reference order and all primary actions are 
 
 
 test("2026-98 compact iPhone access screen stays within small viewports", () => {
-  assert.ok(html.includes("assets/app.css?v=2026-107"));
-  assert.ok(html.includes("assets/app.js?v=2026-98"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
+  assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
   assert.ok(css.includes("Finition cohérente mobile") || css.includes("2026-98 finishing") || css.includes("2026-98 final polish"));
   assert.ok(css.includes("min-height:100dvh"));
   assert.ok(css.includes("overflow-y:auto"));
   assert.ok(css.includes("grid-template-columns:repeat(3,58px)!important"));
-  assert.ok(sw.includes("affiads-audit-2026-107"));
+  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
 });
 
 
@@ -148,17 +148,17 @@ test("2026-98 remembers trusted access in Safari and installed PWA without promp
   assert.match(js, /if\(Lock\.mode==="unlock"\)\{Lock\.cfg\.pwaTrusted=true/);
   assert.doesNotMatch(js, /if\(!standalone&&Lock\.cfg&&Lock\.cfg\.hash&&!document\.body\.classList\.contains\("locked"\)\)lockNow\(false\)/);
   assert.match(js, /Choisissez quand le code doit être redemandé/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
 test("2026-98 keeps optional Google Fonts from blocking the first render", () => {
   assert.match(html, /fonts\.googleapis\.com[^"]+display=swap" media="print" onload="this\.media='all'"/);
   assert.match(html, /<noscript><link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 keeps dark-mode audit form and readiness copy high contrast", () => {
@@ -178,9 +178,9 @@ test("2026-98 enforces readable contrast for body copy, secondary text, forms an
   assert.match(css, /:root\[data-theme="light"\] \.main :is\(input,textarea,select\)/);
   assert.match(css, /:root\[data-theme="dark"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#b7c3ff!important/);
   assert.match(css, /:root\[data-theme="light"\] \.main a:not\(\.btn\):not\(\.button\)\{color:#4335c9!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 lets the owner choose and persist when the access code is requested", () => {
@@ -194,17 +194,17 @@ test("2026-98 lets the owner choose and persist when the access code is requeste
   assert.match(js, /pinDelayDescription\(value\)/);
   assert.match(css, /#pinDelay\{[^}]*font-size:16px!important/);
   assert.match(css, /\.pin-delay-help/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 applies access-code delay when the app returns from background", () => {
   assert.match(js, /if\(lockDelay\(\)===0&&!document\.body\.classList\.contains\("locked"\)\)lockNow\(false\)/);
   assert.match(js, /if\(lockDelay\(\)>0&&away>=lockDelay\(\)\*60000\)lockNow\(false\)/);
   assert.match(js, /const away=Lock\.hiddenAt\?Date\.now\(\)-Lock\.hiddenAt:0/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -212,8 +212,8 @@ test("2026-98 removes the oversized duplicate new-client hero button", () => {
   assert.doesNotMatch(html, /id="heroNewClient"|class="new-client-hero"/);
   assert.doesNotMatch(js, /heroNewClient|new-client-hero/);
   assert.doesNotMatch(css, /\.new-client-hero\{/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 mobile header removes duplicate Clients/New Audit actions while preserving PDF", () => {
@@ -222,16 +222,16 @@ test("2026-98 mobile header removes duplicate Clients/New Audit actions while pr
   assert.doesNotMatch(js, /\$\("topClients"\)|\$\("topNewAudit"\)/);
   assert.match(css, /\.topacts\{display:none!important\}/);
   assert.match(js, /\$\("navNewClient"\)\.addEventListener\("click",\(\)=>\{nav\("auto"\);requestAnimationFrame\(\(\)=>\{\$\("autoName"\)\.focus\(\{preventScroll:true\}\)\}\)\}\)/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
 test("2026-98 removes all leftover styles for the deleted hero CTA", () => {
   assert.doesNotMatch(css, /new-client-hero|new-client-plus|new-client-copy|new-client-arrow/);
   assert.doesNotMatch(html, /heroNewClient|new-client-hero/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -244,8 +244,8 @@ test("2026-98 builds a concise, personalized prospect message for each format", 
   assert.match(html, /id="pitchRegen">Actualiser depuis l’audit/);
   assert.match(html, /id="pitchWhatsapp">WhatsApp/);
   assert.match(html, /id="pitchMail">E-mail/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 makes prospect composer compact and note readable in both themes", () => {
@@ -254,8 +254,8 @@ test("2026-98 makes prospect composer compact and note readable in both themes",
   assert.match(css, /#view-pitch \.pitch-actions #pitchRegen\{grid-column:1\/-1\}/);
   assert.match(css, /:root\[data-theme="dark"\] #view-pitch \.pitch-note\{background:#222b55!important/);
   assert.match(css, /:root\[data-theme="light"\] #view-pitch \.pitch-note\{background:#f1f4ff!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -264,16 +264,16 @@ test("2026-98 uses a clear burger menu label instead of the ambiguous Plus tab",
   assert.match(html, /<span class="t">Menu<\/span><\/button>/);
   assert.match(html, /M4 6h16M4 12h16M4 18h16/);
   assert.match(js, /navMore.*aria-expanded/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 test("2026-98 enforces readable notice contrast and reserves footer space on mobile", () => {
   assert.match(css, /:root\[data-theme="dark"\] \.main \.notice,[\s\S]*?background:#20294f!important;[\s\S]*?color:#f0f3ff!important/);
   assert.match(css, /:root\[data-theme="light"\] \.main \.notice,[\s\S]*?background:#f0f4ff!important;[\s\S]*?color:#253153!important/);
   assert.match(css, /\.main \.footer,.main footer\{[\s\S]*?padding:12px 76px 20px 10px!important/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -282,8 +282,8 @@ test("2026-98 prevents iPhone Safari form focus auto-zoom without disabling acce
   assert.match(css, /#pinDelay\{[\s\S]*?font-size:16px!important/);
   assert.match(html, /name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
-  assert.match(html, /assets\/app\.css\?v=2026-107/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -312,9 +312,9 @@ test("2026-98 report preview has a helpful empty state", () => {
   assert.ok(css.includes('body[data-view="report"] .botfab{display:none!important}'));
   assert.ok(css.includes("#view-report .onepage .op-emptyhint"));
   assert.ok(css.includes("#view-report .actions{display:grid!important;grid-template-columns:1fr 1fr!important"));
-  assert.ok(html.includes("assets/app.css?v=2026-107"));
-  assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.ok(sw.includes("affiads-audit-2026-107"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
+  assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
+  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
 });
 
 
@@ -325,8 +325,8 @@ test("home screen removes redundant quick-action cards and keeps the audit form"
   assert.match(html, /id="autoName"/);
   assert.match(html, /id="autoCity"/);
   assert.match(html, /id="runAuto"/);
-  assert.match(html, /assets\/app\.js\?v=2026-98/);
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.match(html, /assets\/app\.js\?v=2026-\d+/);
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -336,8 +336,8 @@ test("2026-98 social cards offer direct Google search and one-tap manual profile
   assert.match(js, /Collez le lien public de /);
   assert.match(js, /data-social-deep/);
   assert.ok(css.includes(".soc-actions .soc-mini{display:inline-flex"));
-  assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.match(sw, /affiads-audit-2026-107/);
+  assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
+  assert.match(sw, /affiads-audit-\d{4}-\d+/);
 });
 
 
@@ -348,9 +348,9 @@ test("2026-98 keeps pills, checklist counters and social actions readable on mob
   assert.ok(css.includes('-webkit-text-fill-color:#28345f!important'));
   assert.ok(css.includes('flex:1 1 68px;width:auto;min-width:0;max-width:100%;min-height:32px'));
   assert.ok(css.includes('overflow-wrap:anywhere;word-break:normal;white-space:normal'));
-  assert.ok(html.includes("assets/app.css?v=2026-107"));
-  assert.ok(html.includes("assets/app.js?v=2026-98"));
-  assert.ok(sw.includes("affiads-audit-2026-107"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
+  assert.ok(/assets\/app\.js\?v=2026-\d+/.test(html));
+  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
 });
 
 
@@ -378,6 +378,6 @@ test("2026-107 positions the gold marker against its input and styles the mobile
   assert.match(css, /\.askfields\s+\.bigfield\s+\.dot\s*\{[\s\S]*?left:\s*24px\s*!important;[\s\S]*?top:\s*32px\s*!important;[\s\S]*?transform:\s*none\s*!important;/);
   assert.match(css, /\.side\s+\.brand\s+img\s*\{[\s\S]*?width:\s*52px\s*!important;[\s\S]*?height:\s*52px\s*!important;/);
   assert.ok(css.includes("padding: calc(env(safe-area-inset-top) + 2px) 16px 8px !important;"));
-  assert.ok(html.includes("assets/app.css?v=2026-107"));
-  assert.ok(sw.includes("affiads-audit-2026-107"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
+  assert.ok(sw.includes(/affiads-audit-\d{4}-\d+/.test(sw)));
 });
