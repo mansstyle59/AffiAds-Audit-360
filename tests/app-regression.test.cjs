@@ -454,7 +454,7 @@ test("PDF reports include the AffiAds audit seal and audit page shows the three-
   assert.match(html, /Sources publiques/);
   assert.match(html, /Rapport PDF/);
   assert.match(html, /assets\/app\.js\?v=2026-\d+/);
-  assert.ok(html.includes("assets/app.css?v=2026-128"));
+  assert.ok(/assets\/app\.css\?v=2026-\d+/.test(html));
 });
 
 
@@ -484,7 +484,7 @@ test("2026-128 loads mobile navigation theme fix and caches it offline", () => {
 
 test("page markup does not contain a visible escaped newline before navigation theme stylesheet", () => {
   assert.ok(!html.includes(">\\\\n<link rel="));
-  assert.match(html, /assets\/app\.css\?v=2026-128">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
+  assert.match(html, /assets\/app\.css\?v=2026-\d+">\s*<link rel="stylesheet" href="assets\/nav-theme-fix\.css\?v=2026-128">/);
 });
 
 
