@@ -17,11 +17,15 @@ test("PWA manifest is valid and its icons exist", () => {
   }
 });
 
-test("home audit and theme controls are present", () => {
+test("home audit is present and dark theme is permanently enforced", () => {
   for (const id of ["view-auto","autoName","autoCity","runAuto","autoToReport","keyNotice","view-settings"]) {
     assert.ok(new RegExp('id="' + id + '"' ).test(html), "missing element id=" + id);
   }
-  for (const theme of ["auto","light","dark"]) assert.ok(html.includes('data-theme-set="' + theme + '"'));
+  assert.ok(html.includes('data-theme="dark"'));
+  assert.ok(html.includes("Mode sombre permanent"));
+  assert.ok(!html.includes('data-theme-set="light"'));
+  assert.ok(js.includes('settings.theme="dark"'));
+  assert.ok(css.includes("2026-154 — Identité sombre permanente"));
 });
 
 test("all local assets referenced in HTML exist", () => {
