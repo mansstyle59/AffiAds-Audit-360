@@ -206,7 +206,7 @@ function hydrate(){
  fields.forEach(id=>{$(id).value=state.biz[id]??(id==="date"?today():"")});
  if(!$("type").value)$("type").value=BIZ_TYPES[0].label;
  $("notes").value=state.notes||"";
- $("autoName").value=state.biz.name||"";$("autoCity").value=state.biz.city||"";$("autoType").value=state.biz.type||BIZ_TYPES[0].label;$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||"";
+ $("autoName").value=state.biz.name||"";$("autoCity").value=state.biz.city||"";$("autoType").value=state.biz.type||BIZ_TYPES[BIZ_TYPES.length-1].label;$("autoSite").value=state.biz.site||"";$("autoKeyword").value=state.biz.keyword||"";
  ["autoType","autoKeyword"].forEach(id=>delete $(id).dataset.touched);if(state.biz.keyword)$("autoKeyword").dataset.touched="1";setPickInfo();renderPlaceChoice();closeSuggest();
  renderClientSelect();renderChecklist();update();drawAiTests();renderCampaignPrompts();renderAutoSteps(state.data.steps||[]);renderAutoSummary();$("pitchText").value=state.pitch||"";renderTools();renderKeyNotice();
  $("socUrl").value="";$("socNiche").value="";renderSocial();setReportFormat(settings.reportFormat||"one");
@@ -519,7 +519,7 @@ async function sireneSearch(name,city){
   const out=[];(r.results||[]).forEach(e=>{
    const etabs=[...(e.matching_etablissements||[]),...(e.siege?[e.siege]:[])];
    etabs.forEach(t=>{if(!t||!t.siret||out.some(o=>o.siret===t.siret))return;
-    out.push({siret:t.siret,names:[...(t.liste_enseignes||[]),t.nom_commercial,e.nom_raison_sociale,e.nom_complet,e.sigle].filter(Boolean),commune:t.libelle_commune||"",cp:t.code_postal||"",adresse:t.adresse||"",date:t.date_creation||t.date_debut_activite||"",dateEnt:e.date_creation||"",naf:t.activite_principale||e.activite_principale||"",open:(t.etat_administratif||e.etat_administratif)!=="F"&&!t.date_fermeture})});
+    out.push({siret:t.siret,names:[...(t.liste_enseignes||[]),t.nom_commercial,e.nom_raison_sociale,e.nom_complet,e.sigle].filter(Boolean),commune:t.libelle_commune||"",cp:t.code_postal||"",adresse:t.adresse||"",date:t.date_creation||t.date_debut_activite||"",dateEnt:e.date_creation||"",naf:t.activite_principale||e.activite_principale||"",owners:(e.dirigeants||[]).map(d=>({name:[d.prenoms,d.nom].filter(Boolean).join(" ").trim()||d.nom_complet||"",role:d.qualite||d.type_dirigeant||""})).filter(d=>d.name),open:(t.etat_administratif||e.etat_administratif)!=="F"&&!t.date_fermeture})});
   });return out;
  })();
  sireneCache[key]=job;job.catch(()=>{delete sireneCache[key]});return job;
@@ -855,9 +855,9 @@ async function runAuto(){
   setStep("reg","run","Registre des entreprises (SIRENE)");
   try{const gName=place&&place.displayName&&place.displayName.text;const cp=((place&&place.formattedAddress)||"").match(/\b(\d{5})\b/);
    let reg=null;for(const n of [...new Set([gName,name].filter(Boolean))]){const L=await sireneSearch(n,city);reg=sireneMatch(L,n,city,cp&&cp[1],(place&&place.formattedAddress)||state.biz.address||"");if(reg)break}
-   if(!reg&&state.biz.reg&&similar(state.biz.reg.names[0]||"",name))reg=state.biz.reg;
+   if(!reg&&state.biz.reg&&similar((state.biz.reg.names||[]).join(" "),name)&&sameCity(state.biz.reg.commune,city))reg=state.biz.reg;
    state.biz.reg=reg||null;
-   if(reg){const ni=nafInfo(reg.naf);setStep("reg","ok",(ni?ni[0]:"Activité "+reg.naf)+(reg.date?" · ouvert en "+fmtOpen(reg.date):""),"Établissement inscrit au registre SIRENE"+(reg.dateEnt&&reg.dateEnt!==reg.date?" · entreprise créée en "+reg.dateEnt.slice(0,4):"")+". Date d’inscription de cet établissement, qui peut différer de l’ouverture au public (reprise, déménagement).");
+   if(reg){const ni=nafInfo(reg.naf);setStep("reg","ok",(ni?ni[0]:"Activité "+reg.naf)+(reg.date?" · créé en "+fmtOpen(reg.date):""),"Établissement inscrit au registre SIRENE"+(reg.dateEnt&&reg.dateEnt!==reg.date?" · entreprise créée en "+fmtOpen(reg.dateEnt):"")+". La date officielle de création de l’établissement ne garantit pas le jour d’ouverture au public. Dirigeant déclaré disponible uniquement si le registre public le fournit.");
     if(ni&&!$("autoType").dataset.touched&&ni[1]!==type){type=ni[1];state.biz.type=type;$("autoType").value=type;if(!$("autoKeyword").dataset.touched)$("autoKeyword").value=defaultKeywords(type);setStep("reg","ok","Catégorie corrigée selon le registre officiel","Type retenu : "+ni[1]+". Le type officiel SIRENE est prioritaire sur une catégorie Google contradictoire.")}}
    else setStep("reg","skip","Registre des entreprises : établissement non identifié","Nom commercial différent du nom déclaré, entreprise individuelle ou commerce hors de France.");
   }catch(e){setStep("reg","skip","Registre des entreprises non consulté",frErr(e).text)}
@@ -1157,7 +1157,7 @@ function googleBlock(){
  +((d.reviews||[]).length?'<h3 style="margin-top:14px">Avis les plus pertinents selon Google</h3>'+d.reviews.map(r=>'<div class="review"><b aria-label="'+(r.rating||0)+' sur 5">'+"★".repeat(r.rating||0)+"☆".repeat(5-(r.rating||0))+'</b> <span class="muted">'+esc(r.when)+'</span><br>'+esc(r.text||"(sans texte)")+'</div>').join(""):"");
 }
 function partialNote(){const d=state.data||{};if(!d.fetchedAt||!d.partial)return "";return '<div class="partial"><b>Audit partiel</b><span>'+(d.unverified?"Le commerce n’a été trouvé ni sur Google ni sur OpenStreetMap : les résultats reposent sur Bing, les réseaux sociaux et le site s’il est connu. Vérifiez le nom ou ajoutez une clé Google.":"La fiche Google n’a pas été analysée"+(hasKey()?" (clé Google à corriger)":" (pas de clé Google)")+" : note, avis, photos et positions Google ne sont pas inclus dans le score.")+'</span></div>'}
-function bizLine(){const b=state.biz||{},r=b.reg,ni=r&&nafInfo(r.naf);const parts=[ni?ni[0]:b.type,b.city,r&&r.date?"ouvert en "+fmtOpen(r.date)+" ("+ageText(r.date).replace(/^ouvert /,"")+")":""].filter(Boolean);return parts.length?'<p class="bizline">'+esc(parts.join(" · "))+'</p>':''}
+function bizLine(){const b=state.biz||{},r=b.reg,ni=r&&nafInfo(r.naf);const parts=[ni?ni[0]:b.type,b.city,r&&r.date?"créé en "+fmtOpen(r.date)+" (registre SIRENE)":""].filter(Boolean);const owners=r&&Array.isArray(r.owners)?r.owners:[];const ownerText=owners.slice(0,2).map(o=>[o.name,o.role].filter(Boolean).join(" — ")).join(" · ");return (parts.length?'<p class="bizline">'+esc(parts.join(" · "))+'</p>':"")+(ownerText?'<p class="bizline"><b>Dirigeant déclaré (registre public) :</b> '+esc(ownerText)+'</p>':"")+(r&&r.date?'<p class="muted">Date administrative de création : elle peut différer de l’ouverture réelle au public.</p>':"")}
 function renderAutoSummary(){
  const d=state.data||{};
  $("autoToReport").classList.toggle("hidden",!d.fetchedAt);
@@ -1338,7 +1338,7 @@ function renderReport(){
  const top3=(d.findings||[]).slice(0,3);
  const cover='<div class="cover"><div class="cover-brandrow"><div class="brandline"><img src="assets/logo-192.png" alt="">AffiAds Audit 360°</div><div class="affiads-seal" aria-label="Cachet AffiAds, audit de visibilité réalisé"><span class="seal-top">AFFIADS</span><b>✓</b><span class="seal-mid">AUDIT RÉALISÉ</span><small>'+esc(frDate(b.date||today()))+'</small></div></div>'
   +'<span class="eyebrow">Audit de visibilité en ligne</span><h1>'+esc(b.name||"Votre prochain audit")+'</h1>'
-  +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+(b.reg&&b.reg.date?'<br>Établissement ouvert en '+esc(fmtOpen(b.reg.date))+' (registre SIRENE)':'')+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
+  +'<div class="meta">'+esc([b.type,b.city&&("à "+b.city)].filter(Boolean).join(" "))+(b.address?" · "+esc(b.address):"")+(b.reg&&b.reg.date?'<br>Établissement créé en '+esc(fmtOpen(b.reg.date))+' (registre SIRENE)':'')+(b.reg&&Array.isArray(b.reg.owners)&&b.reg.owners.length?'<br>Dirigeant déclaré : '+esc(b.reg.owners.slice(0,2).map(o=>[o.name,o.role].filter(Boolean).join(" — ")).join(" · "))+' (registre public)':'')+'<br>Audit du '+esc(frDate(b.date||today()))+(d.fetchedAt?" · données publiques collectées le "+esc(d.fetchedAt):"")+'</div>'
   +scoreTile(totals.score)+partialNote()+kpiRow()
   +(top3.length?'<div class="covertop"><h3>Les 3 constats à retenir</h3><ol>'+top3.map(f=>'<li>'+esc(f.text)+'</li>').join("")+'</ol></div>':'')
   +'<div class="coverfoot"><b>'+esc(sender?sender+", ":"")+esc(line)+'</b>'+(contact?'<span>'+esc(contact)+'</span>':'')+'</div></div>';
