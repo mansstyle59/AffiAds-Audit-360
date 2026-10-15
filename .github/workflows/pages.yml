@@ -3,6 +3,8 @@ name: Deploy AffiAds Audit 360 to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -40,11 +42,20 @@ jobs:
         run: node --test tests/social-regression.test.cjs
       - name: Test app, PWA, themes and asset consistency
         run: node --test tests/app-regression.test.cjs
+      - name: Install Chromium smoke-test dependencies
+        run: |
+          npm install --prefix /tmp/affiads-e2e --no-save playwright@1.55.0
+          /tmp/affiads-e2e/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test mobile browser flows
+        env:
+          NODE_PATH: /tmp/affiads-e2e/node_modules
+        run: node --test tests/browser-smoke.test.cjs
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
