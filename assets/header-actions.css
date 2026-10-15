@@ -1,0 +1,57 @@
+/* 2026-105 — Header quick actions: compact, touch-friendly controls on mobile. */
+.brand-actions{display:none}
+@media(max-width:900px){
+  .side .brand{
+    width:100%!important;
+    min-width:0!important;
+    gap:10px!important;
+  }
+  .side .brand>div:not(.brand-actions){
+    flex:1 1 auto!important;
+    min-width:0!important;
+  }
+  .side .brand .brand-actions{
+    display:flex!important;
+    flex:0 0 auto!important;
+    align-items:center!important;
+    gap:8px!important;
+    margin-left:auto!important;
+    padding-left:4px!important;
+  }
+  .brand-actions .brand-action{
+    display:grid!important;
+    place-items:center!important;
+    flex:0 0 42px!important;
+    width:42px!important;
+    min-width:42px!important;
+    height:42px!important;
+    min-height:42px!important;
+    padding:0!important;
+    border:1px solid #ffffff25!important;
+    border-radius:14px!important;
+    background:linear-gradient(145deg,#283b91,#30256d)!important;
+    color:#f7f8ff!important;
+    box-shadow:0 4px 12px #060b2b22!important;
+    cursor:pointer!important;
+    touch-action:manipulation;
+    transition:transform .15s ease,background .15s ease,border-color .15s ease;
+  }
+  .brand-actions .brand-action:active{transform:scale(.96)}
+  .brand-actions .brand-action:focus-visible{outline:3px solid #ffb81f!important;outline-offset:2px}
+  .brand-actions .brand-action svg{
+    display:block!important;
+    width:21px!important;
+    height:21px!important;
+    fill:none!important;
+    stroke:currentColor!important;
+    stroke-width:1.8!important;
+    stroke-linecap:round!important;
+    stroke-linejoin:round!important;
+  }
+}
+@media(max-width:380px){
+  .side .brand{gap:8px!important}
+  .side .brand .brand-actions{gap:5px!important;padding-left:1px!important}
+  .brand-actions .brand-action{flex-basis:38px!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;border-radius:12px!important}
+  .brand-actions .brand-action svg{width:19px!important;height:19px!important}
+}
