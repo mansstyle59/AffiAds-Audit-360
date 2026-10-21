@@ -462,14 +462,27 @@ async function auditQualityFetchPublicResource(baseUrl,path,timeout=8000) {
   if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
   const target=new URL(path,base.origin);
   if (target.origin!==base.origin || !auditQualityPublicUrl(target.href)) throw new Error("Origine non autorisée");
-  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),timeout);
+  const controller=()=>new AbortController();
+  const direct=controller(), timer=setTimeout(()=>direct.abort(),timeout);
   try {
-    const r=await fetch(target.href,{signal:ctl.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain, application/xml, text/xml;q=0.9, */*;q=0.1"}});
-    const finalUrl=auditQualityUrl(r.url||target.href,base.origin);
-    if (!finalUrl || finalUrl.origin!==base.origin) throw new Error("Redirection vers une autre origine refusée");
-    if (!r.ok) return {status:r.status,ok:false,url:finalUrl.href,text:""};
-    return {status:r.status,ok:true,url:finalUrl.href,text:(await r.text()).slice(0,500000)};
+    try {
+      const r=await fetch(target.href,{signal:direct.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain, application/xml, text/xml;q=0.9, */*;q=0.1"}});
+      const finalUrl=auditQualityUrl(r.url||target.href,base.origin);
+      if (!finalUrl || finalUrl.origin!==base.origin) throw new Error("Redirection vers une autre origine refusée");
+      if (r.ok) return {status:r.status,ok:true,url:finalUrl.href,text:(await r.text()).slice(0,500000),via:"accès direct (CORS autorisé)"}
+      if (![401,403,404,405,406,429,500,502,503,504].includes(r.status)) return {status:r.status,ok:false,url:finalUrl.href,text:"",via:"accès direct"};
+    } catch (e) { if (e&&e.message==="Redirection vers une autre origine refusée") throw e; }
   } finally { clearTimeout(timer); }
+  /* Sites clients : CORS peut bloquer l'accès direct. Jina est le proxy public déjà utilisé par l'application. */
+  const proxiedTarget=target.href;
+  const proxyController=controller(), proxyTimer=setTimeout(()=>proxyController.abort(),Math.max(timeout,12000));
+  try {
+    const readerUrl="https://r.jina.ai/"+proxiedTarget;
+    const r=await fetch(readerUrl,{signal:proxyController.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain","X-Return-Format":"text","X-Timeout":"10"}});
+    if(!r.ok) return {status:r.status,ok:false,url:target.href,text:"",via:"lecture publique de secours"}
+    const text=await r.text();
+    return {status:r.status,ok:true,url:target.href,text:text.slice(0,500000),via:"Jina Reader (secours CORS)"}
+  } finally { clearTimeout(proxyTimer); }
 }
 async function auditQualityRobotsSitemap(baseUrl) {
   const base=auditQualityUrl(baseUrl);
