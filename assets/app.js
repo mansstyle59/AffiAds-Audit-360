@@ -1163,9 +1163,20 @@ async function runAuto(){
     setAuto("1-3",ctas.length?"ok":"issue",ctas.length?"Boutons d'action présents : "+ctas.join(", ")+".":"Aucun bouton d'appel cliquable, WhatsApp, ni lien de réservation, de rendez-vous ou de devis sur la page d'accueil.",srcH);
     if(!ctas.length)findings.push({sev:2,text:"Le site n'a ni bouton d'appel cliquable, ni WhatsApp, ni lien de réservation, de rendez-vous ou de devis : les visiteurs mobiles doivent chercher comment vous contacter."});
     /* Données structurées */
+    const schema=H.schemaQuality||{localBusiness:[],invalidCount:0,types:[]};
     const local=H.ldTypes.filter(t=>LOCAL_TYPES.test(t));
-    setAuto("1-5",local.length?"ok":"issue",local.length?"Données structurées présentes : "+local.join(", ")+".":"Aucune donnée structurée LocalBusiness (adresse, horaires) pour Google et les IA"+(H.ldTypes.length?" (types présents : "+H.ldTypes.slice(0,4).join(", ")+")":"")+".",srcH);
-    if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins bien ses informations."});
+    const detailedLocal=(schema.localBusiness||[]);
+    const incompleteLocal=detailedLocal.filter(x=>!x.hasName||!x.hasAddress||!x.hasUrl);
+    const schemaProblems=[];
+    if(!local.length)schemaProblems.push("aucune donnée structurée LocalBusiness détectée");
+    if(schema.invalidCount)schemaProblems.push(schema.invalidCount+" bloc(s) JSON-LD illisible(s)");
+    if(incompleteLocal.length)schemaProblems.push(incompleteLocal.length+" objet(s) LocalBusiness sans nom, adresse ou URL");
+    const schemaStatus=!local.length||schema.invalidCount||incompleteLocal.length?"issue":"ok";
+    const schemaEvidence=local.length?"Types locaux : "+local.join(", ")+". ":"";
+    setAuto("1-5",schemaStatus,schemaProblems.length?schemaEvidence+"À examiner : "+schemaProblems.join("; ")+".":schemaEvidence+"Données structurées locales présentes, blocs JSON-LD lisibles et champs nom/adresse/URL détectés.",srcH);
+    if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins directement ses informations."});
+    if(incompleteLocal.length)findings.push({sev:2,text:"Des objets LocalBusiness existent, mais "+incompleteLocal.length+" n’ont pas tous les champs nom, adresse et URL détectés. Vérifier aussi le téléphone et les horaires avant de corriger."});
+    if(schema.invalidCount)findings.push({sev:1,text:schema.invalidCount+" bloc(s) JSON-LD n’ont pas pu être analysés : vérifier la syntaxe JSON avant de conclure à l’absence de données structurées."});
     /* Réseaux sociaux */
     const allSoc=[...(data.socials||[])];H.socials.forEach(s=>{const idx=allSoc.findIndex(x=>(x.net||netOf(hostOf(x.url)))===s.net);if(idx<0)allSoc.push({...s,src:"site officiel"});else if(allSoc[idx].src==="OpenStreetMap"||!allSoc[idx].src)allSoc[idx]={...s,src:"site officiel"};});data.socials=allSoc;
     const hasFbIg=allSoc.some(s=>/Facebook|Instagram/.test(s.net));
