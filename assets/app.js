@@ -488,18 +488,30 @@ async function auditQualityRobotsSitemap(baseUrl) {
   const base=auditQualityUrl(baseUrl);
   if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
   const [rr,sr]=await Promise.allSettled([auditQualityFetchPublicResource(base.href,"/robots.txt"),auditQualityFetchPublicResource(base.href,"/sitemap.xml")]);
-  const robots=rr.status==="fulfilled"?rr.value:null, sitemap=sr.status==="fulfilled"?sr.value:null;
+  const robots=rr.status==="fulfilled"?rr.value:null;
+  const rootSitemap=sr.status==="fulfilled"?sr.value:null;
   const parsed=robots&&robots.ok?auditQualityReadRobots(robots.text):null;
-  let sitemapUrlCount=0,sitemapValid=false;
-  if(sitemap&&sitemap.ok){
-    try { const doc=new DOMParser().parseFromString(sitemap.text,"application/xml"); sitemapValid=!doc.querySelector("parsererror")&&/(urlset|sitemapindex)$/i.test(doc.documentElement.localName); sitemapUrlCount=doc.querySelectorAll("url,sitemap").length; } catch (_) {}
+  const tryParseSitemap=async resource=>{
+    if(!resource||!resource.ok) return {valid:false,urlCount:0};
+    try { const doc=new DOMParser().parseFromString(resource.text,"application/xml"); return {valid:!doc.querySelector("parsererror")&&/(urlset|sitemapindex)$/i.test(doc.documentElement.localName),urlCount:doc.querySelectorAll("url,sitemap").length}; } catch (_) { return {valid:false,urlCount:0}; }
+  };
+  let smap=await tryParseSitemap(rootSitemap), declared=null, declaredParse={valid:false,urlCount:0};
+  const declaredCandidate=(parsed&&parsed.sitemaps||[]).find(value=>{const u=auditQualityUrl(value,base.href);return u&&u.origin===base.origin&&auditQualityPublicUrl(u.href)});
+  if(!smap.valid&&declaredCandidate){
+    try {
+      const u=auditQualityUrl(declaredCandidate,base.href);
+      declared=await auditQualityFetchPublicResource(base.href,u.pathname+u.search);
+      declaredParse=await tryParseSitemap(declared);
+    } catch (_) { declared=null; }
   }
-  const sitemapStatus=sitemapValid?"found":parsed&&parsed.sitemaps.length?"declared-in-robots":sitemap&&sitemap.status===404?"not-found":sitemap&&sitemap.ok?"invalid":"unknown";
+  const sitemapResource=smap.valid?rootSitemap:declaredParse.valid?declared:rootSitemap;
+  const finalSitemap=smap.valid?smap:declaredParse;
+  const sitemapStatus=finalSitemap.valid?(sitemapResource===rootSitemap?"found":"declared-in-robots"):parsed&&(parsed.sitemaps||[]).length?"declared-in-robots":rootSitemap&&rootSitemap.status===404?"not-found":rootSitemap&&rootSitemap.ok?"invalid":"unknown";
   return {
     checkedAt:new Date().toISOString(),
-    robots:{status:robots?robots.status:"unavailable",found:!!(robots&&robots.ok),parsed,source:robots&&robots.url||new URL("/robots.txt",base.origin).href},
-    sitemap:{status:sitemapStatus,found:!!(sitemap&&sitemap.ok),valid:sitemapValid,urlCount:sitemapUrlCount,source:sitemap&&sitemap.url||new URL("/sitemap.xml",base.origin).href},
-    notes:["L’absence de sitemap.xml à la racine ne prouve pas qu’aucun sitemap n’existe.","Les règles robots.txt ne garantissent ni l’indexation ni l’exclusion d’une URL."]
+    robots:{status:robots?robots.status:"unavailable",found:!!(robots&&robots.ok),parsed,source:robots&&robots.url||new URL("/robots.txt",base.origin).href,via:robots&&robots.via||""},
+    sitemap:{status:sitemapStatus,found:!!(sitemapResource&&sitemapResource.ok),valid:!!finalSitemap.valid,urlCount:finalSitemap.urlCount||0,source:sitemapResource&&sitemapResource.url||new URL("/sitemap.xml",base.origin).href,via:sitemapResource&&sitemapResource.via||""},
+    notes:["L’absence de sitemap.xml à la racine ne prouve pas qu’aucun sitemap n’existe.","Les règles robots.txt ne garantissent ni l’indexation ni l’exclusion d’une URL.","Les sitemaps publiés sur un autre domaine ne sont pas automatiquement suivis par ce contrôle."]
   };
 }
 function auditQualitySecurityHeaders(urlValue) {
