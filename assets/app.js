@@ -1082,7 +1082,20 @@ async function runAuto(){
    setStep("psi","run","Vitesse et qualité du site (Lighthouse mobile)","Compter 20 à 60 secondes.");
    setStep("html","run","Lecture du site : contenu, boutons, réseaux, suivi");
    setStep("shot","run","Capture mobile et technologies du site");
-   const [rPsi,rHtml,rShot,rDom]=await Promise.allSettled([pageSpeed(u.href),fetchHtml(u.href).then(h=>analyzeHtml(h,u.href,{phone:state.biz.phone,city})),microlinkShot(u.href),domainInfo(u.hostname)]);
+   const [rPsi,rHtml,rShot,rDom,rQuality]=await Promise.allSettled([pageSpeed(u.href),fetchHtml(u.href).then(h=>analyzeHtml(h,u.href,{phone:state.biz.phone,city})),microlinkShot(u.href),domainInfo(u.hostname),auditQualityRobotsSitemap(u.href)]);
+   const quality=rQuality.status==="fulfilled"?rQuality.value:null;
+   data.quality=quality;
+   data.securityHeaders=auditQualitySecurityHeaders(u.href);
+   if(quality){
+    const rob=quality.robots,smap=quality.sitemap;
+    const aiBlocked=!!(rob.parsed&&rob.parsed.aiAgents.some(g=>g.directives.some(d=>d.name==="disallow"&&d.value==="/")));
+    const robotEvidence=rob.found?(rob.parsed&&rob.parsed.valid?"robots.txt accessible et analysable":"robots.txt accessible, format à contrôler"):(rob.status===404?"robots.txt absent à la racine":"robots.txt non vérifié (accès refusé, erreur réseau ou délai dépassé)");
+    setStep("quality",rob.found||smap.found?"ok":"warn","Contrôles techniques complémentaires",robotEvidence+" · sitemap : "+(smap.valid?"XML valide ("+smap.urlCount+" entrée(s))":smap.status==="declared-in-robots"?"annoncé dans robots.txt, mais pas validé à la racine":smap.status==="not-found"?"non trouvé à la racine (absence non concluante)":"non validé"));
+    if(rob.found&&rob.parsed&&rob.parsed.wildcardDisallowAll)findings.push({sev:3,text:"Le robots.txt contient une règle Disallow: / pour User-agent *. Vérifier que le site n'est pas involontairement bloqué pour l'exploration."});
+    if(aiBlocked)findings.push({sev:1,text:"Le robots.txt interdit explicitement l'exploration à au moins un agent IA détecté. À confirmer selon l'objectif de visibilité souhaité : certains robots concernent la recherche, d'autres l'entraînement."});
+    if(smap.status==="not-found")findings.push({sev:1,text:"Aucun sitemap.xml validé à la racine. Ce n'est pas une preuve d'absence de sitemap : rechercher aussi les sitemaps déclarés et indexés avant de corriger."});
+   }else setStep("quality","skip","Contrôles complémentaires indisponibles","Les résultats principaux restent utilisables ; robots.txt et sitemap n'ont pas pu être vérifiés.");
+
    const H=rHtml.status==="fulfilled"?rHtml.value:null,P=rPsi.status==="fulfilled"?rPsi.value:null,M=rShot.status==="fulfilled"?rShot.value:null,D=rDom.status==="fulfilled"?rDom.value:null;
    data.html=H;data.psi=P;data.tech=M&&M.tech||[];data.shotUrl=M&&M.shot||"";data.domain=D;
    const srcP=P?P.via+", "+P.fetchedAt:"",srcH="Lecture du site (Jina Reader), "+data.fetchedAt;
