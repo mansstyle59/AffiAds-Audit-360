@@ -527,7 +527,7 @@ test("evidence-based supplementary audit helpers guard URLs and parse robots.txt
 test("JSON-LD quality checks are attached to HTML analysis and influence the local schema recommendation", () => {
   assert.match(js, /schemaQuality:auditQualityJsonLd\(html\)/);
   assert.match(js, /const incompleteLocal=detailedLocal\.filter/);
-  assert.match(js, /objets LocalBusiness sans nom, adresse ou URL/);
+  assert.match(js, /champs nom, adresse et URL détectés/);
   assert.match(js, /objets LocalBusiness existent/);
   assert.match(js, /CORS autorisé/);
   assert.match(js, /Jina Reader \(secours CORS\)/);
