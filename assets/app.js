@@ -398,6 +398,128 @@ async function pageSpeed(url,cats){
   return parseLhr(lh,null,url,"Lighthouse via Microlink");
  }
 }
+/* AffiAds Audit Quality — contrôles techniques indépendants, datés et prudents.
+   Ces contrôles ajoutent des preuves au rapport sans prétendre remplacer Lighthouse ni une vérification serveur. */
+const AUDIT_QUALITY_VERSION = "2026-10-21";
+function auditQualityUrl(value, baseUrl) {
+  try {
+    const u = new URL(value, baseUrl);
+    if (!/^https?:$/.test(u.protocol) || u.username || u.password) return null;
+    return u;
+  } catch (_) { return null; }
+}
+function auditQualityPublicUrl(value) {
+  const u = auditQualityUrl(value);
+  if (!u) return false;
+  const h = u.hostname.toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return false;
+  if (/^(0|10|127|169\.254|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h)) return false;
+  if (h === "::1" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80:")) return false;
+  return true;
+}
+function auditQualityReadRobots(text) {
+  const lines = String(text || "").split(/\r?\n/).map(s => s.replace(/#.*/, "").trim()).filter(Boolean);
+  const groups = [];
+  let current = null;
+  for (const line of lines) {
+    const m = line.match(/^user-agent\s*:\s*(.+)$/i);
+    if (m) { current = { agents:[m[1].trim().toLowerCase()], directives:[] }; groups.push(current); }
+    else if (current && /^([a-z-]+)\s*:/i.test(line)) {
+      const d = line.match(/^([a-z-]+)\s*:\s*(.*)$/i);
+      current.directives.push({name:d[1].toLowerCase(), value:d[2].trim()});
+    }
+  }
+  const sitemaps = lines.filter(x => /^sitemap\s*:/i.test(x)).map(x => x.replace(/^sitemap\s*:\s*/i,"").trim()).filter(Boolean);
+  const aiAgents = groups.filter(g => g.agents.some(a => /gptbot|oai-searchbot|claudebot|claude-web|perplexitybot|google-extended|amazonbot|meta-externalagent/i.test(a)));
+  const wildcardDisallowAll = groups.some(g => g.agents.includes("*") && g.directives.some(d => d.name === "disallow" && d.value === "/"));
+  return {valid:lines.some(x => /^user-agent\s*:/i.test(x)), sitemaps, wildcardDisallowAll, aiAgents:aiAgents.map(g => ({agents:g.agents,directives:g.directives}))};
+}
+function auditQualityJsonLd(html) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  const rows = [];
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach((script,index) => {
+    try {
+      const root = JSON.parse(script.textContent || "");
+      const visit = v => {
+        if (!v || typeof v !== "object") return;
+        if (Array.isArray(v)) { v.forEach(visit); return; }
+        const raw=v["@type"], types=(Array.isArray(raw)?raw:[raw]).filter(Boolean).map(String);
+        if (types.length) rows.push({index,types,hasName:!!v.name,hasUrl:!!(v.url||v["@id"]),hasAddress:!!v.address,hasTelephone:!!v.telephone,hasOpeningHours:!!(v.openingHours||v.openingHoursSpecification),hasSameAs:Array.isArray(v.sameAs)&&v.sameAs.length>0});
+        if (v["@graph"]) visit(v["@graph"]);
+        if (v.mainEntity) visit(v.mainEntity);
+        if (v.itemListElement) visit(v.itemListElement);
+      };
+      visit(root);
+    } catch (_) { rows.push({index,invalid:true}); }
+  });
+  const flat=rows.filter(r=>!r.invalid);
+  const local=flat.filter(r=>r.types.some(t=>/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffeeShop|Store|HairSalon|BeautySalon|Hotel|LodgingBusiness|AutoRepair|ProfessionalService|MedicalBusiness|Plumber|Electrician/i.test(t)));
+  return {count:rows.length,invalidCount:rows.filter(r=>r.invalid).length,types:[...new Set(flat.flatMap(r=>r.types))],localBusinessCount:local.length,localBusiness:local};
+}
+/* Ressources same-origin seulement : pas de proxy externe, pas de redirection hors origine. */
+async function auditQualityFetchPublicResource(baseUrl,path,timeout=8000) {
+  const base=auditQualityUrl(baseUrl);
+  if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
+  const target=new URL(path,base.origin);
+  if (target.origin!==base.origin || !auditQualityPublicUrl(target.href)) throw new Error("Origine non autorisée");
+  const controller=()=>new AbortController();
+  const direct=controller(), timer=setTimeout(()=>direct.abort(),timeout);
+  try {
+    try {
+      const r=await fetch(target.href,{signal:direct.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain, application/xml, text/xml;q=0.9, */*;q=0.1"}});
+      const finalUrl=auditQualityUrl(r.url||target.href,base.origin);
+      if (!finalUrl || finalUrl.origin!==base.origin) throw new Error("Redirection vers une autre origine refusée");
+      if (r.ok) return {status:r.status,ok:true,url:finalUrl.href,text:(await r.text()).slice(0,500000),via:"accès direct (CORS autorisé)"}
+      if (![401,403,404,405,406,429,500,502,503,504].includes(r.status)) return {status:r.status,ok:false,url:finalUrl.href,text:"",via:"accès direct"};
+    } catch (e) { if (e&&e.message==="Redirection vers une autre origine refusée") throw e; }
+  } finally { clearTimeout(timer); }
+  /* Sites clients : CORS peut bloquer l'accès direct. Jina est le proxy public déjà utilisé par l'application. */
+  const proxiedTarget=target.href;
+  const proxyController=controller(), proxyTimer=setTimeout(()=>proxyController.abort(),Math.max(timeout,12000));
+  try {
+    const readerUrl="https://r.jina.ai/"+proxiedTarget;
+    const r=await fetch(readerUrl,{signal:proxyController.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain","X-Return-Format":"text","X-Timeout":"10"}});
+    if(!r.ok) return {status:r.status,ok:false,url:target.href,text:"",via:"lecture publique de secours"}
+    const text=await r.text();
+    return {status:r.status,ok:true,url:target.href,text:text.slice(0,500000),via:"Jina Reader (secours CORS)"}
+  } finally { clearTimeout(proxyTimer); }
+}
+async function auditQualityRobotsSitemap(baseUrl) {
+  const base=auditQualityUrl(baseUrl);
+  if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
+  const [rr,sr]=await Promise.allSettled([auditQualityFetchPublicResource(base.href,"/robots.txt"),auditQualityFetchPublicResource(base.href,"/sitemap.xml")]);
+  const robots=rr.status==="fulfilled"?rr.value:null;
+  const rootSitemap=sr.status==="fulfilled"?sr.value:null;
+  const parsed=robots&&robots.ok?auditQualityReadRobots(robots.text):null;
+  const tryParseSitemap=async resource=>{
+    if(!resource||!resource.ok) return {valid:false,urlCount:0};
+    try { const doc=new DOMParser().parseFromString(resource.text,"application/xml"); return {valid:!doc.querySelector("parsererror")&&/(urlset|sitemapindex)$/i.test(doc.documentElement.localName),urlCount:doc.querySelectorAll("url,sitemap").length}; } catch (_) { return {valid:false,urlCount:0}; }
+  };
+  let smap=await tryParseSitemap(rootSitemap), declared=null, declaredParse={valid:false,urlCount:0};
+  const declaredCandidate=(parsed&&parsed.sitemaps||[]).find(value=>{const u=auditQualityUrl(value,base.href);return u&&u.origin===base.origin&&auditQualityPublicUrl(u.href)});
+  if(!smap.valid&&declaredCandidate){
+    try {
+      const u=auditQualityUrl(declaredCandidate,base.href);
+      declared=await auditQualityFetchPublicResource(base.href,u.pathname+u.search);
+      declaredParse=await tryParseSitemap(declared);
+    } catch (_) { declared=null; }
+  }
+  const sitemapResource=smap.valid?rootSitemap:declaredParse.valid?declared:rootSitemap;
+  const finalSitemap=smap.valid?smap:declaredParse;
+  const sitemapStatus=finalSitemap.valid?(sitemapResource===rootSitemap?"found":"declared-in-robots"):parsed&&(parsed.sitemaps||[]).length?"declared-in-robots":rootSitemap&&rootSitemap.status===404?"not-found":rootSitemap&&rootSitemap.ok?"invalid":"unknown";
+  return {
+    checkedAt:new Date().toISOString(),
+    robots:{status:robots?robots.status:"unavailable",found:!!(robots&&robots.ok),parsed,source:robots&&robots.url||new URL("/robots.txt",base.origin).href,via:robots&&robots.via||""},
+    sitemap:{status:sitemapStatus,found:!!(sitemapResource&&sitemapResource.ok),valid:!!finalSitemap.valid,urlCount:finalSitemap.urlCount||0,source:sitemapResource&&sitemapResource.url||new URL("/sitemap.xml",base.origin).href,via:sitemapResource&&sitemapResource.via||""},
+    notes:["L’absence de sitemap.xml à la racine ne prouve pas qu’aucun sitemap n’existe.","Les règles robots.txt ne garantissent ni l’indexation ni l’exclusion d’une URL.","Les sitemaps publiés sur un autre domaine ne sont pas automatiquement suivis par ce contrôle."]
+  };
+}
+function auditQualitySecurityHeaders(urlValue) {
+  const u=auditQualityUrl(urlValue);
+  if(!u) return {status:"unknown",note:"URL invalide"};
+  return {https:u.protocol==="https:",hsts:null,csp:null,xContentTypeOptions:null,frameProtection:null,status:"manual-or-server-check",note:"Les en-têtes HTTP de sécurité ne sont pas lisibles de façon fiable depuis cette application statique ; vérifier côté serveur avec un outil dédié."};
+}
+
 /* Microlink : capture d'écran mobile et technologies (Wappalyzer), sans clé */
 async function microlinkShot(url){
  const r=await fetchJson("https://api.microlink.io/?url="+encodeURIComponent(url)+"&meta=false&screenshot=true&insights.technologies=true&insights.lighthouse=false&viewport.isMobile=true&viewport.width=390&viewport.height=844&viewport.deviceScaleFactor=1",{},60000);
@@ -454,7 +576,7 @@ function analyzeHtml(html,pageUrl,ctx){
  const copyrightYear=years.length?Math.max(...years):null;
  const words=text.split(" ").filter(w=>w.length>2).length;
  const mixed=(html.match(/\ssrc=["']http:\/\//gi)||[]).length;
- return {title,metaDesc,h1s,viewport,ogImage:!!ogImage,ldTypes:[...ldTypes],socials,tel:[...new Set(tel)],whatsapp,booking,tracking,cms,imgs:imgs.length,noAlt,phoneOnSite,cityOnSite,hoursOnSite,addressOnSite,menuOnSite,copyrightYear,words,mixed,fetchedAt:nowLabel()};
+ return {title,metaDesc,h1s,viewport,ogImage:!!ogImage,ldTypes:[...ldTypes],schemaQuality:auditQualityJsonLd(html),socials,tel:[...new Set(tel)],whatsapp,booking,tracking,cms,imgs:imgs.length,noAlt,phoneOnSite,cityOnSite,hoursOnSite,addressOnSite,menuOnSite,copyrightYear,words,mixed,fetchedAt:nowLabel()};
 }
 const LOCAL_TYPES=/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffeeShop|BarOrPub|Store|HairSalon|BeautySalon|DaySpa|HealthAndBeautyBusiness|Hotel|LodgingBusiness|AutoRepair|AutomotiveBusiness|HomeAndConstructionBusiness|Plumber|Electrician|HousePainter|ProfessionalService|MedicalBusiness|Organization/;
 
@@ -985,7 +1107,20 @@ async function runAuto(){
    setStep("psi","run","Vitesse et qualité du site (Lighthouse mobile)","Compter 20 à 60 secondes.");
    setStep("html","run","Lecture du site : contenu, boutons, réseaux, suivi");
    setStep("shot","run","Capture mobile et technologies du site");
-   const [rPsi,rHtml,rShot,rDom]=await Promise.allSettled([pageSpeed(u.href),fetchHtml(u.href).then(h=>analyzeHtml(h,u.href,{phone:state.biz.phone,city})),microlinkShot(u.href),domainInfo(u.hostname)]);
+   const [rPsi,rHtml,rShot,rDom,rQuality]=await Promise.allSettled([pageSpeed(u.href),fetchHtml(u.href).then(h=>analyzeHtml(h,u.href,{phone:state.biz.phone,city})),microlinkShot(u.href),domainInfo(u.hostname),auditQualityRobotsSitemap(u.href)]);
+   const quality=rQuality.status==="fulfilled"?rQuality.value:null;
+   data.quality=quality;
+   data.securityHeaders=auditQualitySecurityHeaders(u.href);
+   if(quality){
+    const rob=quality.robots,smap=quality.sitemap;
+    const aiBlocked=!!(rob.parsed&&rob.parsed.aiAgents.some(g=>g.directives.some(d=>d.name==="disallow"&&d.value==="/")));
+    const robotEvidence=rob.found?(rob.parsed&&rob.parsed.valid?"robots.txt accessible et analysable":"robots.txt accessible, format à contrôler"):(rob.status===404?"robots.txt absent à la racine":"robots.txt non vérifié (accès refusé, erreur réseau ou délai dépassé)");
+    setStep("quality",rob.found||smap.found?"ok":"warn","Contrôles techniques complémentaires",robotEvidence+" · sitemap : "+(smap.valid?"XML valide ("+smap.urlCount+" entrée(s))":smap.status==="declared-in-robots"?"annoncé dans robots.txt, mais pas validé à la racine":smap.status==="not-found"?"non trouvé à la racine (absence non concluante)":"non validé"));
+    if(rob.found&&rob.parsed&&rob.parsed.wildcardDisallowAll)findings.push({sev:3,text:"Le robots.txt contient une règle Disallow: / pour User-agent *. Vérifier que le site n'est pas involontairement bloqué pour l'exploration."});
+    if(aiBlocked)findings.push({sev:1,text:"Le robots.txt interdit explicitement l'exploration à au moins un agent IA détecté. À confirmer selon l'objectif de visibilité souhaité : certains robots concernent la recherche, d'autres l'entraînement."});
+    if(smap.status==="not-found")findings.push({sev:1,text:"Aucun sitemap.xml validé à la racine. Ce n'est pas une preuve d'absence de sitemap : rechercher aussi les sitemaps déclarés et indexés avant de corriger."});
+   }else setStep("quality","skip","Contrôles complémentaires indisponibles","Les résultats principaux restent utilisables ; robots.txt et sitemap n'ont pas pu être vérifiés.");
+
    const H=rHtml.status==="fulfilled"?rHtml.value:null,P=rPsi.status==="fulfilled"?rPsi.value:null,M=rShot.status==="fulfilled"?rShot.value:null,D=rDom.status==="fulfilled"?rDom.value:null;
    data.html=H;data.psi=P;data.tech=M&&M.tech||[];data.shotUrl=M&&M.shot||"";data.domain=D;
    const srcP=P?P.via+", "+P.fetchedAt:"",srcH="Lecture du site (Jina Reader), "+data.fetchedAt;
@@ -1028,9 +1163,20 @@ async function runAuto(){
     setAuto("1-3",ctas.length?"ok":"issue",ctas.length?"Boutons d'action présents : "+ctas.join(", ")+".":"Aucun bouton d'appel cliquable, WhatsApp, ni lien de réservation, de rendez-vous ou de devis sur la page d'accueil.",srcH);
     if(!ctas.length)findings.push({sev:2,text:"Le site n'a ni bouton d'appel cliquable, ni WhatsApp, ni lien de réservation, de rendez-vous ou de devis : les visiteurs mobiles doivent chercher comment vous contacter."});
     /* Données structurées */
+    const schema=H.schemaQuality||{localBusiness:[],invalidCount:0,types:[]};
     const local=H.ldTypes.filter(t=>LOCAL_TYPES.test(t));
-    setAuto("1-5",local.length?"ok":"issue",local.length?"Données structurées présentes : "+local.join(", ")+".":"Aucune donnée structurée LocalBusiness (adresse, horaires) pour Google et les IA"+(H.ldTypes.length?" (types présents : "+H.ldTypes.slice(0,4).join(", ")+")":"")+".",srcH);
-    if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins bien ses informations."});
+    const detailedLocal=(schema.localBusiness||[]);
+    const incompleteLocal=detailedLocal.filter(x=>!x.hasName||!x.hasAddress||!x.hasUrl);
+    const schemaProblems=[];
+    if(!local.length)schemaProblems.push("aucune donnée structurée LocalBusiness détectée");
+    if(schema.invalidCount)schemaProblems.push(schema.invalidCount+" bloc(s) JSON-LD illisible(s)");
+    if(incompleteLocal.length)schemaProblems.push(incompleteLocal.length+" objet(s) LocalBusiness sans nom, adresse ou URL");
+    const schemaStatus=!local.length||schema.invalidCount||incompleteLocal.length?"issue":"ok";
+    const schemaEvidence=local.length?"Types locaux : "+local.join(", ")+". ":"";
+    setAuto("1-5",schemaStatus,schemaProblems.length?schemaEvidence+"À examiner : "+schemaProblems.join("; ")+".":schemaEvidence+"Données structurées locales présentes, blocs JSON-LD lisibles et champs nom/adresse/URL détectés.",srcH);
+    if(!local.length)findings.push({sev:1,text:"Le site ne fournit pas de données structurées « commerce local » : Google et les assistants IA lisent moins directement ses informations."});
+    if(incompleteLocal.length)findings.push({sev:2,text:"Des objets LocalBusiness existent, mais "+incompleteLocal.length+" n’ont pas tous les champs nom, adresse et URL détectés. Vérifier aussi le téléphone et les horaires avant de corriger."});
+    if(schema.invalidCount)findings.push({sev:1,text:schema.invalidCount+" bloc(s) JSON-LD n’ont pas pu être analysés : vérifier la syntaxe JSON avant de conclure à l’absence de données structurées."});
     /* Réseaux sociaux */
     const allSoc=[...(data.socials||[])];H.socials.forEach(s=>{const idx=allSoc.findIndex(x=>(x.net||netOf(hostOf(x.url)))===s.net);if(idx<0)allSoc.push({...s,src:"site officiel"});else if(allSoc[idx].src==="OpenStreetMap"||!allSoc[idx].src)allSoc[idx]={...s,src:"site officiel"};});data.socials=allSoc;
     const hasFbIg=allSoc.some(s=>/Facebook|Instagram/.test(s.net));

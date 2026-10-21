@@ -504,5 +504,33 @@ test("axe-core audits the visible AffiAds screen with the current engine", () =>
   assert.ok(js.includes('axeButton.onclick=runAxeAudit'));
   assert.ok(js.includes('axe.run(scope,'));
   assert.ok(html.includes('axe-core vérifie l’interface AffiAds actuellement ouverte'));
-  assert.ok(sw.includes('affiads-audit-2026-158'));
+  assert.ok(sw.includes('affiads-audit-2026-159'));
+});
+
+
+test("evidence-based supplementary audit helpers guard URLs and parse robots.txt and JSON-LD", () => {
+  assert.match(js, /const AUDIT_QUALITY_VERSION = "2026-10-21"/);
+  assert.match(js, /function auditQualityPublicUrl/);
+  assert.match(js, /function auditQualityReadRobots/);
+  assert.match(js, /function auditQualityJsonLd/);
+  assert.match(js, /async function auditQualityRobotsSitemap/);
+  assert.match(js, /Redirection vers une autre origine refusée/);
+  assert.match(js, /L’absence de sitemap\.xml à la racine ne prouve pas qu’aucun sitemap n’existe/);
+  assert.match(js, /data\.securityHeaders=auditQualitySecurityHeaders\(u\.href\)/);
+  assert.match(js, /Contrôles techniques complémentaires/);
+  assert.match(html, /aa-audit-quality/);
+  assert.match(html, /assets\/app\.js\?v=2026-159&build=2026-159/);
+  assert.match(sw, /affiads-audit-2026-159/);
+});
+
+
+test("JSON-LD quality checks are attached to HTML analysis and influence the local schema recommendation", () => {
+  assert.match(js, /schemaQuality:auditQualityJsonLd\(html\)/);
+  assert.match(js, /const incompleteLocal=detailedLocal\.filter/);
+  assert.match(js, /champs nom, adresse et URL détectés/);
+  assert.match(js, /objets LocalBusiness existent/);
+  assert.match(js, /CORS autorisé/);
+  assert.match(js, /Jina Reader \(secours CORS\)/);
+  assert.match(js, /declaredCandidate/);
+  assert.match(js, /L’absence de sitemap\.xml à la racine ne prouve pas qu’aucun sitemap n’existe/);
 });
