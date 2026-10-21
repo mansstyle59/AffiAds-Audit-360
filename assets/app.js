@@ -398,6 +398,103 @@ async function pageSpeed(url,cats){
   return parseLhr(lh,null,url,"Lighthouse via Microlink");
  }
 }
+/* AffiAds Audit Quality — contrôles techniques indépendants, datés et prudents.
+   Ces contrôles ajoutent des preuves au rapport sans prétendre remplacer Lighthouse ni une vérification serveur. */
+const AUDIT_QUALITY_VERSION = "2026-10-21";
+function auditQualityUrl(value, baseUrl) {
+  try {
+    const u = new URL(value, baseUrl);
+    if (!/^https?:$/.test(u.protocol) || u.username || u.password) return null;
+    return u;
+  } catch (_) { return null; }
+}
+function auditQualityPublicUrl(value) {
+  const u = auditQualityUrl(value);
+  if (!u) return false;
+  const h = u.hostname.toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return false;
+  if (/^(0|10|127|169\.254|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h)) return false;
+  if (h === "::1" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80:")) return false;
+  return true;
+}
+function auditQualityReadRobots(text) {
+  const lines = String(text || "").split(/\r?\n/).map(s => s.replace(/#.*/, "").trim()).filter(Boolean);
+  const groups = [];
+  let current = null;
+  for (const line of lines) {
+    const m = line.match(/^user-agent\s*:\s*(.+)$/i);
+    if (m) { current = { agents:[m[1].trim().toLowerCase()], directives:[] }; groups.push(current); }
+    else if (current && /^([a-z-]+)\s*:/i.test(line)) {
+      const d = line.match(/^([a-z-]+)\s*:\s*(.*)$/i);
+      current.directives.push({name:d[1].toLowerCase(), value:d[2].trim()});
+    }
+  }
+  const sitemaps = lines.filter(x => /^sitemap\s*:/i.test(x)).map(x => x.replace(/^sitemap\s*:\s*/i,"").trim()).filter(Boolean);
+  const aiAgents = groups.filter(g => g.agents.some(a => /gptbot|oai-searchbot|claudebot|claude-web|perplexitybot|google-extended|amazonbot|meta-externalagent/i.test(a)));
+  const wildcardDisallowAll = groups.some(g => g.agents.includes("*") && g.directives.some(d => d.name === "disallow" && d.value === "/"));
+  return {valid:lines.some(x => /^user-agent\s*:/i.test(x)), sitemaps, wildcardDisallowAll, aiAgents:aiAgents.map(g => ({agents:g.agents,directives:g.directives}))};
+}
+function auditQualityJsonLd(html) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  const rows = [];
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach((script,index) => {
+    try {
+      const root = JSON.parse(script.textContent || "");
+      const visit = v => {
+        if (!v || typeof v !== "object") return;
+        if (Array.isArray(v)) { v.forEach(visit); return; }
+        const raw=v["@type"], types=(Array.isArray(raw)?raw:[raw]).filter(Boolean).map(String);
+        if (types.length) rows.push({index,types,hasName:!!v.name,hasUrl:!!(v.url||v["@id"]),hasAddress:!!v.address,hasTelephone:!!v.telephone,hasOpeningHours:!!(v.openingHours||v.openingHoursSpecification),hasSameAs:Array.isArray(v.sameAs)&&v.sameAs.length>0});
+        if (v["@graph"]) visit(v["@graph"]);
+        if (v.mainEntity) visit(v.mainEntity);
+        if (v.itemListElement) visit(v.itemListElement);
+      };
+      visit(root);
+    } catch (_) { rows.push({index,invalid:true}); }
+  });
+  const flat=rows.filter(r=>!r.invalid);
+  const local=flat.filter(r=>r.types.some(t=>/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffeeShop|Store|HairSalon|BeautySalon|Hotel|LodgingBusiness|AutoRepair|ProfessionalService|MedicalBusiness|Plumber|Electrician/i.test(t)));
+  return {count:rows.length,invalidCount:rows.filter(r=>r.invalid).length,types:[...new Set(flat.flatMap(r=>r.types))],localBusinessCount:local.length,localBusiness:local};
+}
+/* Ressources same-origin seulement : pas de proxy externe, pas de redirection hors origine. */
+async function auditQualityFetchPublicResource(baseUrl,path,timeout=8000) {
+  const base=auditQualityUrl(baseUrl);
+  if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
+  const target=new URL(path,base.origin);
+  if (target.origin!==base.origin || !auditQualityPublicUrl(target.href)) throw new Error("Origine non autorisée");
+  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),timeout);
+  try {
+    const r=await fetch(target.href,{signal:ctl.signal,redirect:"follow",credentials:"omit",cache:"no-store",headers:{"Accept":"text/plain, application/xml, text/xml;q=0.9, */*;q=0.1"}});
+    const finalUrl=auditQualityUrl(r.url||target.href,base.origin);
+    if (!finalUrl || finalUrl.origin!==base.origin) throw new Error("Redirection vers une autre origine refusée");
+    if (!r.ok) return {status:r.status,ok:false,url:finalUrl.href,text:""};
+    return {status:r.status,ok:true,url:finalUrl.href,text:(await r.text()).slice(0,500000)};
+  } finally { clearTimeout(timer); }
+}
+async function auditQualityRobotsSitemap(baseUrl) {
+  const base=auditQualityUrl(baseUrl);
+  if (!base || !auditQualityPublicUrl(base.href)) throw new Error("URL publique invalide");
+  const [rr,sr]=await Promise.allSettled([auditQualityFetchPublicResource(base.href,"/robots.txt"),auditQualityFetchPublicResource(base.href,"/sitemap.xml")]);
+  const robots=rr.status==="fulfilled"?rr.value:null, sitemap=sr.status==="fulfilled"?sr.value:null;
+  const parsed=robots&&robots.ok?auditQualityReadRobots(robots.text):null;
+  let sitemapUrlCount=0,sitemapValid=false;
+  if(sitemap&&sitemap.ok){
+    try { const doc=new DOMParser().parseFromString(sitemap.text,"application/xml"); sitemapValid=!doc.querySelector("parsererror")&&/(urlset|sitemapindex)$/i.test(doc.documentElement.localName); sitemapUrlCount=doc.querySelectorAll("url,sitemap").length; } catch (_) {}
+  }
+  const sitemapStatus=sitemapValid?"found":parsed&&parsed.sitemaps.length?"declared-in-robots":sitemap&&sitemap.status===404?"not-found":sitemap&&sitemap.ok?"invalid":"unknown";
+  return {
+    checkedAt:new Date().toISOString(),
+    robots:{status:robots?robots.status:"unavailable",found:!!(robots&&robots.ok),parsed,source:robots&&robots.url||new URL("/robots.txt",base.origin).href},
+    sitemap:{status:sitemapStatus,found:!!(sitemap&&sitemap.ok),valid:sitemapValid,urlCount:sitemapUrlCount,source:sitemap&&sitemap.url||new URL("/sitemap.xml",base.origin).href},
+    notes:["L’absence de sitemap.xml à la racine ne prouve pas qu’aucun sitemap n’existe.","Les règles robots.txt ne garantissent ni l’indexation ni l’exclusion d’une URL."]
+  };
+}
+function auditQualitySecurityHeaders(urlValue) {
+  const u=auditQualityUrl(urlValue);
+  if(!u) return {status:"unknown",note:"URL invalide"};
+  return {https:u.protocol==="https:",hsts:null,csp:null,xContentTypeOptions:null,frameProtection:null,status:"manual-or-server-check",note:"Les en-têtes HTTP de sécurité ne sont pas lisibles de façon fiable depuis cette application statique ; vérifier côté serveur avec un outil dédié."};
+}
+
 /* Microlink : capture d'écran mobile et technologies (Wappalyzer), sans clé */
 async function microlinkShot(url){
  const r=await fetchJson("https://api.microlink.io/?url="+encodeURIComponent(url)+"&meta=false&screenshot=true&insights.technologies=true&insights.lighthouse=false&viewport.isMobile=true&viewport.width=390&viewport.height=844&viewport.deviceScaleFactor=1",{},60000);
