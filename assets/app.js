@@ -551,7 +551,7 @@ function analyzeHtml(html,pageUrl,ctx){
  const copyrightYear=years.length?Math.max(...years):null;
  const words=text.split(" ").filter(w=>w.length>2).length;
  const mixed=(html.match(/\ssrc=["']http:\/\//gi)||[]).length;
- return {title,metaDesc,h1s,viewport,ogImage:!!ogImage,ldTypes:[...ldTypes],socials,tel:[...new Set(tel)],whatsapp,booking,tracking,cms,imgs:imgs.length,noAlt,phoneOnSite,cityOnSite,hoursOnSite,addressOnSite,menuOnSite,copyrightYear,words,mixed,fetchedAt:nowLabel()};
+ return {title,metaDesc,h1s,viewport,ogImage:!!ogImage,ldTypes:[...ldTypes],schemaQuality:auditQualityJsonLd(html),socials,tel:[...new Set(tel)],whatsapp,booking,tracking,cms,imgs:imgs.length,noAlt,phoneOnSite,cityOnSite,hoursOnSite,addressOnSite,menuOnSite,copyrightYear,words,mixed,fetchedAt:nowLabel()};
 }
 const LOCAL_TYPES=/LocalBusiness|Restaurant|FoodEstablishment|Bakery|CafeOrCoffeeShop|BarOrPub|Store|HairSalon|BeautySalon|DaySpa|HealthAndBeautyBusiness|Hotel|LodgingBusiness|AutoRepair|AutomotiveBusiness|HomeAndConstructionBusiness|Plumber|Electrician|HousePainter|ProfessionalService|MedicalBusiness|Organization/;
 
