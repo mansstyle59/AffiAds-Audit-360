@@ -813,7 +813,7 @@ async function bingSearch(q){
 }
 function matchBiz(row,name,siteHost){if(siteHost&&row.host&&(row.host===siteHost||row.host.endsWith("."+siteHost)))return "site";let path="";try{path=decodeURIComponent(new URL(row.url).pathname)}catch(e){}return nameIn(row.title,name)||nameIn(path.replace(/[-_/.]/g," "),name)?"mention":null}
 /* IA avec recherche web : Gemini + Recherche Google (clé Google, API « Generative Language » activée) */
-const GEMINI_MODELS=["gemini-flash-latest","gemini-2.5-flash"];
+const GEMINI_MODELS=["gemini-flash-latest","gemini-2.0-flash","gemini-1.5-flash"];
 async function geminiAsk(question){
  let last;for(const m of GEMINI_MODELS){
   try{const r=await fetchJson("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":settings.googleKey.trim()},body:JSON.stringify({contents:[{role:"user",parts:[{text:question}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.2,maxOutputTokens:900}})},60000);
